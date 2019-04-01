@@ -1,0 +1,116 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="头文件\adapter">
+      <UniqueIdentifier>{aeb3ea85-293b-485e-abf5-3db1499f9dad}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\adapter">
+      <UniqueIdentifier>{0b4e4190-2863-469d-9e5e-edb0705ef99d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\infrastructure">
+      <UniqueIdentifier>{ba967367-36fb-4c00-a49f-1fd60080fe85}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\infrastructure">
+      <UniqueIdentifier>{5a2fca9e-1e87-47bd-8bd5-8e8204c17f94}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\strategy">
+      <UniqueIdentifier>{fdc45001-a895-471b-b58e-40932efc8b96}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\strategy">
+      <UniqueIdentifier>{2406ac18-15ed-49f6-8546-9b753378b945}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\cmMarketMaking.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\threadpool\threadpool.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\baseClass\Utils.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ctp\quoteAdapter_CTP.cpp">
+      <Filter>源文件\adapter</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ctp\tradeAdapter_CTP.cpp">
+      <Filter>源文件\adapter</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tap\quoteAdapter_TAP.cpp">
+      <Filter>源文件\adapter</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tap\tradeAdapter_TAP.cpp">
+      <Filter>源文件\adapter</Filter>
+    </ClCompile>
+    <ClCompile Include="src\infrastructure.cpp">
+      <Filter>源文件\infrastructure</Filter>
+    </ClCompile>
+    <ClCompile Include="src\infrastructure_quote.cpp">
+      <Filter>源文件\infrastructure</Filter>
+    </ClCompile>
+    <ClCompile Include="src\infrastructure_trade.cpp">
+      <Filter>源文件\infrastructure</Filter>
+    </ClCompile>
+    <ClCompile Include="src\strategy\cmMM01.cpp">
+      <Filter>源文件\strategy</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="header\threadpool\threadpool.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="header\json\configloader.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="header\baseClass\orderBase.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="header\baseClass\Utils.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="header\baseClass\adapterBase.h">
+      <Filter>头文件\adapter</Filter>
+    </ClInclude>
+    <ClInclude Include="header\ctp\quoteAdapter_CTP.h">
+      <Filter>头文件\adapter</Filter>
+    </ClInclude>
+    <ClInclude Include="header\tap\quoteAdapter_TAP.h">
+      <Filter>头文件\adapter</Filter>
+    </ClInclude>
+    <ClInclude Include="header\ctp\tradeAdapter_CTP.h">
+      <Filter>头文件\adapter</Filter>
+    </ClInclude>
+    <ClInclude Include="header\tap\tradeAdapter_TAP.h">
+      <Filter>头文件\adapter</Filter>
+    </ClInclude>
+    <ClInclude Include="header\infrastructureStruct.h">
+      <Filter>头文件\infrastructure</Filter>
+    </ClInclude>
+    <ClInclude Include="header\infrastructure.h">
+      <Filter>头文件\infrastructure</Filter>
+    </ClInclude>
+    <ClInclude Include="header\strategy\cmMM01.h">
+      <Filter>头文件\strategy</Filter>
+    </ClInclude>
+    <ClInclude Include="header\baseClass\strategyBase.h">
+      <Filter>头文件\strategy</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="resource\config.json">
+      <Filter>资源文件</Filter>
+    </None>
+  </ItemGroup>
+</Project>
