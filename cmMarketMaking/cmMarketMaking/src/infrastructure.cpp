@@ -78,6 +78,7 @@ void infrastructure::initAdapters()
 			pTradeAdapter->m_OnInstrumentsRtn = bind(&infrastructure::onRtnCtpInstruments, this, _1, _2);
 			pTradeAdapter->m_OnOrderRtn = bind(&infrastructure::onRtnCtpOrder, this, _1, _2);
 			pTradeAdapter->m_OnTradeRtn = bind(&infrastructure::onRtnCtpTrade, this, _1, _2);
+			pTradeAdapter->m_onRspCancel = bind(&infrastructure::onRespCtpCancel, this, _1, _2, _3);
 			pTradeAdapter->init();
 			//m_tradeAdapters[adapterID] = pTradeAdapter;
 			m_adapters[adapterID] = pTradeAdapter;

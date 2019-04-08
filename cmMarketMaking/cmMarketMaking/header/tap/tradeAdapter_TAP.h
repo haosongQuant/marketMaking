@@ -55,7 +55,7 @@ public:
 	virtual int OrderInsert(string instrument, string exchange, char orderType, char dir,
 		char positionEffect, double price, unsigned int volume);
 	//³·µ¥
-	virtual void cancelOrder(int orderRef);
+	virtual int cancelOrder(int orderRef);
 private:
 	void splitInstId(string instId, char* commodity, char* contract);
 

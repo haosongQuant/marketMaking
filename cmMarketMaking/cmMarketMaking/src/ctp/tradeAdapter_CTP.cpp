@@ -147,7 +147,7 @@ void tradeAdapterCTP::OnRspUserLogin(CThostFtdcRspUserLoginField *pRspUserLogin,
 			hourSeq = local->tm_hour - 4;
 		else
 			hourSeq = local->tm_hour;
-		sprintf(m_orderRef, "00%02d%02d%02d0000", hourSeq, local->tm_min, local->tm_sec);
+		sprintf(m_orderRef, "0%02d%02d%02d00000", hourSeq, local->tm_min, local->tm_sec);
 
 		m_status = ADAPTER_STATUS_LOGIN;
 		m_lag_Timer.expires_from_now(boost::posix_time::milliseconds(3000));
@@ -405,8 +405,7 @@ int tradeAdapterCTP::OrderInsert(string instrument, char priceType, char dir,
 	strncpy(pInputOrder.BrokerID, m_loginField.BrokerID, sizeof(pInputOrder.BrokerID));
 	strncpy(pInputOrder.InvestorID, m_loginField.UserID, sizeof(pInputOrder.InvestorID));
 	strncpy(pInputOrder.UserID, m_loginField.UserID, sizeof(pInputOrder.UserID));
-	int nextOrderRef = atoi(m_orderRef);
-	sprintf(m_orderRef, "%012d", ++nextOrderRef);
+	int nextOrderRef = updateOrderRef();
 	strncpy(pInputOrder.OrderRef, m_orderRef, sizeof(pInputOrder.OrderRef) - 1);  //报单引用
 
 	strncpy(pInputOrder.InstrumentID, instrument.c_str(), sizeof(pInputOrder.InstrumentID) - 1);
@@ -498,7 +497,7 @@ void tradeAdapterCTP::OnRtnTrade(CThostFtdcTradeField *pTrade)
 		m_OnTradeRtn(m_adapterID, pTrade);
 };
 
-void tradeAdapterCTP::cancelOrder(int orderRef)
+int tradeAdapterCTP::cancelOrder(int orderRef)
 {
 	auto iter = m_ref2order.find(orderRef);
 	if (iter == m_ref2order.end())
@@ -511,8 +510,7 @@ void tradeAdapterCTP::cancelOrder(int orderRef)
 	actionField.ActionFlag = THOST_FTDC_AF_Delete;
 	actionField.FrontID = iter->second->FrontID;
 	actionField.SessionID = iter->second->SessionID;
-	int nextOrderRef = atoi(m_orderRef);
-	sprintf(m_orderRef, "%0d", ++nextOrderRef);
+	int nextOrderRef = updateOrderRef();
 	actionField.OrderActionRef = nextOrderRef;
 	sprintf(actionField.OrderRef, "%0d", orderRef);
 	strncpy(actionField.BrokerID, m_loginField.BrokerID, sizeof(actionField.BrokerID));
@@ -520,10 +518,20 @@ void tradeAdapterCTP::cancelOrder(int orderRef)
 	strncpy(actionField.UserID, m_loginField.UserID, sizeof(actionField.UserID));
 	strncpy(actionField.InstrumentID, iter->second->InstrumentID, sizeof(actionField.InstrumentID));
 	int ret = m_pUserApi->ReqOrderAction(&actionField, ++m_requestId);
-	cerr << " req | send order action ... " << ((ret == 0) ? "succ" : "fail") << endl;
+	if (ret == 0)
+	{
+		cout << " req | send cancel order ... succ." << endl;
+		return nextOrderRef;
+	}
+	else
+	{
+		cout << " req | send cancel order ... fail." << endl;
+		return -1;
+	}
 };
 
-void tradeAdapterCTP::OnRspOrderAction(CThostFtdcInputOrderActionField *pInputOrderAction, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
+void tradeAdapterCTP::OnRspOrderAction(CThostFtdcInputOrderActionField *pInputOrderAction, 
+	CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
 	if (!isErrorRespInfo(pRspInfo)){
 		if (pInputOrderAction)

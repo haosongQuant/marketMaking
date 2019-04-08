@@ -155,6 +155,7 @@ copy  .\lib\*.lib  ..\Debug\</Command>
     <ClCompile Include="src\infrastructure.cpp" />
     <ClCompile Include="src\infrastructure_quote.cpp" />
     <ClCompile Include="src\infrastructure_trade.cpp" />
+    <ClCompile Include="src\strategyEngine.cpp" />
     <ClCompile Include="src\strategy\cmMM01.cpp" />
     <ClCompile Include="src\tap\quoteAdapter_TAP.cpp" />
     <ClCompile Include="src\tap\tradeAdapter_TAP.cpp" />
@@ -170,6 +171,7 @@ copy  .\lib\*.lib  ..\Debug\</Command>
     <ClInclude Include="header\infrastructure.h" />
     <ClInclude Include="header\infrastructureStruct.h" />
     <ClInclude Include="header\json\configloader.h" />
+    <ClInclude Include="header\strategyEngine.h" />
     <ClInclude Include="header\strategy\cmMM01.h" />
     <ClInclude Include="header\tap\quoteAdapter_TAP.h" />
     <ClInclude Include="header\tap\tradeAdapter_TAP.h" />

@@ -226,7 +226,9 @@ public:
 		enum_order_dir_type dir, enum_position_effect_type positionEffect, enum_hedge_flag hedgeflag,
 		double price, unsigned int volume,
 		boost::function<void(orderRtnPtr)> orderRtnhandler, boost::function<void(tradeRtnPtr)> tradeRtnhandler);
-	void cancelOrder(string adapterID, int orderRef);
+	int cancelOrder(string adapterID, int orderRef, boost::function<void(cancelRtnPtr)> cancelRtnhandler);
+	void onRespCtpCancel(string adapterID, CThostFtdcInputOrderActionField *pInputOrderAction, 
+		CThostFtdcRspInfoField *pRspInfo);
 
 private:
 	map<enum_adapterType, map<enum_order_type, char> > m_orderTypeMap;
@@ -239,6 +241,8 @@ private:
 		map<int, boost::function<void(orderRtnPtr)> > > m_orderRtnHandlers;
 	map<string, //adapterID
 		map< int, boost::function<void(tradeRtnPtr)> > > m_tradeRtnHandlers;
+	map < string, //adapterID
+		map<int, boost::function<void(cancelRtnPtr)> > > m_cancelRtnHandlers;
 	/*
 	//定时任务
 private:

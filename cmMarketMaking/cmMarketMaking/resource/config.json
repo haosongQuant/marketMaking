@@ -34,7 +34,8 @@
             "quote": "quoteCTP01",
             "trade": "tradeCTP01",
             "tickSize": 0.2,
-            "miniOrderSpread": 4.0
+            "miniOrderSpread": 4.0,
+            "orderQty": 10
         }
     ]
 }

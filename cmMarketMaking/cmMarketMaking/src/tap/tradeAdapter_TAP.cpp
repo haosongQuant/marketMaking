@@ -287,7 +287,7 @@ void tradeAdapter_TAP::OnRtnFill(const TapAPIFillInfo *info)
 		m_OnTradeRtn(m_adapterID, (TapAPIFillInfo *)info);
 };
 
-void tradeAdapter_TAP::cancelOrder(int orderRef)
+int tradeAdapter_TAP::cancelOrder(int orderRef)
 {
 	auto iter = m_ref2order.find(orderRef);
 	if (iter == m_ref2order.end())
@@ -308,4 +308,5 @@ void tradeAdapter_TAP::cancelOrder(int orderRef)
 		cout << m_adapterID << " req CanceOrder Error: " << iErr << endl;
 	else
 		cout << m_adapterID << " req CancelOrder succ." << endl;
+	return 0; //todo£ºÉè¼Æ·µ»Øid
 };

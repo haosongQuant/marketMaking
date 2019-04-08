@@ -78,23 +78,42 @@ int infrastructure::insertOrder(string adapterID, string instrument, string exch
 	return -1;
 };
 
-void infrastructure::cancelOrder(string adapterID, int orderRef)
+int infrastructure::cancelOrder(string adapterID, int orderRef, boost::function<void(cancelRtnPtr)> cancelRtnhandler)
 {
 	switch (m_adapterTypeMap[adapterID])
 	{
 	case ADAPTER_CTP_TRADE:
 	{
 		tradeAdapterCTP * pTradeAdapter = (tradeAdapterCTP *)m_adapters[adapterID];
-		pTradeAdapter->cancelOrder(orderRef);
+		int cancelOrderRef = pTradeAdapter->cancelOrder(orderRef);
+		m_cancelRtnHandlers[adapterID][cancelOrderRef] = cancelRtnhandler;
 		break;
 	}
 	case ADAPTER_TAP_TRADE:
 	{
 		tradeAdapter_TAP * pTradeAdapter = (tradeAdapter_TAP *)m_adapters[adapterID];
-		pTradeAdapter->cancelOrder(orderRef);
+		return pTradeAdapter->cancelOrder(orderRef);
 		break;
 	}
 	}
+};
+
+void infrastructure::onRespCtpCancel(string adapterID, CThostFtdcInputOrderActionField *pInputOrderAction,
+	CThostFtdcRspInfoField *pRspInfo)
+{
+	cancelRtnPtr cancelPtr = cancelRtnPtr(new cancelRtn_struct());
+	cancelPtr->m_cancelOrderRef = pInputOrderAction->OrderActionRef;
+	cancelPtr->m_originOrderRef = atoi(pInputOrderAction->OrderRef);
+	cancelPtr->m_isCancelSucc = pRspInfo->ErrorID == 0 ? true : false;
+	auto iter1 = m_cancelRtnHandlers.find(adapterID);
+	if (iter1 != m_cancelRtnHandlers.end())
+	{
+		auto iter2 = iter1->second.find(cancelPtr->m_cancelOrderRef);
+		if (iter2 != iter1->second.end())
+			m_tradeTP->getDispatcher().post(bind((m_cancelRtnHandlers[adapterID][cancelPtr->m_cancelOrderRef]),
+				cancelPtr));
+	}
+
 };
 
 void infrastructure::onRtnCtpOrder(string adapterID, CThostFtdcOrderField *pOrder)

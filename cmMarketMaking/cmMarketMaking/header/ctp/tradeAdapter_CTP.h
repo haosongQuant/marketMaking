@@ -22,12 +22,21 @@ private:
 	int m_frontId;    //前置编号
 	int m_sessionId;    //会话编号
 	char m_orderRef[13];
+	boost::mutex m_orderRefLock;
 	map<int, CThostFtdcOrderFieldPtr> m_ref2order;
 	boost::detail::spinlock m_ref2order_lock;
 	CThostFtdcTraderApi* m_pUserApi;
 	CThostFtdcReqUserLoginField m_loginField;
 	bool m_needAuthenticate;
 	CThostFtdcReqAuthenticateField m_authenticateField;
+
+private:
+	int updateOrderRef(){
+		boost::mutex::scoped_lock lock(m_orderRefLock);
+		int nextOrderRef = atoi(m_orderRef)+1;
+		sprintf(m_orderRef, "%012d", nextOrderRef);
+		return nextOrderRef;
+	};
 
 public:
 	tradeAdapterCTP(string adapterID, char* tradeFront, char* broker, char* user, char* pwd, 
@@ -50,7 +59,7 @@ public:
 		int volume, char tmCondition, char volCondition, int minVol, char contiCondition,
 		double stopPrz, char forceCloseReason);
 	//撤单
-	virtual void cancelOrder(int orderRef);
+	virtual int cancelOrder(int orderRef);
 
 private:
 	athenathreadpoolPtr m_threadpool;
@@ -64,6 +73,8 @@ public:
 	boost::function<void(string, CThostFtdcTradeField*)> m_OnTradeRtn;
 	boost::function<void(string, CThostFtdcInstrumentField*)> m_OnInstrumentsRtn;
 	boost::function<void(CThostFtdcInvestorPositionField*)> m_OnInvestorPositionRtn;
+	boost::function < void(string adapterID, CThostFtdcInputOrderActionField *pInputOrderAction,
+		CThostFtdcRspInfoField *pRspInfo) > m_onRspCancel;
 
 private:
 	bool isErrorRespInfo(CThostFtdcRspInfoField *pRspInfo);

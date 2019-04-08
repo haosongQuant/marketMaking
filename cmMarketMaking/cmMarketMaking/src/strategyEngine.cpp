@@ -35,6 +35,7 @@ void strategyEngine::init()
 				strategyConfig["trade"].asString(),
 				strategyConfig["tickSize"].asDouble(),
 				strategyConfig["miniOrderSpread"].asDouble(),
+				strategyConfig["orderQty"].asDouble(),
 				m_quoteTP, m_tradeTP, m_infra);
 			m_strategies[strategyId] = pCmMM01;
 			break;

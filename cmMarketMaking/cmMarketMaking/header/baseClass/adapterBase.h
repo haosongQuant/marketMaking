@@ -49,7 +49,7 @@ public:
 		return 0;
 	};
 
-	virtual void cancelOrder(int key) = 0;
+	virtual int cancelOrder(int key) = 0;
 
 	virtual void destroyAdapter(){};
 };
