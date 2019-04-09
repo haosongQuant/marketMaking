@@ -3,7 +3,7 @@
         {
             "adapterID": "tradeCTP01",
             "adapterType": "tradeCtp",
-            "frontIP": "tcp://180.168.146.187:10030",
+            "frontIP": "tcp://180.168.146.187:10000",
             "broker": "9999",
             "user": "140108",
             "pwd": "1qazxc",
@@ -14,7 +14,7 @@
         {
             "adapterID": "quoteCTP01",
             "adapterType": "quoteCtp",
-            "frontIP": "tcp://180.168.146.187:10031",
+            "frontIP": "tcp://180.168.146.187:10010",
             "broker": "9999",
             "user": "ctpTestUser01",
             "pwd": "1234qwer"

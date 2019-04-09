@@ -39,13 +39,13 @@ int quoteAdapter_CTP::init()
 int quoteAdapter_CTP::login()
 {
 	int ret = m_pUserApi->ReqUserLogin(&m_loginField, ++m_requestId);
-	cerr << " req | user login ... " << ((ret == 0) ? "succ" : "fail") << endl;
+	cout << m_adapterID << ":  req | user login ... " << ((ret == 0) ? "succ" : "fail") << endl;
 	return ret;
 };
 
 void quoteAdapter_CTP::OnFrontConnected()
 {
-	cout << endl << m_adapterID << ": ctp quote connected!" << endl;
+	cout << m_adapterID << ": ctp quote connected!" << endl;
 	login();
 };
 
@@ -67,10 +67,10 @@ void quoteAdapter_CTP::OnHeartBeatWarning(int nTimeLapse)
 void quoteAdapter_CTP::OnRspUserLogin(CThostFtdcRspUserLoginField *pRspUserLogin, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
 	if (isErrorRespInfo(pRspInfo))
-		cout << endl << "quote login error | ErrorID: " << pRspInfo->ErrorID << ", ErrorMsg: " << pRspInfo->ErrorMsg << endl;
+		cout << m_adapterID << ": quote login error | ErrorID: " << pRspInfo->ErrorID << ", ErrorMsg: " << pRspInfo->ErrorMsg << endl;
 	else
 	{
-		cout << endl << "quote login succ!" << endl;
+		cout << m_adapterID << ": quote login succ!" << endl;
 		auto iter = m_instrumentList.begin();
 		while (iter != m_instrumentList.end())
 		{
@@ -91,7 +91,7 @@ void quoteAdapter_CTP::OnRspUserLogin(CThostFtdcRspUserLoginField *pRspUserLogin
 
 void quoteAdapter_CTP::OnRspUserLogout(CThostFtdcUserLogoutField *pUserLogout, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
-	cout << "quoteAdapter_CTP logout!" << endl;
+	cout << m_adapterID << ": quoteAdapter_CTP logout!" << endl;
 
 	m_status = ADAPTER_STATUS_LOGOUT;
 	if (m_OnUserLogout != NULL)
@@ -121,7 +121,7 @@ int quoteAdapter_CTP::SubscribeMarketData(char * pInstrumentList)
 			m_instrumentList.push_back(instTemp);
 	}
 	int ret = m_pUserApi->SubscribeMarketData(pInstId, len);
-	cerr << " req | subscribe quote ... " << ((ret == 0) ? "succ" : "fail") << endl;
+	cout << m_adapterID << ":  req | subscribe quote ... " << ((ret == 0) ? "succ" : "fail") << endl;
 	return ret;
 };
 
@@ -130,7 +130,7 @@ void quoteAdapter_CTP::OnRspSubMarketData(CThostFtdcSpecificInstrumentField *pSp
 	int nRequestID, bool bIsLast)
 {
 	if (isErrorRespInfo(pRspInfo))
-		cerr << " resp | subscribe quote " << (isErrorRespInfo(pRspInfo) ? "fail:" : "succ: ") << pSpecificInstrument->InstrumentID << endl;
+		cout << m_adapterID << ":  resp | subscribe quote " << (isErrorRespInfo(pRspInfo) ? "fail:" : "succ: ") << pSpecificInstrument->InstrumentID << endl;
 };
 
 
@@ -153,7 +153,7 @@ void quoteAdapter_CTP::UnSubscribeMarketData(char * pInstrumentList)
 			m_instrumentList.push_back(instTemp);
 	}
 	int ret = m_pUserApi->UnSubscribeMarketData(pInstId, len);
-	cerr << " req | cancel quote subscription ... " << ((ret == 0) ? "succ" : "fail") << endl;
+	cout << m_adapterID << ":  req | cancel quote subscription ... " << ((ret == 0) ? "succ" : "fail") << endl;
 	return;
 };
 
@@ -171,7 +171,7 @@ void quoteAdapter_CTP::OnRtnDepthMarketData(CThostFtdcDepthMarketDataField *pDep
 	//	<< " 买一价:" << pDepthMarketData->BidPrice1
 	//	<< " 买一量:" << pDepthMarketData->BidVolume1
 	//	<< " 持仓量:" << pDepthMarketData->OpenInterest << endl;
-	cout << " 行情 | 合约:" << pDepthMarketData->InstrumentID << ", 最新价: " << pDepthMarketData->LastPrice<<endl;
+	cout << m_adapterID << ":  行情 | 合约:" << pDepthMarketData->InstrumentID << ", 最新价: " << pDepthMarketData->LastPrice << endl;
 
 	if (m_onRtnMarketData != NULL)
 		m_onRtnMarketData(m_adapterID, pDepthMarketData);

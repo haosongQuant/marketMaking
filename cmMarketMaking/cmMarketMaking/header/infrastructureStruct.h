@@ -33,9 +33,9 @@ struct futuresMD_struct
 	double	OpenInterest;///持仓量
 	/*double	ClosePrice;///今收盘
 	double	SettlementPrice;///本次结算价*/
-	/*double	UpperLimitPrice;///涨停板价
+	double	UpperLimitPrice;///涨停板价
 	double	LowerLimitPrice;///跌停板价
-	double	PreDelta;///昨虚实度
+	/*double	PreDelta;///昨虚实度
 	double	CurrDelta;///今虚实度
 	double	PreIOPV;///昨日基金净值
 	double	IOPV;///基金净值

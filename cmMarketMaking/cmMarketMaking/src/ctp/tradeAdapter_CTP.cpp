@@ -71,11 +71,11 @@ int tradeAdapterCTP::init()
 
 void tradeAdapterCTP::OnFrontConnected()
 {
-	cout << endl << "trade connected!" << endl;
+	cout << m_adapterID << ": trade connected!" << endl;
 	if (m_needAuthenticate)
 	{
 		int ret = m_pUserApi->ReqAuthenticate(&m_authenticateField, ++m_requestId);
-		cerr << " req | send Authenticate ... " << ((ret == 0) ? "succ" : "fail") << endl;
+		cout << m_adapterID << ":  req | send Authenticate ... " << ((ret == 0) ? "succ" : "fail") << endl;
 	}
 	else
 		login();
@@ -85,11 +85,11 @@ void tradeAdapterCTP::OnRspAuthenticate(CThostFtdcRspAuthenticateField *pRspAuth
 	CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
 	if (isErrorRespInfo(pRspInfo))
-		cout << endl << "Authenticate error | ErrorID: " << pRspInfo->ErrorID <<
+		cout << m_adapterID << ": Authenticate error | ErrorID: " << pRspInfo->ErrorID <<
 		", ErrorMsg: " << pRspInfo->ErrorMsg << endl;
 	else
 	{
-		cout << endl << "Authenticate succ | broker: " << pRspAuthenticateField->BrokerID <<
+		cout << m_adapterID << ": Authenticate succ | broker: " << pRspAuthenticateField->BrokerID <<
 			", user: " << pRspAuthenticateField->UserID <<
 			", productInfo: " << pRspAuthenticateField->UserProductInfo << endl;
 		login();
@@ -98,7 +98,7 @@ void tradeAdapterCTP::OnRspAuthenticate(CThostFtdcRspAuthenticateField *pRspAuth
 
 void tradeAdapterCTP::OnFrontDisconnected(int nReason)
 {
-	cout << "trade adapterCTP disconnected!" << endl;
+	cout << m_adapterID << ": trade adapterCTP disconnected!" << endl;
 	if (m_status != ADAPTER_STATUS_DISCONNECT && m_OnFrontDisconnected)
 	{
 		m_OnFrontDisconnected(m_adapterID, "trade");
@@ -108,13 +108,13 @@ void tradeAdapterCTP::OnFrontDisconnected(int nReason)
 
 void tradeAdapterCTP::OnHeartBeatWarning(int nTimeLapse)
 {
-	cout << "heartbeat warning: " << nTimeLapse << "s." << endl;
+	cout << m_adapterID << ": heartbeat warning: " << nTimeLapse << "s." << endl;
 };
 
 int tradeAdapterCTP::login()
 {
 	int ret = m_pUserApi->ReqUserLogin(&m_loginField, ++m_requestId);
-	cerr << " req | send login ... " << ((ret == 0) ? "succ" : "fail") << endl;
+	cout << m_adapterID << ":  req | send login ... " << ((ret == 0) ? "succ" : "fail") << endl;
 	return ret;
 };
 
@@ -122,11 +122,11 @@ void tradeAdapterCTP::OnRspUserLogin(CThostFtdcRspUserLoginField *pRspUserLogin,
 	CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
 	if (isErrorRespInfo(pRspInfo))
-		cout << endl << "trade login error | ErrorID: " << pRspInfo->ErrorID << ", ErrorMsg: " << pRspInfo->ErrorMsg 
+		cout << m_adapterID << ": trade login error | ErrorID: " << pRspInfo->ErrorID << ", ErrorMsg: " << pRspInfo->ErrorMsg
 		<< ", user: " << m_loginField.UserID << ", pwd:" << m_loginField.Password << ", broker: " << m_loginField.BrokerID<<endl;
 	else
 	{
-		cout << endl << "trade login succ!" << endl;
+		cout << m_adapterID<<": trade login succ!" << endl;
 
 		// 保存会话参数    
 		m_frontId = pRspUserLogin->FrontID;
@@ -148,7 +148,7 @@ void tradeAdapterCTP::OnRspUserLogin(CThostFtdcRspUserLoginField *pRspUserLogin,
 			hourSeq = local->tm_hour - 4;
 		else
 			hourSeq = local->tm_hour;
-		sprintf(m_orderRef, "0%02d%02d%02d00000", hourSeq, local->tm_min, local->tm_sec);
+		sprintf(m_orderRef, "00%02d%02d%02d0000", hourSeq, local->tm_min, local->tm_sec);
 
 		m_status = ADAPTER_STATUS_LOGIN;
 		m_lag_Timer.expires_from_now(boost::posix_time::milliseconds(3000));
@@ -174,7 +174,7 @@ int tradeAdapterCTP::queryTradingAccount()
 	strncpy(qryTradingAccountField.BrokerID, m_loginField.BrokerID, sizeof(qryTradingAccountField.BrokerID));
 	strncpy(qryTradingAccountField.InvestorID, m_loginField.UserID, sizeof(qryTradingAccountField.InvestorID));
 	int ret = m_pUserApi->ReqQryTradingAccount(&qryTradingAccountField, ++m_requestId);
-	cerr << " req | query cash ... " << ((ret == 0) ? "succ" : "fail") << endl;
+	cout << m_adapterID << ":  req | query trading account ... " << ((ret == 0) ? "succ" : "fail") << endl;
 	return ret;
 };
 
@@ -183,56 +183,56 @@ void tradeAdapterCTP::OnRspQryTradingAccount(CThostFtdcTradingAccountField *pTra
 {
 	if (pTradingAccount)
 	{
-		cerr << "经纪公司代码	:" << pTradingAccount->BrokerID << endl
-			<< "投资者帐号:" << pTradingAccount->AccountID << endl
-			<< "上次质押金额:" << pTradingAccount->PreMortgage << endl
-			<< "上次信用额度:" << pTradingAccount->PreCredit << endl
-			<< "上次存款额:" << pTradingAccount->PreDeposit << endl
-			<< "上次结算准备金:" << pTradingAccount->PreBalance << endl
-			<< "上次占用的保证金:" << pTradingAccount->PreMargin << endl
-			<< "利息基数:" << pTradingAccount->InterestBase << endl
-			<< "利息收入:" << pTradingAccount->Interest << endl
-			<< "入金金额:" << pTradingAccount->Deposit << endl
-			<< "出金金额:" << pTradingAccount->Withdraw << endl
-			<< "冻结的保证金:" << pTradingAccount->FrozenMargin << endl
-			<< "冻结的资金:" << pTradingAccount->FrozenCash << endl
-			<< "冻结的手续费:" << pTradingAccount->FrozenCommission << endl
-			<< "当前保证金总额:" << pTradingAccount->CurrMargin << endl
-			<< "资金差额:" << pTradingAccount->CashIn << endl
-			<< "手续费:" << pTradingAccount->Commission << endl
-			<< "平仓盈亏:" << pTradingAccount->CloseProfit << endl
-			<< "持仓盈亏:" << pTradingAccount->PositionProfit << endl
-			<< "期货结算准备金:" << pTradingAccount->Balance << endl
-			<< "可用资金:" << pTradingAccount->Available << endl
-			<< "可取资金:" << pTradingAccount->WithdrawQuota << endl
-			<< "基本准备金:" << pTradingAccount->Reserve << endl
-			<< "交易日:" << pTradingAccount->TradingDay << endl
-			<< "结算编号:" << pTradingAccount->SettlementID << endl
-			<< "信用额度:" << pTradingAccount->Credit << endl
-			<< "质押金额:" << pTradingAccount->Mortgage << endl
-			<< "交易所保证金:" << pTradingAccount->ExchangeMargin << endl
-			<< "投资者交割保证金:" << pTradingAccount->DeliveryMargin << endl
-			<< "交易所交割保证金:" << pTradingAccount->ExchangeDeliveryMargin << endl
-			<< "保底期货结算准备金:" << pTradingAccount->ReserveBalance << endl
-			<< "币种代码:" << pTradingAccount->CurrencyID << endl
-			<< "上次货币质入金额:" << pTradingAccount->PreFundMortgageIn << endl
-			<< "上次货币质出金额:" << pTradingAccount->PreFundMortgageOut << endl
-			<< "货币质入金额:" << pTradingAccount->FundMortgageIn << endl
-			<< "货币质出金额:" << pTradingAccount->FundMortgageOut << endl
-			<< "货币质押余额:" << pTradingAccount->FundMortgageAvailable << endl
-			<< "可质押货币金额:" << pTradingAccount->MortgageableFund << endl
-			<< "特殊产品占用保证金:" << pTradingAccount->SpecProductMargin << endl
-			<< "特殊产品冻结保证金:" << pTradingAccount->SpecProductFrozenMargin << endl
-			<< "特殊产品手续费:" << pTradingAccount->SpecProductCommission << endl
-			<< "特殊产品冻结手续费:" << pTradingAccount->SpecProductFrozenCommission << endl
-			<< "特殊产品持仓盈亏:" << pTradingAccount->SpecProductPositionProfit << endl
-			<< "特殊产品平仓盈亏:" << pTradingAccount->SpecProductCloseProfit << endl
-			<< "根据持仓盈亏算法计算的特殊产品持仓盈亏:" << pTradingAccount->SpecProductPositionProfitByAlg << endl
-			<< "特殊产品交易所保证金:" << pTradingAccount->SpecProductExchangeMargin << endl;
+		//cerr << "经纪公司代码	:" << pTradingAccount->BrokerID << endl
+		cout << "投资者帐号:" << pTradingAccount->AccountID << ", "
+			//	<< "上次质押金额:" << pTradingAccount->PreMortgage << endl
+			//	<< "上次信用额度:" << pTradingAccount->PreCredit << endl
+			//	<< "上次存款额:" << pTradingAccount->PreDeposit << endl
+			//	<< "上次结算准备金:" << pTradingAccount->PreBalance << endl
+			//	<< "上次占用的保证金:" << pTradingAccount->PreMargin << endl
+			//	<< "利息基数:" << pTradingAccount->InterestBase << endl
+			//	<< "利息收入:" << pTradingAccount->Interest << endl
+			//	<< "入金金额:" << pTradingAccount->Deposit << endl
+			//	<< "出金金额:" << pTradingAccount->Withdraw << endl
+			//	<< "冻结的保证金:" << pTradingAccount->FrozenMargin << endl
+			//	<< "冻结的资金:" << pTradingAccount->FrozenCash << endl
+			//	<< "冻结的手续费:" << pTradingAccount->FrozenCommission << endl
+			//	<< "当前保证金总额:" << pTradingAccount->CurrMargin << endl
+			//	<< "资金差额:" << pTradingAccount->CashIn << endl
+			//	<< "手续费:" << pTradingAccount->Commission << endl
+			//	<< "平仓盈亏:" << pTradingAccount->CloseProfit << endl
+			//	<< "持仓盈亏:" << pTradingAccount->PositionProfit << endl
+			//	<< "期货结算准备金:" << pTradingAccount->Balance << endl
+			<< "可用资金: " << pTradingAccount->Available << endl;
+		//	<< "可取资金:" << pTradingAccount->WithdrawQuota << endl
+		//	<< "基本准备金:" << pTradingAccount->Reserve << endl
+		//	<< "交易日:" << pTradingAccount->TradingDay << endl
+		//	<< "结算编号:" << pTradingAccount->SettlementID << endl
+		//	<< "信用额度:" << pTradingAccount->Credit << endl
+		//	<< "质押金额:" << pTradingAccount->Mortgage << endl
+		//	<< "交易所保证金:" << pTradingAccount->ExchangeMargin << endl
+		//	<< "投资者交割保证金:" << pTradingAccount->DeliveryMargin << endl
+		//	<< "交易所交割保证金:" << pTradingAccount->ExchangeDeliveryMargin << endl
+		//	<< "保底期货结算准备金:" << pTradingAccount->ReserveBalance << endl
+		//	<< "币种代码:" << pTradingAccount->CurrencyID << endl
+		//	<< "上次货币质入金额:" << pTradingAccount->PreFundMortgageIn << endl
+		//	<< "上次货币质出金额:" << pTradingAccount->PreFundMortgageOut << endl
+		//	<< "货币质入金额:" << pTradingAccount->FundMortgageIn << endl
+		//	<< "货币质出金额:" << pTradingAccount->FundMortgageOut << endl
+		//	<< "货币质押余额:" << pTradingAccount->FundMortgageAvailable << endl
+		//	<< "可质押货币金额:" << pTradingAccount->MortgageableFund << endl
+		//	<< "特殊产品占用保证金:" << pTradingAccount->SpecProductMargin << endl
+		//	<< "特殊产品冻结保证金:" << pTradingAccount->SpecProductFrozenMargin << endl
+		//	<< "特殊产品手续费:" << pTradingAccount->SpecProductCommission << endl
+		//	<< "特殊产品冻结手续费:" << pTradingAccount->SpecProductFrozenCommission << endl
+		//	<< "特殊产品持仓盈亏:" << pTradingAccount->SpecProductPositionProfit << endl
+		//	<< "特殊产品平仓盈亏:" << pTradingAccount->SpecProductCloseProfit << endl
+		//	<< "根据持仓盈亏算法计算的特殊产品持仓盈亏:" << pTradingAccount->SpecProductPositionProfitByAlg << endl
+		//	<< "特殊产品交易所保证金:" << pTradingAccount->SpecProductExchangeMargin << endl;
 
 		if (bIsLast)
 		{
-			cout << "querying investor position" << endl;
+			cout << m_adapterID << ": query trading account done." << endl;
 			m_lag_Timer.expires_from_now(boost::posix_time::milliseconds(3000));
 			m_lag_Timer.async_wait(boost::bind(&tradeAdapterCTP::queryInvestorPosition, this));
 		}
@@ -253,11 +253,11 @@ int tradeAdapterCTP::queryInvestorPosition()
 	memset(&qryInvestorPositionField, 0, sizeof(qryInvestorPositionField));
 	strncpy(qryInvestorPositionField.BrokerID, m_loginField.BrokerID, sizeof(qryInvestorPositionField.BrokerID));
 	strncpy(qryInvestorPositionField.InvestorID, m_loginField.UserID, sizeof(qryInvestorPositionField.InvestorID));
-	cout << qryInvestorPositionField.BrokerID << endl
-		<< qryInvestorPositionField.InvestorID << endl
-		<< qryInvestorPositionField.InstrumentID << endl;
+	//cout << qryInvestorPositionField.BrokerID << endl
+	//	<< qryInvestorPositionField.InvestorID << endl
+	//	<< qryInvestorPositionField.InstrumentID << endl;
 	int ret = m_pUserApi->ReqQryInvestorPosition(&qryInvestorPositionField, ++m_requestId);
-	cerr << " req | query position ... " << ((ret == 0) ? "succ" : "fail") << ", ret = " << ret << endl;
+	cerr << m_adapterID << ":  req | query position ... " << ((ret == 0) ? "succ" : "fail") << ", ret = " << ret << endl;
 	return ret;
 };
 
@@ -266,7 +266,7 @@ void tradeAdapterCTP::OnRspQryInvestorPosition(CThostFtdcInvestorPositionField *
 {
 	if (pInvestorPosition)
 	{
-		/*cerr<< "合约代码: " << pInvestorPosition->InstrumentID << endl
+		/*cout<< "合约代码: " << pInvestorPosition->InstrumentID << endl
 		<< "经纪公司代码: " << pInvestorPosition->BrokerID << endl
 		<< "投资者代码: " << pInvestorPosition->InvestorID << endl
 		<< "持仓多空方向: " << pInvestorPosition->PosiDirection << endl
@@ -314,13 +314,14 @@ void tradeAdapterCTP::OnRspQryInvestorPosition(CThostFtdcInvestorPositionField *
 
 		if (bIsLast)
 		{
+			cout << m_adapterID << ": query investor position done." << endl;
 			m_lag_Timer.expires_from_now(boost::posix_time::milliseconds(3000));
 			m_lag_Timer.async_wait(boost::bind(&tradeAdapterCTP::queryAllInstrument, this));
 		}
 	}
 	else
 	{
-		cerr << "resp | query position fail";
+		cerr << m_adapterID << ": resp | query position fail";
 		if (pRspInfo == nullptr)
 			cerr << ", pRspInfo is nullptr!" << endl;
 		else
@@ -335,7 +336,7 @@ int tradeAdapterCTP::queryAllInstrument()
 	CThostFtdcQryInstrumentField qryInstrument;
 	memset(&qryInstrument, 0, sizeof(CThostFtdcQryInstrumentField));
 	int ret = m_pUserApi->ReqQryInstrument(&qryInstrument, ++m_requestId);
-	cerr << " req | query all instruments ... " << ((ret == 0) ? "succ" : "fail") << endl;
+	cerr << m_adapterID << ":  req | query all instruments ... " << ((ret == 0) ? "succ" : "fail") << endl;
 	return ret;
 };
 
@@ -348,6 +349,7 @@ void tradeAdapterCTP::OnRspQryInstrument(CThostFtdcInstrumentField *pInstrument,
 			m_OnInstrumentsRtn(m_adapterID, pInstrument);
 		if (bIsLast)
 		{
+			cout << m_adapterID << ": resp | query instrument done." << endl;
 			if (m_OnUserLogin != NULL)
 			{
 				m_OnUserLogin(m_adapterID);
@@ -388,11 +390,11 @@ void tradeAdapterCTP::OnRspQryInstrument(CThostFtdcInstrumentField *pInstrument,
 	}
 	else
 	{
-		cerr << "resp | query instrument fail ";
+		cerr << m_adapterID << ": resp | query instrument fail ";
 		if (pRspInfo == nullptr)
 			cerr << endl;
 		else
-			cerr << " ErrorID: " << pRspInfo->ErrorID << ", ErrorMsg : " << pRspInfo->ErrorMsg << endl;
+			cerr << m_adapterID << ": ErrorID: " << pRspInfo->ErrorID << ", ErrorMsg : " << pRspInfo->ErrorMsg << endl;
 	}
 }
 
@@ -436,22 +438,26 @@ int tradeAdapterCTP::OrderInsert(string instrument, char priceType, char dir,
 
 	int ret = m_pUserApi->ReqOrderInsert(&pInputOrder, reqId);
 	if (ret == 0)
+	{
+		cout << m_adapterID<<": req | order insert succ." << endl;
 		return nextOrderRef;
+	}
 	else
 	{
-		cout << " req | order insert fail! retCode: " << ret << endl;
+		cout << m_adapterID << ": req | order insert fail! retCode: " << ret << endl;
 		return -1;
 	}
 }
 
+//报单失败才返回
 void tradeAdapterCTP::OnRspOrderInsert(CThostFtdcInputOrderField *pInputOrder, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
 	if (!isErrorRespInfo(pRspInfo)){
 		if (pInputOrder)
-			cout << "resp | order insert succ, orderRef: " << pInputOrder->OrderRef << endl;
+			cout << m_adapterID << ":resp | order insert succ, orderRef: " << pInputOrder->OrderRef << endl;
 	}
 	else
-		cout << "resp | order insert fail, ErrorID: " << pRspInfo->ErrorID << ", ErrorMsg: " << pRspInfo->ErrorMsg << endl;
+		cout << m_adapterID << ":resp | order insert fail, ErrorID: " << pRspInfo->ErrorID << ", ErrorMsg: " << pRspInfo->ErrorMsg << endl;
 };
 
 void tradeAdapterCTP::OnErrRtnOrderInsert(CThostFtdcInputOrderField *pInputOrder, CThostFtdcRspInfoField *pRspInfo)
@@ -513,7 +519,7 @@ int tradeAdapterCTP::cancelOrder(int orderRef)
 	actionField.SessionID = iter->second->SessionID;
 	int nextOrderRef = updateOrderRef();
 	actionField.OrderActionRef = nextOrderRef;
-	sprintf(actionField.OrderRef, "%0d", orderRef);
+	sprintf(actionField.OrderRef, "%012d", orderRef);
 	strncpy(actionField.BrokerID, m_loginField.BrokerID, sizeof(actionField.BrokerID));
 	strncpy(actionField.InvestorID, m_loginField.UserID, sizeof(actionField.InvestorID));
 	strncpy(actionField.UserID, m_loginField.UserID, sizeof(actionField.UserID));
@@ -521,31 +527,32 @@ int tradeAdapterCTP::cancelOrder(int orderRef)
 	int ret = m_pUserApi->ReqOrderAction(&actionField, ++m_requestId);
 	if (ret == 0)
 	{
-		cout << " req | send cancel order ... succ." << endl;
+		cout << m_adapterID <<": req | cancel order succ." << endl;
 		return nextOrderRef;
 	}
 	else
 	{
-		cout << " req | send cancel order ... fail." << endl;
+		cout << m_adapterID << ": req | cancel order fail." << endl;
 		return -1;
 	}
 };
 
-void tradeAdapterCTP::OnRspOrderAction(CThostFtdcInputOrderActionField *pInputOrderAction, 
+//撤单失败才会调用
+void tradeAdapterCTP::OnRspOrderAction(CThostFtdcInputOrderActionField *pInputOrderAction,
 	CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
 	if (!isErrorRespInfo(pRspInfo)){
 		if (pInputOrderAction)
-			cout << "resp | send order action succ, orderRef: " << pInputOrderAction->OrderRef << ", orderActionRef: " << pInputOrderAction->OrderActionRef << endl;
+			cout << m_adapterID << ":resp | send order action succ, orderRef: " << pInputOrderAction->OrderRef << ", orderActionRef: " << pInputOrderAction->OrderActionRef << endl;
 	}
 	else
-		cout << "resp | send order action fail, ErrorID: " << pRspInfo->ErrorID << ", ErrorMsg: " << pRspInfo->ErrorMsg << endl;
+		cout << m_adapterID << ":resp | send order action fail, ErrorID: " << pRspInfo->ErrorID << ", ErrorMsg: " << pRspInfo->ErrorMsg << endl;
 };
 
 void tradeAdapterCTP::OnErrRtnOrderAction(CThostFtdcOrderActionField *pOrderAction, CThostFtdcRspInfoField *pRspInfo)
 {
 	if (isErrorRespInfo(pRspInfo))
-		cout << "resp | send order action fail, OrderRef:" << pOrderAction->OrderRef << ", ErrorID: " << pRspInfo->ErrorID << ", ErrorMsg: " << pRspInfo->ErrorMsg << endl;
+		cout << m_adapterID << ":resp | send order action fail, OrderRef:" << pOrderAction->OrderRef << ", ErrorID: " << pRspInfo->ErrorID << ", ErrorMsg: " << pRspInfo->ErrorMsg << endl;
 };
 
 bool tradeAdapterCTP::isErrorRespInfo(CThostFtdcRspInfoField *pRspInfo)

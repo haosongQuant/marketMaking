@@ -204,9 +204,9 @@ private:
 		map < string, //instrument
 		enum_productCategory > > m_productCategory;
 	map< string, //adapterID
-		map<string, //exchange
+		//map<string, exchange
 		map<string, //instrumentID
-		list<boost::function<void(futuresMDPtr)> > > > > m_futuresMDHandler;
+		list<boost::function<void(futuresMDPtr)> > > >  m_futuresMDHandler;
 	boost::mutex m_futuresMDHandlerLock;
 	void registerFuturesQuoteHandler(string adapterID, string exchange, string instList, boost::function<void(futuresMDPtr)> handler);
 	void onFuturesTick(string adapterID, futuresMDPtr pQuote);

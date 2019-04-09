@@ -137,7 +137,7 @@ void infrastructure::registerFuturesQuoteHandler(string adapterID, string exchan
 	{
 		boost::mutex::scoped_lock lock1(m_futuresMDHandlerLock);
 		for each (auto instrument in instVec)
-			m_futuresMDHandler[adapterID][exchange][instrument].push_back(handler);
+			m_futuresMDHandler[adapterID][instrument].push_back(handler);
 	}
 };
 
@@ -194,8 +194,8 @@ void infrastructure::onRtnCtpQuote(string adapterID, CThostFtdcDepthMarketDataFi
 			quote->OpenInterest = dataptr->OpenInterest;
 			//quote->ClosePrice = dataptr->ClosePrice;
 			//quote->SettlementPrice = dataptr->SettlementPrice;
-			//quote->UpperLimitPrice = dataptr->UpperLimitPrice;
-			//quote->LowerLimitPrice = dataptr->LowerLimitPrice;
+			quote->UpperLimitPrice = dataptr->UpperLimitPrice;
+			quote->LowerLimitPrice = dataptr->LowerLimitPrice;
 			//quote->PreDelta = dataptr->PreDelta;
 			//quote->CurrDelta = dataptr->CurrDelta;
 			strncpy(quote->UpdateTime, dataptr->UpdateTime, sizeof(quote->UpdateTime));
@@ -295,11 +295,11 @@ void infrastructure::onFuturesTick(string adapterID, futuresMDPtr pQuote)
 	auto iter0 = m_futuresMDHandler.find(adapterID);
 	if (iter0 != m_futuresMDHandler.end())
 	{
-		auto iter1 = iter0->second.find(string(pQuote->ExchangeID));
-		if (iter1 != iter0->second.end())
-		{
-			auto iter2 = iter1->second.find(string(pQuote->InstrumentID));
-			if (iter2 != iter1->second.end())
+		//auto iter1 = iter0->second.find(string(pQuote->ExchangeID));
+		//if (iter1 != iter0->second.end())
+		//{
+			auto iter2 = iter0->second.find(string(pQuote->InstrumentID));
+			if (iter2 != iter0->second.end())
 			{
 				for each(auto item in iter2->second)
 				{
@@ -307,7 +307,7 @@ void infrastructure::onFuturesTick(string adapterID, futuresMDPtr pQuote)
 				}
 				return;
 			}
-		}
+		//}
 	}
 	cout << "infra warning: "<< string(pQuote->InstrumentID) << " no handler registered!" << endl;
 	return;

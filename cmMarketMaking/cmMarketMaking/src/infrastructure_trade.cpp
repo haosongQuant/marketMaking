@@ -52,7 +52,7 @@ int infrastructure::insertOrder(string adapterID, string instrument, string exch
 		{
 			m_orderRtnHandlers[adapterID][orderRef] = orderRtnhandler;
 			m_tradeRtnHandlers[adapterID][orderRef] = tradeRtnhandler;
-			cout << "infra: order sent succ." << endl;
+			//cout << "infra: order sent succ." << endl;
 			return orderRef;
 		}
 		break;
@@ -86,7 +86,11 @@ int infrastructure::cancelOrder(string adapterID, int orderRef, boost::function<
 	{
 		tradeAdapterCTP * pTradeAdapter = (tradeAdapterCTP *)m_adapters[adapterID];
 		int cancelOrderRef = pTradeAdapter->cancelOrder(orderRef);
-		m_cancelRtnHandlers[adapterID][cancelOrderRef] = cancelRtnhandler;
+		if (cancelOrderRef > 0)
+		{
+			m_cancelRtnHandlers[adapterID][cancelOrderRef] = cancelRtnhandler;
+			return cancelOrderRef;
+		}
 		break;
 	}
 	case ADAPTER_TAP_TRADE:
@@ -96,6 +100,7 @@ int infrastructure::cancelOrder(string adapterID, int orderRef, boost::function<
 		break;
 	}
 	}
+	return -1;
 };
 
 void infrastructure::onRespCtpCancel(string adapterID, CThostFtdcInputOrderActionField *pInputOrderAction,
@@ -130,8 +135,16 @@ void infrastructure::onRtnCtpOrder(string adapterID, CThostFtdcOrderField *pOrde
 };
 void infrastructure::onRtnCtpTrade(string adapterID, CThostFtdcTradeField *pTrade)
 {
-	tradeRtnPtr tradePtr = tradeRtnPtr(new tradeRtn_struct());
 	int orderRef = atoi(pTrade->OrderRef);
+
+	tradeRtnPtr tradePtr = tradeRtnPtr(new tradeRtn_struct());
+	tradePtr->m_instId = string(pTrade->InstrumentID);
+	tradePtr->m_exchange = string(pTrade->ExchangeID);
+	tradePtr->m_orderDir = pTrade->Direction == THOST_FTDC_D_Buy ? ORDER_DIR_BUY : ORDER_DIR_SELL;
+	tradePtr->m_orderRef = orderRef;
+	tradePtr->m_price = pTrade->Price;
+	tradePtr->m_volume = pTrade->Volume;
+
 	auto iter = m_tradeRtnHandlers.find(adapterID);
 	if (iter != m_tradeRtnHandlers.end())
 	{

@@ -1,4 +1,5 @@
 #include "strategyEngine.h"
+#include "baseClass/Utils.h"
 
 strategyEngine::strategyEngine(Json::Value  config, infrastructure* infra):
 m_config(config), m_infra(infra)
@@ -47,8 +48,45 @@ void strategyEngine::init()
 void strategyEngine::commandProcess()
 {
 	//¸ñÊ½£ºstart|stop strategyName(mm_ZC905)
-	string command;
-	cin >> command;
+	char commandLine[100];
+	memset(commandLine, 0, sizeof(commandLine));
+	cin.getline(commandLine, sizeof(commandLine)-1);
+	string command = string(commandLine);
 	if ("exit" == command)
 		return;
+	else if (athenaUtils::Rtrim(command) == "")
+	{
+		commandProcess();
+		return;
+	}
+	else
+	{
+		vector<string> commandEle;
+		athenaUtils::Split(command, " ", commandEle);
+		if (commandEle[0] == "start")
+		{
+			switch (m_strategyTypeMap[commandEle[1]])
+			{
+			case STRATEGY_cmMM01:
+			{
+				cmMM01* pStrategy = (cmMM01*)m_strategies[commandEle[1]];
+				pStrategy->startStrategy();
+				break;
+			}
+			}
+		}
+		else if (commandEle[0] == "stop")
+		{
+			switch (m_strategyTypeMap[commandEle[1]])
+			{
+			case STRATEGY_cmMM01:
+			{
+				cmMM01* pStrategy = (cmMM01*)m_strategies[commandEle[1]];
+				pStrategy->stopStrategy();
+				break;
+			}
+			}
+		}
+	}
+	commandProcess();
 };
