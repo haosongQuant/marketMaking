@@ -122,7 +122,8 @@ void tradeAdapterCTP::OnRspUserLogin(CThostFtdcRspUserLoginField *pRspUserLogin,
 	CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
 	if (isErrorRespInfo(pRspInfo))
-		cout << endl << "trade login error | ErrorID: " << pRspInfo->ErrorID << ", ErrorMsg: " << pRspInfo->ErrorMsg << endl;
+		cout << endl << "trade login error | ErrorID: " << pRspInfo->ErrorID << ", ErrorMsg: " << pRspInfo->ErrorMsg 
+		<< ", user: " << m_loginField.UserID << ", pwd:" << m_loginField.Password << ", broker: " << m_loginField.BrokerID<<endl;
 	else
 	{
 		cout << endl << "trade login succ!" << endl;

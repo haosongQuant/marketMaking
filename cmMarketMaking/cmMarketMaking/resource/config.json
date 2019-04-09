@@ -5,8 +5,8 @@
             "adapterType": "tradeCtp",
             "frontIP": "tcp://180.168.146.187:10030",
             "broker": "9999",
-            "user": "ctpTestUser01",
-            "pwd": "1234qwer",
+            "user": "140108",
+            "pwd": "1qazxc",
             "Authenticate": false,
             "productID": "nan",
             "authCode": "nan"

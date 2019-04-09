@@ -22,12 +22,12 @@ private:
 	int m_frontId;    //«∞÷√±‡∫≈
 	int m_sessionId;    //ª·ª∞±‡∫≈
 	char m_orderRef[13];
-	boost::mutex m_orderRefLock;
+	boost::mutex                      m_orderRefLock;
 	map<int, CThostFtdcOrderFieldPtr> m_ref2order;
-	boost::detail::spinlock m_ref2order_lock;
-	CThostFtdcTraderApi* m_pUserApi;
+	boost::detail::spinlock     m_ref2order_lock;
+	CThostFtdcTraderApi*        m_pUserApi;
 	CThostFtdcReqUserLoginField m_loginField;
-	bool m_needAuthenticate;
+	bool                           m_needAuthenticate;
 	CThostFtdcReqAuthenticateField m_authenticateField;
 
 private:
