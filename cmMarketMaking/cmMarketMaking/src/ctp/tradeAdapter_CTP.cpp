@@ -503,7 +503,7 @@ int tradeAdapterCTP::cancelOrder(int orderRef)
 	if (iter == m_ref2order.end())
 	{
 		cerr << "³·µ¥fail | orderRef " << orderRef << " not found in adapterCTP." << endl;
-		return;
+		return -1;
 	}
 	CThostFtdcInputOrderActionField actionField;
 	memset(&actionField, 0, sizeof(actionField));

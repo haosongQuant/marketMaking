@@ -10,5 +10,5 @@ public:
 	strategyBase(){};
 	strategyBase(string strategyID) :m_strateID(strategyID){};
 	virtual void startStrategy() = 0;
-	virtual void stopAdapter() = 0;
+	virtual void stopStrategy() = 0;
 };

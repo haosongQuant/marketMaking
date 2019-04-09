@@ -46,6 +46,9 @@ void strategyEngine::init()
 
 void strategyEngine::commandProcess()
 {
+	//¸ñÊ½£ºstart|stop strategyName(mm_ZC905)
 	string command;
 	cin >> command;
+	if ("exit" == command)
+		return;
 };

@@ -67,14 +67,11 @@
       <Filter>源文件\strategy</Filter>
     </ClCompile>
     <ClCompile Include="src\strategyEngine.cpp">
-      <Filter>源文件</Filter>
+      <Filter>源文件\strategy</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="header\threadpool\threadpool.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="header\json\configloader.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="header\baseClass\orderBase.h">
@@ -108,9 +105,12 @@
       <Filter>头文件\strategy</Filter>
     </ClInclude>
     <ClInclude Include="header\strategyEngine.h">
-      <Filter>头文件</Filter>
+      <Filter>头文件\strategy</Filter>
     </ClInclude>
     <ClInclude Include="header\strategy\cmMM01.h">
+      <Filter>头文件\strategy</Filter>
+    </ClInclude>
+    <ClInclude Include="header\json\configloader.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

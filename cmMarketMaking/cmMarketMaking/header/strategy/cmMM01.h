@@ -16,6 +16,7 @@ enum enum_cmMM01_strategy_status
 	STRATEGY_STATUS_CLOSING_POSITION,
 	STRATEGY_STATUS_TRADED_HEDGING,
 	STRATEGY_STATUS_TRADED_NET_HEDGING,
+	STRATEGY_STATUS_STOP,
 };
 
 enum enum_cmMM01_strategy_order_type
@@ -50,7 +51,7 @@ public:
 		athenathreadpoolPtr quoteTP, athenathreadpoolPtr tradeTP, infrastructure* infra);
 	~cmMM01();
 	virtual void startStrategy();
-	virtual void stopAdapter();
+	virtual void stopStrategy();
 	void orderPrice(double* bidprice, double* askprice);
 
 private:
@@ -77,7 +78,7 @@ private:
 	futuresMDPtr   m_lastQuotePtr;
 	boost::mutex   m_lastQuoteLock;
 	void quoteEngine();
-	void sentOrder();
+	void sendOrder();
 
 private:
 	int m_bidOrderRef;

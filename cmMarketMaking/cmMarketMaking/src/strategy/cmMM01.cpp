@@ -18,8 +18,17 @@ void cmMM01::resetStrategyStatus(){
 };
 
 void cmMM01::startStrategy(){
-	m_infra->subscribeFutures(m_quoteAdapterID, m_exchange, m_productId, bind(&cmMM01::onRtnMD, this, _1));
+	{
+		boost::mutex::scoped_lock lock(m_strategyStatusLock);
+		if (STRATEGY_STATUS_START == m_strategyStatus)
+			m_infra->subscribeFutures(m_quoteAdapterID, m_exchange, m_productId, bind(&cmMM01::onRtnMD, this, _1));
+	}
 	resetStrategyStatus();
+};
+
+void cmMM01::stopStrategy(){
+	boost::mutex::scoped_lock lock(m_strategyStatusLock);
+	m_strategyStatus = STRATEGY_STATUS_STOP;
 };
 
 void cmMM01::orderPrice(double* bidprice, double* askprice)
@@ -39,7 +48,7 @@ void cmMM01::onRtnMD(futuresMDPtr pFuturesMD)
 	m_quoteTP->getDispatcher().post(bind(&cmMM01::quoteEngine, this));
 };
 
-void cmMM01::sentOrder()
+void cmMM01::sendOrder()
 {
 	double bidprice, askprice;
 	orderPrice(&bidprice, &askprice);
@@ -68,7 +77,7 @@ void cmMM01::quoteEngine()
 	{
 	case STRATEGY_STATUS_READY:
 	{
-		sentOrder();
+		sendOrder();
 		break;
 	}
 	case STRATEGY_STATUS_ORDER_SENT:
@@ -107,7 +116,7 @@ void cmMM01::confirmCancel_sendOrder(){
 	}
 	if (STRATEGY_STATUS_CLOSING_POSITION == status)
 		if (m_isOrderCanceled[m_cancelBidOrderRef] && m_isOrderCanceled[m_cancelAskOrderRef])
-			sentOrder();
+			sendOrder();
 		else
 		{
 			m_cancelConfirmTimer.expires_from_now(boost::posix_time::milliseconds(10));
@@ -126,28 +135,31 @@ void cmMM01::onTradeRtn(tradeRtnPtr ptrade)
 	{
 		boost::mutex::scoped_lock lock(m_strategyStatusLock);
 		status = m_strategyStatus;
+		if (STRATEGY_STATUS_TRADED_HEDGING != status)
+			m_strategyStatus = STRATEGY_STATUS_TRADED_HEDGING;
 	}
 	if (STRATEGY_STATUS_ORDER_SENT == status)
-	{
+	{//撤单
 		m_cancelBidOrderRef = m_infra->cancelOrder(m_tradeAdapterID, m_bidOrderRef,
 			bind(&cmMM01::onRspCancel, this, _1));
 		m_cancelAskOrderRef = m_infra->cancelOrder(m_tradeAdapterID, m_askOrderRef,
 			bind(&cmMM01::onRspCancel, this, _1));
 	}
 
+	//同价对冲
 	enum_order_dir_type dir = ptrade->m_orderDir == ORDER_DIR_BUY ? ORDER_DIR_SELL : ORDER_DIR_BUY;
 	int m_hedgeOrderRef = m_infra->insertOrder(m_tradeAdapterID, m_productId, m_exchange, ORDER_TYPE_LIMIT,
 		dir, POSITION_EFFECT_OPEN, FLAG_MARKETMAKER, ptrade->m_price , ptrade->m_volume,
 		bind(&cmMM01::onHedgeOrderRtn, this, _1), bind(&cmMM01::onHedgeTradeRtn, this, _1));
-	{
+	{//记录对冲量
 		boost::mutex::scoped_lock lock(m_hedgeOrderVolLock);
 		m_hedgeOrderVol[m_hedgeOrderRef] = ((dir == ORDER_DIR_BUY) ? 
 			ptrade->m_volume : (ptrade->m_volume * -1));
 	}
-	if (STRATEGY_STATUS_TRADED_HEDGING != status)
+
+	//等待1s
+	if (STRATEGY_STATUS_ORDER_SENT == status)
 	{
-		boost::mutex::scoped_lock lock(m_strategyStatusLock);
-		m_strategyStatus = STRATEGY_STATUS_TRADED_HEDGING;
 		m_cancelHedgeTimer.expires_from_now(boost::posix_time::milliseconds(1000));
 		m_cancelHedgeTimer.async_wait(boost::bind(&cmMM01::cancelHedgeOrder, this));
 	}
@@ -156,16 +168,22 @@ void cmMM01::onTradeRtn(tradeRtnPtr ptrade)
 void cmMM01::cancelHedgeOrder(){
 
 	boost::mutex::scoped_lock lock(m_hedgeOrderVolLock);
-	boost::mutex::scoped_lock lock1(m_isOrderCanceledLock);
-	for (auto iter = m_hedgeOrderVol.begin(); iter != m_hedgeOrderVol.end();)
+	if (m_hedgeOrderVol.size() > 0)
 	{
-		int cancelOrderRef = m_infra->cancelOrder(m_tradeAdapterID, iter->first,
-			bind(&cmMM01::onRspCancel, this, _1));
-		m_isOrderCanceled[cancelOrderRef] = false;
-		iter++;
+		boost::mutex::scoped_lock lock1(m_isOrderCanceledLock);
+		for (auto iter = m_hedgeOrderVol.begin(); iter != m_hedgeOrderVol.end();)
+		{
+			//撤销对冲单
+			int cancelOrderRef = m_infra->cancelOrder(m_tradeAdapterID, iter->first,
+				bind(&cmMM01::onRspCancel, this, _1));
+
+			//记录对冲单撤销状态
+			m_isOrderCanceled[cancelOrderRef] = false;
+			iter++;
+		}
+		m_cancelConfirmTimer.expires_from_now(boost::posix_time::milliseconds(100));
+		m_cancelConfirmTimer.async_wait(boost::bind(&cmMM01::confirmCancel_hedgeOrder, this));
 	}
-	m_cancelConfirmTimer.expires_from_now(boost::posix_time::milliseconds(100));
-	m_cancelConfirmTimer.async_wait(boost::bind(&cmMM01::confirmCancel_hedgeOrder, this));
 };
 
 void cmMM01::confirmCancel_hedgeOrder()
@@ -198,11 +216,13 @@ void cmMM01::confirmCancel_hedgeOrder()
 				netHedgeVol += iter->second;
 			if (0.0 != netHedgeVol)
 			{
+				//轧差市价对冲
 				enum_order_dir_type dir = netHedgeVol > 0.0 ? ORDER_DIR_BUY : ORDER_DIR_SELL;
 				int netHedgeOrderRef = m_infra->insertOrder(m_tradeAdapterID, m_productId, m_exchange,
 					ORDER_TYPE_MARKET, dir, POSITION_EFFECT_OPEN, FLAG_MARKETMAKER, 0.0, fabs(netHedgeVol),
 					bind(&cmMM01::onNetHedgeOrderRtn, this, _1), bind(&cmMM01::onNetHedgeTradeRtn, this, _1));
 				{
+					//记录轧差对冲量
 					boost::mutex::scoped_lock lock(m_NetHedgeOrderVolLock);
 					m_NetHedgeOrderVol[netHedgeOrderRef] = netHedgeVol;
 				}
@@ -210,10 +230,6 @@ void cmMM01::confirmCancel_hedgeOrder()
 			else
 				resetStrategyStatus();
 		}
-	}
-	else
-	{
-		resetStrategyStatus();
 	}
 };
 
@@ -229,6 +245,10 @@ void cmMM01::onHedgeTradeRtn(tradeRtnPtr ptrade)
 		? ptrade->m_volume : (ptrade->m_volume*-1));
 	if (0.0 == m_hedgeOrderVol[ptrade->m_orderRef])
 		m_hedgeOrderVol.erase(ptrade->m_orderRef);
+
+	//同价对冲单全部成交
+	if (m_hedgeOrderVol.size() == 0)
+		resetStrategyStatus();
 }
 
 
@@ -242,6 +262,8 @@ void cmMM01::onNetHedgeTradeRtn(tradeRtnPtr ptrade)
 	boost::mutex::scoped_lock lock(m_NetHedgeOrderVolLock);
 	m_NetHedgeOrderVol[ptrade->m_orderRef] -= ((ptrade->m_orderDir == ORDER_DIR_BUY)
 		? ptrade->m_volume : (ptrade->m_volume*-1));
+
+	//轧差对冲全部成交
 	if (0.0 == m_NetHedgeOrderVol[ptrade->m_orderRef])
 		resetStrategyStatus();
 }

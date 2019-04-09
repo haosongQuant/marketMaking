@@ -1,10 +1,8 @@
 #include <iostream>
-//#include <boost/bind.hpp>
 #include "json/configloader.h"
 #include "threadpool/threadpool.h"
 #include "infrastructure.h"
-//#include "tap/quoteAdapter_TAP.h"
-//#include "tap\tradeAdapter_TAP.h"
+#include "strategyEngine.h"
 
 using namespace std;
 
@@ -12,7 +10,12 @@ int main()
 {
 	auto global_config = loadconfig(".\\resource\\config.json");
 
-	cout << global_config << endl;
+	infrastructure* pInfra = new infrastructure(global_config);
+	pInfra->init();
+
+	strategyEngine* pStrategy = new strategyEngine(global_config, pInfra);
+	pStrategy->init();
+	pStrategy->commandProcess();
 
 	return 0;
 }

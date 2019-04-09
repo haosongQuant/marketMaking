@@ -293,7 +293,7 @@ int tradeAdapter_TAP::cancelOrder(int orderRef)
 	if (iter == m_ref2order.end())
 	{
 		cerr << m_adapterID <<  " cancel order fail | orderRef " << orderRef << " not found in adapter." << endl;
-		return;
+		return -1;
 	}
 	TAPIUINT32 sessionID;
 	TapAPIOrderCancelReq orderRefInfo;

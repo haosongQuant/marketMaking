@@ -12,6 +12,7 @@ m_config(config)
 
 void infrastructure::init()
 {
+	cout << "initing infra..." << endl;
 	time_t t;
 	tm* local;
 	t = time(NULL);
@@ -50,6 +51,9 @@ void infrastructure::initAdapters()
 		string adapterID = adapterConfig["adapterID"].asString();
 		string adapterType = adapterConfig["adapterType"].asString();
 		registerAdapterType(adapterID, adapterType);
+
+		cout << "initing " << adapterID << " ..." << endl;
+
 		switch (m_adapterTypeMap[adapterID])
 		{
 		case ADAPTER_CTP_TRADE:
