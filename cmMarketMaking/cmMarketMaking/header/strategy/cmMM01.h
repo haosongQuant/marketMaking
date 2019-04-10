@@ -59,10 +59,7 @@ private:
 
 private:
 	enum_cmMM01_strategy_status m_strategyStatus;
-	boost::mutex                m_strategyStatusLock;
-
-	map<int, enum_cmMM01_strategy_order_type> m_orderTypMap;
-	boost::mutex                              m_orderTypMapLock;
+	//boost::mutex                m_strategyStatusLock;
 
 public:
 	void onRtnMD(futuresMDPtr pFuturesMD);
@@ -85,21 +82,25 @@ private:
 	int m_askOrderRef;
 
 private:
-	int m_cancelBidOrderRef;
-	int m_cancelAskOrderRef;
+	int m_cancelBidOrderRC;
+	int m_cancelAskOrderRC;
 	athena_lag_timer m_cancelConfirmTimer;
-	map<int, bool>   m_isOrderCanceled;
-	boost::mutex     m_isOrderCanceledLock;
+	bool             m_isOrderCanceled;
+	void CancelOrder();
 	void confirmCancel_sendOrder();
 
 private:
-	map< int, double > m_hedgeOrderVol;
 	boost::mutex	   m_hedgeOrderVolLock;
+	map< int, double > m_hedgeOrderVol;
+	map< int, int >    m_hedgeOrderCancelRC;
 	athena_lag_timer   m_cancelHedgeTimer;
-	void cancelHedgeOrder();
+	void cancelHedgeOrder(const boost::system::error_code& error);
 	void confirmCancel_hedgeOrder();
+
+	athena_lag_timer   m_resetStatusTimer;
+	void confirmCancel_resetStatus();
 	
 private:
-	map< int, double > m_NetHedgeOrderVol;
-	boost::mutex	   m_NetHedgeOrderVolLock;
+	double        m_NetHedgeOrderVol;
+	boost::mutex  m_NetHedgeOrderVolLock;
 };

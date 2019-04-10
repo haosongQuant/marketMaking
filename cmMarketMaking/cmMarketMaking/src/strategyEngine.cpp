@@ -87,6 +87,10 @@ void strategyEngine::commandProcess()
 			}
 			}
 		}
+		else
+		{
+			cout << "strategyEngine: unrecognized command | " << commandEle[0] << endl;
+		}
 	}
 	commandProcess();
 };

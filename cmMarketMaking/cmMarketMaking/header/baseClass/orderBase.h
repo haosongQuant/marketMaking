@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <boost/shared_ptr.hpp>
 using namespace std;
 
 
@@ -39,6 +40,12 @@ enum enum_hedge_flag
 	FLAG_HEDGE,
 	///×öÊÐÉÌ
 	FLAG_MARKETMAKER,
+};
+
+enum enum_order_error
+{
+	ORDER_SEND_ERROR_TO_DEFINE = -1000,
+	ORDER_CANCEL_ERROR_NOT_FOUND,
 };
 
 struct orderRtn_struct

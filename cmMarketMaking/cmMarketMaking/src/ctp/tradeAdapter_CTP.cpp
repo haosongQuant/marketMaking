@@ -129,8 +129,8 @@ void tradeAdapterCTP::OnRspUserLogin(CThostFtdcRspUserLoginField *pRspUserLogin,
 		cout << m_adapterID<<": trade login succ!" << endl;
 
 		// 保存会话参数    
-		m_frontId = pRspUserLogin->FrontID;
-		m_sessionId = pRspUserLogin->SessionID;
+		//m_frontId = pRspUserLogin->FrontID;
+		//m_sessionId = pRspUserLogin->SessionID;
 
 		time_t t;
 		tm* local;
@@ -398,48 +398,53 @@ void tradeAdapterCTP::OnRspQryInstrument(CThostFtdcInstrumentField *pInstrument,
 	}
 }
 
-int tradeAdapterCTP::OrderInsert(string instrument, char priceType, char dir,
+int tradeAdapterCTP::OrderInsert(string instrument, string exchange, char priceType, char dir,
 	char ComOffsetFlag, char ComHedgeFlag, double price,
 	int volume, char tmCondition, char volCondition, int minVol, char contiCondition,
 	double stopPrz, char forceCloseReason)
 {
-	CThostFtdcInputOrderField pInputOrder;
-	memset(&pInputOrder, 0, sizeof(pInputOrder));
-	strncpy(pInputOrder.BrokerID, m_loginField.BrokerID, sizeof(pInputOrder.BrokerID));
-	strncpy(pInputOrder.InvestorID, m_loginField.UserID, sizeof(pInputOrder.InvestorID));
-	strncpy(pInputOrder.UserID, m_loginField.UserID, sizeof(pInputOrder.UserID));
+	CThostFtdcInputOrderField * pInputOrder = new CThostFtdcInputOrderField();
+	memset(pInputOrder, 0, sizeof(CThostFtdcInputOrderField));
+	strncpy(pInputOrder->BrokerID, m_loginField.BrokerID, sizeof(pInputOrder->BrokerID));
+	strncpy(pInputOrder->InvestorID, m_loginField.UserID, sizeof(pInputOrder->InvestorID));
+	strncpy(pInputOrder->UserID, m_loginField.UserID, sizeof(pInputOrder->UserID));
 	int nextOrderRef = updateOrderRef();
-	strncpy(pInputOrder.OrderRef, m_orderRef, sizeof(pInputOrder.OrderRef) - 1);  //报单引用
+	strncpy(pInputOrder->OrderRef, m_orderRef, sizeof(pInputOrder->OrderRef) - 1);  //报单引用
 
-	strncpy(pInputOrder.InstrumentID, instrument.c_str(), sizeof(pInputOrder.InstrumentID) - 1);
-	pInputOrder.OrderPriceType = priceType;///报单价格条件
-	pInputOrder.Direction = dir;  ///买卖方向
-	pInputOrder.CombOffsetFlag[0] = ComOffsetFlag;///组合开平标志
-	pInputOrder.CombHedgeFlag[0] = ComHedgeFlag;///组合投机套保标志
+	strncpy(pInputOrder->InstrumentID, instrument.c_str(), sizeof(pInputOrder->InstrumentID) - 1);
+	strncpy(pInputOrder->ExchangeID, exchange.c_str(), sizeof(pInputOrder->ExchangeID) - 1);
+	pInputOrder->OrderPriceType = priceType;///报单价格条件
+	pInputOrder->Direction = dir;  ///买卖方向
+	pInputOrder->CombOffsetFlag[0] = ComOffsetFlag;///组合开平标志
+	pInputOrder->CombHedgeFlag[0] = ComHedgeFlag;///组合投机套保标志
 
-	pInputOrder.LimitPrice = price; ///价格
-	pInputOrder.VolumeTotalOriginal = volume;///数量
-	pInputOrder.TimeCondition = tmCondition;///有效期类型
+	pInputOrder->LimitPrice = price; ///价格
+	pInputOrder->VolumeTotalOriginal = volume;///数量
+	pInputOrder->TimeCondition = tmCondition;///有效期类型
 	///GTD日期 //good till date 到哪一天有效
 	///TThostFtdcDateType	GTDDate;
-	pInputOrder.VolumeCondition = volCondition;///成交量类型
-	pInputOrder.MinVolume = minVol;///最小成交量
-	pInputOrder.ContingentCondition = contiCondition;///触发条件
-	pInputOrder.StopPrice = stopPrz;///止损价
-	pInputOrder.ForceCloseReason = forceCloseReason;///强平原因
+	pInputOrder->VolumeCondition = volCondition;///成交量类型
+	pInputOrder->MinVolume = minVol;///最小成交量
+	pInputOrder->ContingentCondition = contiCondition;///触发条件
+	pInputOrder->StopPrice = stopPrz;///止损价
+	pInputOrder->ForceCloseReason = forceCloseReason;///强平原因
 
 	///TThostFtdcBoolType	IsAutoSuspend;///自动挂起标志 默认 0
 	///TThostFtdcBusinessUnitType	BusinessUnit;///业务单元
 
 	int reqId = ++m_requestId;
-	pInputOrder.RequestID = reqId;///req编号
+	pInputOrder->RequestID = reqId;///req编号
 	///TThostFtdcBoolType	UserForceClose;///用户强评标志 默认 0
 	///TThostFtdcBoolType  IsSwapOrder; ///互换单标志
 
-	int ret = m_pUserApi->ReqOrderInsert(&pInputOrder, reqId);
+	int ret = m_pUserApi->ReqOrderInsert(pInputOrder, reqId);
+
+	m_ref2sentOrder[nextOrderRef] = CThostFtdcInputOrderFieldPtr(pInputOrder);
+
 	if (ret == 0)
 	{
-		cout << m_adapterID<<": req | order insert succ." << endl;
+		cout << m_adapterID << ": req | order insert succ, orderRef: " << m_orderRef<< 
+			", inst: " << instrument<< ", price: "<< price << ", volume: "<<volume<< endl;
 		return nextOrderRef;
 	}
 	else
@@ -470,13 +475,25 @@ void tradeAdapterCTP::OnErrRtnOrderInsert(CThostFtdcInputOrderField *pInputOrder
 		cout << "resp | order insert fail, ErrorID: " << pRspInfo->ErrorID << ", ErrorMsg: " << pRspInfo->ErrorMsg << endl;
 };
 
-void tradeAdapterCTP::OnRtnOrder(CThostFtdcOrderField *pOrder)
+void tradeAdapterCTP::OnRspQryOrder(CThostFtdcOrderField *pOrder, CThostFtdcRspInfoField *pRspInfo, 
+	int nRequestID, bool bIsLast)
 {
-	CThostFtdcOrderFieldPtr order = CThostFtdcOrderFieldPtr(new CThostFtdcOrderField(*pOrder));
-	int orderRef = atoi(order->OrderRef);
+	cout << m_adapterID << ": Rsp | OnRspQryOrder, orderRef " << pOrder->OrderRef << endl;
+	CThostFtdcOrderFieldPtr orderPtr = CThostFtdcOrderFieldPtr(new CThostFtdcOrderField(*pOrder));
+	int orderRef = atoi(pOrder->OrderRef);
 	{
 		boost::detail::spinlock l(m_ref2order_lock);
-		m_ref2order[orderRef] = order;
+		m_ref2order[orderRef] = orderPtr;
+	}
+};
+
+void tradeAdapterCTP::OnRtnOrder(CThostFtdcOrderField *pOrder)
+{
+	CThostFtdcOrderFieldPtr orderPtr = CThostFtdcOrderFieldPtr(new CThostFtdcOrderField(*pOrder));
+	int orderRef = atoi(pOrder->OrderRef);
+	{
+		boost::detail::spinlock l(m_ref2order_lock);
+		m_ref2order[orderRef] = orderPtr;
 	}
 	if (m_OnOrderRtn)
 		m_OnOrderRtn(m_adapterID, pOrder);
@@ -509,8 +526,18 @@ int tradeAdapterCTP::cancelOrder(int orderRef)
 	auto iter = m_ref2order.find(orderRef);
 	if (iter == m_ref2order.end())
 	{
-		cerr << "撤单fail | orderRef " << orderRef << " not found in adapterCTP." << endl;
-		return -1;
+		cout << m_adapterID << ": cancel Order fail | orderRef " << orderRef << " not found in adapter, querying from server..." << endl;
+		auto iter1 = m_ref2sentOrder.find(orderRef);
+		if (iter1 != m_ref2sentOrder.end())
+		{
+			CThostFtdcQryOrderField qryOrder;
+			memset(&qryOrder, 0, sizeof(CThostFtdcQryOrderField));
+			strncpy(qryOrder.BrokerID, m_loginField.BrokerID, sizeof(qryOrder.BrokerID)-1);
+			strncpy(qryOrder.InvestorID, m_loginField.UserID, sizeof(qryOrder.InvestorID) - 1);
+			strncpy(qryOrder.ExchangeID, iter1->second->ExchangeID, sizeof(qryOrder.ExchangeID) -1);
+			m_pUserApi->ReqQryOrder(&qryOrder, ++m_requestId);
+		}
+		return ORDER_CANCEL_ERROR_NOT_FOUND;
 	}
 	CThostFtdcInputOrderActionField actionField;
 	memset(&actionField, 0, sizeof(actionField));
@@ -527,12 +554,12 @@ int tradeAdapterCTP::cancelOrder(int orderRef)
 	int ret = m_pUserApi->ReqOrderAction(&actionField, ++m_requestId);
 	if (ret == 0)
 	{
-		cout << m_adapterID <<": req | cancel order succ." << endl;
+		cout << m_adapterID << ": req | cancel order succ, orderRef: " << orderRef << endl;
 		return nextOrderRef;
 	}
 	else
 	{
-		cout << m_adapterID << ": req | cancel order fail." << endl;
+		cout << m_adapterID << ": req | cancel order fail, orderRef: " << orderRef << endl;
 		return -1;
 	}
 };
@@ -541,12 +568,12 @@ int tradeAdapterCTP::cancelOrder(int orderRef)
 void tradeAdapterCTP::OnRspOrderAction(CThostFtdcInputOrderActionField *pInputOrderAction,
 	CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
-	if (!isErrorRespInfo(pRspInfo)){
+	/*if (!isErrorRespInfo(pRspInfo)){
 		if (pInputOrderAction)
 			cout << m_adapterID << ":resp | send order action succ, orderRef: " << pInputOrderAction->OrderRef << ", orderActionRef: " << pInputOrderAction->OrderActionRef << endl;
 	}
 	else
-		cout << m_adapterID << ":resp | send order action fail, ErrorID: " << pRspInfo->ErrorID << ", ErrorMsg: " << pRspInfo->ErrorMsg << endl;
+		cout << m_adapterID << ":resp | send order action fail, ErrorID: " << pRspInfo->ErrorID << ", ErrorMsg: " << pRspInfo->ErrorMsg << endl;*/
 };
 
 void tradeAdapterCTP::OnErrRtnOrderAction(CThostFtdcOrderActionField *pOrderAction, CThostFtdcRspInfoField *pRspInfo)

@@ -1,6 +1,7 @@
 #pragma once
 #include <iostream>
 #include <map>
+#include "baseClass/orderBase.h"
 #include "ctp/ThostFtdcTraderApi.h"
 #include "threadpool/threadpool.h"
 #include <boost/shared_ptr.hpp>
@@ -13,18 +14,24 @@
 using namespace std;
 
 typedef boost::shared_ptr<CThostFtdcOrderField> CThostFtdcOrderFieldPtr;
+typedef boost::shared_ptr<CThostFtdcInputOrderField> CThostFtdcInputOrderFieldPtr;
 
 class  tradeAdapterCTP : public traderAdapterBase, public CThostFtdcTraderSpi
 {
 
 private:
 	int m_requestId = 0;
-	int m_frontId;    //前置编号
-	int m_sessionId;    //会话编号
+	//int m_frontId;    //前置编号
+	//int m_sessionId;    //会话编号
+
 	char m_orderRef[13];
 	boost::mutex                      m_orderRefLock;
+
+	map<int, CThostFtdcInputOrderFieldPtr> m_ref2sentOrder;
+	boost::detail::spinlock     m_ref2sentOrder_lock;
 	map<int, CThostFtdcOrderFieldPtr> m_ref2order;
 	boost::detail::spinlock     m_ref2order_lock;
+
 	CThostFtdcTraderApi*        m_pUserApi;
 	CThostFtdcReqUserLoginField m_loginField;
 	bool                           m_needAuthenticate;
@@ -54,7 +61,7 @@ public:
 	int queryAllInstrument();//查询全部合约
 
 	//下单
-	virtual int OrderInsert(string instrument, char priceType, char dir,
+	virtual int OrderInsert(string instrument, string exchange, char priceType, char dir,
 		char ComOffsetFlag, char ComHedgeFlag, double price,
 		int volume, char tmCondition, char volCondition, int minVol, char contiCondition,
 		double stopPrz, char forceCloseReason);
@@ -116,6 +123,9 @@ public:
 	virtual void OnRspOrderInsert(CThostFtdcInputOrderField *pInputOrder, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
 	///报单录入错误回报
 	virtual void OnErrRtnOrderInsert(CThostFtdcInputOrderField *pInputOrder, CThostFtdcRspInfoField *pRspInfo);
+
+	///请求查询报单响应
+	virtual void OnRspQryOrder(CThostFtdcOrderField *pOrder, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
 
 	///报单通知
 	virtual void OnRtnOrder(CThostFtdcOrderField *pOrder);

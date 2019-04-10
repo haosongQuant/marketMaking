@@ -37,7 +37,7 @@ int infrastructure::insertOrder(string adapterID, string instrument, string exch
 	case ADAPTER_CTP_TRADE:
 	{
 		tradeAdapterCTP * pTradeAdapter = (tradeAdapterCTP *)m_adapters[adapterID];
-		int orderRef = pTradeAdapter->OrderInsert(instrument,
+		int orderRef = pTradeAdapter->OrderInsert(instrument, exchange,
 			m_orderTypeMap[ADAPTER_CTP_TRADE][orderType],
 			m_orderDirMap[ADAPTER_CTP_TRADE][dir],
 			m_positinEffectMap[ADAPTER_CTP_TRADE][positionEffect],
@@ -80,16 +80,17 @@ int infrastructure::insertOrder(string adapterID, string instrument, string exch
 
 int infrastructure::cancelOrder(string adapterID, int orderRef, boost::function<void(cancelRtnPtr)> cancelRtnhandler)
 {
+	int cancelRtnCd = 0;
 	switch (m_adapterTypeMap[adapterID])
 	{
 	case ADAPTER_CTP_TRADE:
 	{
 		tradeAdapterCTP * pTradeAdapter = (tradeAdapterCTP *)m_adapters[adapterID];
-		int cancelOrderRef = pTradeAdapter->cancelOrder(orderRef);
-		if (cancelOrderRef > 0)
+		cancelRtnCd = pTradeAdapter->cancelOrder(orderRef);
+		if (cancelRtnCd > 0)
 		{
-			m_cancelRtnHandlers[adapterID][cancelOrderRef] = cancelRtnhandler;
-			return cancelOrderRef;
+			m_cancelRtnHandlers[adapterID][cancelRtnCd] = cancelRtnhandler;
+			return cancelRtnCd;
 		}
 		break;
 	}
@@ -100,7 +101,7 @@ int infrastructure::cancelOrder(string adapterID, int orderRef, boost::function<
 		break;
 	}
 	}
-	return -1;
+	return cancelRtnCd;
 };
 
 void infrastructure::onRespCtpCancel(string adapterID, CThostFtdcInputOrderActionField *pInputOrderAction,
