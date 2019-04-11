@@ -23,6 +23,7 @@ tradeAdapterCTP::tradeAdapterCTP(string adapterID, char * tradeFront, char * bro
 	strncpy(m_loginField.Password, pwd, sizeof(m_loginField.Password));
 
 	m_needAuthenticate = false;
+	m_qryingOrder = false;
 };
 
 
@@ -49,6 +50,8 @@ tradeAdapterCTP::tradeAdapterCTP(string adapterID, char* tradeFront, char* broke
 	strncpy(m_authenticateField.UserID, user, sizeof(m_authenticateField.UserID));
 	strncpy(m_authenticateField.UserProductInfo, userproductID, sizeof(m_authenticateField.UserProductInfo));
 	strncpy(m_authenticateField.AuthCode, authenticateCode, sizeof(m_authenticateField.AuthCode));
+
+	m_qryingOrder = false;
 };
 
 void tradeAdapterCTP::destroyAdapter()
@@ -496,10 +499,10 @@ void tradeAdapterCTP::OnRspQryOrder(CThostFtdcOrderField *pOrder, CThostFtdcRspI
 		//cout << m_adapterID << ": locking m_ref2order in OnRspQryOrder." << endl;
 		boost::mutex::scoped_lock l(m_ref2order_lock);
 		m_ref2order[orderRef] = orderPtr;
-		//cout << m_adapterID << " | OnRspQryOrder: orderRef: " << pOrder->OrderRef
-		//	<<", time: "<< pOrder->InsertTime << endl;
 		//cout << m_adapterID << ": unlocking m_ref2order in OnRspQryOrder." << endl;
 	}
+	if (bIsLast) //返回报单完成
+		m_qryingOrder = false;
 };
 
 void tradeAdapterCTP::OnRtnOrder(CThostFtdcOrderField *pOrder)
@@ -553,20 +556,24 @@ int tradeAdapterCTP::cancelOrder(int orderRef)
 		{
 			//cout << m_adapterID << ": locking m_ref2sentOrder in cancelOrder." << endl;
 			boost::detail::spinlock l1(m_ref2sentOrder_lock);
-			auto iter1 = m_ref2sentOrder.find(orderRef);
-			if (iter1 != m_ref2sentOrder.end())
+			if (!m_qryingOrder)
 			{
-				CThostFtdcQryOrderField qryOrder;
-				memset(&qryOrder, 0, sizeof(CThostFtdcQryOrderField));
-				strncpy(qryOrder.BrokerID, m_loginField.BrokerID, sizeof(qryOrder.BrokerID)-1);
-				strncpy(qryOrder.InvestorID, m_loginField.UserID, sizeof(qryOrder.InvestorID) - 1);
-				strncpy(qryOrder.ExchangeID, iter1->second->ExchangeID, sizeof(qryOrder.ExchangeID) -1);
-				//athenaUtils::getCurrTime(qryOrder.InsertTimeStart, -60 * 10);
-				m_pUserApi->ReqQryOrder(&qryOrder, ++m_requestId);
-				cout << m_adapterID << ": querying old order." << endl;
+				auto iter1 = m_ref2sentOrder.find(orderRef);
+				if (iter1 != m_ref2sentOrder.end())
+				{
+					CThostFtdcQryOrderField qryOrder;
+					memset(&qryOrder, 0, sizeof(CThostFtdcQryOrderField));
+					strncpy(qryOrder.BrokerID, m_loginField.BrokerID, sizeof(qryOrder.BrokerID) - 1);
+					strncpy(qryOrder.InvestorID, m_loginField.UserID, sizeof(qryOrder.InvestorID) - 1);
+					strncpy(qryOrder.ExchangeID, iter1->second->ExchangeID, sizeof(qryOrder.ExchangeID) - 1);
+					//athenaUtils::getCurrTime(qryOrder.InsertTimeStart, -60 * 10);
+					m_qryingOrder = true;
+					m_pUserApi->ReqQryOrder(&qryOrder, ++m_requestId);
+					cout << m_adapterID << ": Req | querying old order." << endl;
+				}
+				else
+					cout << m_adapterID << ": orderRef " << orderRef << " not found in m_ref2sentOrder, querying from server fail." << endl;
 			}
-			else
-				cout << m_adapterID << ": cancel Order fail | orderRef " << orderRef << " not found in m_ref2sentOrder, querying from server fail." << endl;
 			//cout << m_adapterID << ": unlocking m_ref2sentOrder in cancelOrder." << endl;
 		}
 		return ORDER_CANCEL_ERROR_NOT_FOUND;

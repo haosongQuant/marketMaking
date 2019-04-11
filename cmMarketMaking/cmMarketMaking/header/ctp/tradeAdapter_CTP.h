@@ -27,6 +27,7 @@ private:
 	char             m_orderRef[13];
 	boost::mutex     m_orderRefLock;
 
+	bool m_qryingOrder; //主动查询报单标识
 	map<int, CThostFtdcInputOrderFieldPtr> m_ref2sentOrder;
 	boost::detail::spinlock     m_ref2sentOrder_lock;
 	map<int, CThostFtdcOrderFieldPtr> m_ref2order;
