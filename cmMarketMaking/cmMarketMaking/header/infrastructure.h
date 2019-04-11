@@ -243,26 +243,7 @@ private:
 		map< int, boost::function<void(tradeRtnPtr)> > > m_tradeRtnHandlers;
 	map < string, //adapterID
 		map<int, boost::function<void(cancelRtnPtr)> > > m_cancelRtnHandlers;
-	/*
-	//定时任务
-private:
-	boost::asio::deadline_timer m_delayedSubscribe_Timer;
-	boost::mutex m_delayedSubscribe_lunchLock;
-	bool m_isDelayedSubscribeLunched;
-	void delayedSubscribe();
 
-	boost::asio::deadline_timer m_infraScheduledJob_Timer;
-	void infraScheduledJob();
-
-	//不定时任务
-private:
-	boost::asio::deadline_timer m_delayed_Timer;
-	boost::mutex m_delayed_TimerLock;
-	boost::asio::deadline_timer m_delayed_Timer1;
-	boost::mutex m_delayed_TimerLock1;
-	boost::asio::deadline_timer m_delayed_Timer2;
-	boost::mutex m_delayed_TimerLock2;
-*/
 private:
 	void initAdapters();
 };

@@ -28,6 +28,13 @@ private:
 	boost::mutex     m_orderRefLock;
 
 	bool m_qryingOrder; //主动查询报单标识
+	void openOrderQrySwitch(const boost::system::error_code& error){
+		if (error)
+			return;
+		m_qryingOrder = false;
+	};
+	void closeOrderQrySwitch(){ m_qryingOrder = true; };
+
 	map<int, CThostFtdcInputOrderFieldPtr> m_ref2sentOrder;
 	boost::detail::spinlock     m_ref2sentOrder_lock;
 	map<int, CThostFtdcOrderFieldPtr> m_ref2order;
@@ -70,8 +77,8 @@ public:
 
 private:
 	athenathreadpoolPtr m_threadpool;
-	boost::asio::deadline_timer m_lag_Timer;
-
+	athena_lag_timer    m_lag_Timer;
+	athena_lag_timer    m_qryOrder_Timer;
 public:
 	boost::function<void(string adapterID)> m_OnUserLogin;
 	boost::function<void(string adapterID)> m_OnUserLogout;

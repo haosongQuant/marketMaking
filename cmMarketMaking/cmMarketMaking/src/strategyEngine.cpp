@@ -4,8 +4,8 @@
 strategyEngine::strategyEngine(Json::Value  config, infrastructure* infra):
 m_config(config), m_infra(infra)
 {
-	m_quoteTP = athenathreadpoolPtr(new threadpool(2));
-	m_tradeTP = athenathreadpoolPtr(new threadpool(2));
+	m_quoteTP = athenathreadpoolPtr(new threadpool(4));
+	m_tradeTP = athenathreadpoolPtr(new threadpool(6));
 };
 
 void strategyEngine::registerStrategyType(string strategyID, string strategyType)

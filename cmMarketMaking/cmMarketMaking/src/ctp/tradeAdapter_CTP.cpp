@@ -7,7 +7,7 @@ using namespace std;
 
 tradeAdapterCTP::tradeAdapterCTP(string adapterID, char * tradeFront, char * broker, char * user, char * pwd,
 	athenathreadpoolPtr tp)// :m_onLogin(NULL)
-	:m_threadpool(tp), m_lag_Timer(tp->getDispatcher())
+	:m_threadpool(tp), m_lag_Timer(tp->getDispatcher()), m_qryOrder_Timer(tp->getDispatcher())
 {
 	m_adapterID = adapterID;
 
@@ -29,7 +29,7 @@ tradeAdapterCTP::tradeAdapterCTP(string adapterID, char * tradeFront, char * bro
 
 tradeAdapterCTP::tradeAdapterCTP(string adapterID, char* tradeFront, char* broker, char* user, char* pwd,
 	char * userproductID, char * authenticateCode, athenathreadpoolPtr tp)
-	:m_threadpool(tp), m_lag_Timer(tp->getDispatcher())
+	:m_threadpool(tp), m_lag_Timer(tp->getDispatcher()), m_qryOrder_Timer(tp->getDispatcher())
 {
 	m_adapterID = adapterID;
 
@@ -502,7 +502,10 @@ void tradeAdapterCTP::OnRspQryOrder(CThostFtdcOrderField *pOrder, CThostFtdcRspI
 		//cout << m_adapterID << ": unlocking m_ref2order in OnRspQryOrder." << endl;
 	}
 	if (bIsLast) //返回报单完成
+	{
 		m_qryingOrder = false;
+		m_qryOrder_Timer.cancel();
+	}
 };
 
 void tradeAdapterCTP::OnRtnOrder(CThostFtdcOrderField *pOrder)
@@ -567,13 +570,18 @@ int tradeAdapterCTP::cancelOrder(int orderRef)
 					strncpy(qryOrder.InvestorID, m_loginField.UserID, sizeof(qryOrder.InvestorID) - 1);
 					strncpy(qryOrder.ExchangeID, iter1->second->ExchangeID, sizeof(qryOrder.ExchangeID) - 1);
 					//athenaUtils::getCurrTime(qryOrder.InsertTimeStart, -60 * 10);
-					m_qryingOrder = true;
+					closeOrderQrySwitch();
 					m_pUserApi->ReqQryOrder(&qryOrder, ++m_requestId);
 					cout << m_adapterID << ": Req | querying old order." << endl;
+					m_qryOrder_Timer.expires_from_now(boost::posix_time::milliseconds(60*1000));
+					m_qryOrder_Timer.async_wait(boost::bind(&tradeAdapterCTP::openOrderQrySwitch, this,
+						boost::asio::placeholders::error));
 				}
 				else
 					cout << m_adapterID << ": orderRef " << orderRef << " not found in m_ref2sentOrder, querying from server fail." << endl;
 			}
+			else
+				cout << m_adapterID << ": query order is in process, no more query lunched." << endl;
 			//cout << m_adapterID << ": unlocking m_ref2sentOrder in cancelOrder." << endl;
 		}
 		return ORDER_CANCEL_ERROR_NOT_FOUND;
