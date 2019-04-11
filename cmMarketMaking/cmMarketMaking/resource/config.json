@@ -55,6 +55,17 @@
             "tickSize": 0.2,
             "miniOrderSpread": 4.0,
             "orderQty": 10
+        },
+        {
+            "strategyID": "mm_ZC907",
+            "strategyTyp": "cmMM01",
+            "productId": "ZC907",
+            "exchange": "CZCE",
+            "quote": "quoteCTP01",
+            "trade": "tradeCTP01",
+            "tickSize": 0.2,
+            "miniOrderSpread": 4.0,
+            "orderQty": 10
         }
     ]
 }

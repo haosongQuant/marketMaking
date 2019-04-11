@@ -17,6 +17,18 @@ public:
 	static bool IsInvalid(const double& d);    //判断d为无效值 
 	static double GetInvalidValue();     //无效值定义为double类型的最大值1.7976931348623158e+308
 	static int  gcd(const int integer1, const int integer2); //计算最大公约数
+
+	static void getCurrTime(char* tar, int shiftSec)
+	{
+		time_t     now;
+		struct tm  ts;
+		time(&now);
+		now = now + shiftSec;
+		ts = *localtime(&now);
+		memset(tar, 0, 9);
+		sprintf(tar, "%02d:%02d:%02d", ts.tm_hour, ts.tm_min, ts.tm_sec);
+	};
+
 	///@brief        以指定的分隔字符串劈分一个字符串         
 	///@param[in]    src 待处理的字符串对象引用 
 	///@param[in]    delimit    指定的分隔字符串

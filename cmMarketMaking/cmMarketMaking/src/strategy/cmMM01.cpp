@@ -6,12 +6,12 @@ cmMM01::cmMM01(string strategyId, string strategyTyp, string productId, string e
 	athenathreadpoolPtr quoteTP, athenathreadpoolPtr tradeTP, infrastructure* infra)
 	:m_strategyId(strategyId), m_strategyTyp(strategyTyp), m_productId(productId), m_exchange(exchange),
 	m_quoteAdapterID(quoteAdapterID), m_tradeAdapterID(tradeAdapterID), m_tickSize(tickSize),
-	m_miniOrderSpread(miniOrderSpread), m_orderQty(orderQty), m_quoteTP(quoteTP), m_tradeTP(tradeTP), 
+	m_miniOrderSpread(miniOrderSpread), m_orderQty(orderQty), m_quoteTP(quoteTP), m_tradeTP(tradeTP),
 	m_infra(infra),
 	m_cancelConfirmTimer(tradeTP->getDispatcher()), m_cancelHedgeTimer(tradeTP->getDispatcher()),
 	m_resetStatusTimer(tradeTP->getDispatcher())
 {
-	m_strategyStatus = STRATEGY_STATUS_START;
+	m_strategyStatus  = STRATEGY_STATUS_START;
 };
 
 void cmMM01::resetStrategyStatus(){
@@ -36,17 +36,37 @@ void cmMM01::stopStrategy(){
 
 void cmMM01::orderPrice(double* bidprice, double* askprice)
 {
-	double quoteSpread = (m_lastQuotePtr->askprice[0] - m_lastQuotePtr->bidprice[0]) / m_tickSize;
+	int quoteSpread = round((m_lastQuotePtr->askprice[0] - m_lastQuotePtr->bidprice[0]) / m_tickSize);
 	if (quoteSpread > m_miniOrderSpread) return;
-	*bidprice = m_lastQuotePtr->bidprice[0] + int((quoteSpread - m_miniOrderSpread) / 2) * m_tickSize;
+	switch (quoteSpread)
+	{
+	case 1:
+	case 2:
+	{
+		*bidprice = m_lastQuotePtr->bidprice[0] - m_tickSize;
+		break;
+	}
+	case 3:
+	case 4:
+	{
+		*bidprice = m_lastQuotePtr->bidprice[0];
+		break;
+	}
+	}
+	//*bidprice = m_lastQuotePtr->bidprice[0] + int((quoteSpread - m_miniOrderSpread) / 2) * m_tickSize;
 	//*bidprice = m_lastQuotePtr->askprice[0]; //≤‚ ‘≥…Ωª
 	*askprice = *bidprice + m_tickSize * m_miniOrderSpread;
 };
 
 void cmMM01::sendOrder()
 {
-	double bidprice, askprice;
+	double bidprice=0.0, askprice=0.0;
 	orderPrice(&bidprice, &askprice);
+	if (0.0 == bidprice || 0.0 == askprice)
+	{
+		cout << m_strategyId << ": warning | spread is too wide, no order sent." << endl;
+		return;
+	}
 
 	m_bidOrderRef = 0;
 	m_askOrderRef = 0;
@@ -118,7 +138,7 @@ void cmMM01::CancelOrder()
 		m_cancelAskOrderRC == ORDER_CANCEL_ERROR_NOT_FOUND)
 	{
 		cout << m_strategyId << ": waiting to cancel order." << endl;
-		m_cancelConfirmTimer.expires_from_now(boost::posix_time::milliseconds(100));
+		m_cancelConfirmTimer.expires_from_now(boost::posix_time::milliseconds(5000));
 		m_cancelConfirmTimer.async_wait(boost::bind(&cmMM01::CancelOrder, this));
 	}
 	else

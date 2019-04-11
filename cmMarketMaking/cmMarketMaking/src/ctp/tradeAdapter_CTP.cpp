@@ -1,6 +1,7 @@
 #include <iostream>
 #include <time.h>
 #include "ctp/tradeAdapter_CTP.h"
+#include "baseClass/Utils.h"
 
 using namespace std;
 
@@ -350,6 +351,7 @@ void tradeAdapterCTP::OnRspQryInstrument(CThostFtdcInstrumentField *pInstrument,
 		if (bIsLast)
 		{
 			cout << m_adapterID << ": resp | query instrument done." << endl;
+			cout << "---------- " << m_adapterID << " init done ----------" << endl;
 			if (m_OnUserLogin != NULL)
 			{
 				m_OnUserLogin(m_adapterID);
@@ -408,9 +410,14 @@ int tradeAdapterCTP::OrderInsert(string instrument, string exchange, char priceT
 	strncpy(pInputOrder->BrokerID, m_loginField.BrokerID, sizeof(pInputOrder->BrokerID));
 	strncpy(pInputOrder->InvestorID, m_loginField.UserID, sizeof(pInputOrder->InvestorID));
 	strncpy(pInputOrder->UserID, m_loginField.UserID, sizeof(pInputOrder->UserID));
-	int nextOrderRef = updateOrderRef();
-	strncpy(pInputOrder->OrderRef, m_orderRef, sizeof(pInputOrder->OrderRef) - 1);  //报单引用
-
+	int nextOrderRef = -1;
+	{
+		//cout << m_adapterID << ": locking m_orderRefLock in OrderInsert." << endl;
+		boost::mutex::scoped_lock l0(m_orderRefLock);
+		nextOrderRef = updateOrderRef();
+		strncpy(pInputOrder->OrderRef, m_orderRef, sizeof(pInputOrder->OrderRef) - 1);  //报单引用
+		//cout << m_adapterID << ": unlocking m_orderRefLock in OrderInsert." << endl;
+	}
 	strncpy(pInputOrder->InstrumentID, instrument.c_str(), sizeof(pInputOrder->InstrumentID) - 1);
 	strncpy(pInputOrder->ExchangeID, exchange.c_str(), sizeof(pInputOrder->ExchangeID) - 1);
 	pInputOrder->OrderPriceType = priceType;///报单价格条件
@@ -439,11 +446,16 @@ int tradeAdapterCTP::OrderInsert(string instrument, string exchange, char priceT
 
 	int ret = m_pUserApi->ReqOrderInsert(pInputOrder, reqId);
 
-	m_ref2sentOrder[nextOrderRef] = CThostFtdcInputOrderFieldPtr(pInputOrder);
+	{
+		//cout << m_adapterID << ": locking m_ref2sentOrder in OrderInsert." << endl;
+		boost::detail::spinlock l1(m_ref2sentOrder_lock);
+		m_ref2sentOrder[nextOrderRef] = CThostFtdcInputOrderFieldPtr(pInputOrder);
+		//cout << m_adapterID << ": unlocking m_ref2sentOrder in OrderInsert." << endl;
+	}
 
 	if (ret == 0)
 	{
-		cout << m_adapterID << ": req | order insert succ, orderRef: " << m_orderRef<< 
+		cout << m_adapterID << ": req | order insert succ, orderRef: " << nextOrderRef <<
 			", inst: " << instrument<< ", price: "<< price << ", volume: "<<volume<< endl;
 		return nextOrderRef;
 	}
@@ -478,12 +490,15 @@ void tradeAdapterCTP::OnErrRtnOrderInsert(CThostFtdcInputOrderField *pInputOrder
 void tradeAdapterCTP::OnRspQryOrder(CThostFtdcOrderField *pOrder, CThostFtdcRspInfoField *pRspInfo, 
 	int nRequestID, bool bIsLast)
 {
-	cout << m_adapterID << ": Rsp | OnRspQryOrder, orderRef " << pOrder->OrderRef << endl;
 	CThostFtdcOrderFieldPtr orderPtr = CThostFtdcOrderFieldPtr(new CThostFtdcOrderField(*pOrder));
 	int orderRef = atoi(pOrder->OrderRef);
 	{
-		boost::detail::spinlock l(m_ref2order_lock);
+		//cout << m_adapterID << ": locking m_ref2order in OnRspQryOrder." << endl;
+		boost::mutex::scoped_lock l(m_ref2order_lock);
 		m_ref2order[orderRef] = orderPtr;
+		//cout << m_adapterID << " | OnRspQryOrder: orderRef: " << pOrder->OrderRef
+		//	<<", time: "<< pOrder->InsertTime << endl;
+		//cout << m_adapterID << ": unlocking m_ref2order in OnRspQryOrder." << endl;
 	}
 };
 
@@ -492,8 +507,10 @@ void tradeAdapterCTP::OnRtnOrder(CThostFtdcOrderField *pOrder)
 	CThostFtdcOrderFieldPtr orderPtr = CThostFtdcOrderFieldPtr(new CThostFtdcOrderField(*pOrder));
 	int orderRef = atoi(pOrder->OrderRef);
 	{
-		boost::detail::spinlock l(m_ref2order_lock);
+		//cout << m_adapterID << ": locking m_ref2order in OnRtnOrder." << endl;
+		boost::mutex::scoped_lock l(m_ref2order_lock);
 		m_ref2order[orderRef] = orderPtr;
+		//cout << m_adapterID << ": unlocking m_ref2order in OnRtnOrder." << endl;
 	}
 	if (m_OnOrderRtn)
 		m_OnOrderRtn(m_adapterID, pOrder);
@@ -523,19 +540,34 @@ void tradeAdapterCTP::OnRtnTrade(CThostFtdcTradeField *pTrade)
 
 int tradeAdapterCTP::cancelOrder(int orderRef)
 {
-	auto iter = m_ref2order.find(orderRef);
+	auto iter = m_ref2order.begin();
+	{
+		//cout << m_adapterID << ": locking m_ref2order in cancelOrder." << endl;
+		boost::mutex::scoped_lock l0(m_ref2order_lock);
+		iter = m_ref2order.find(orderRef);
+		//cout << m_adapterID << ": unlocking m_ref2order in cancelOrder." << endl;
+	}
 	if (iter == m_ref2order.end())
 	{
 		cout << m_adapterID << ": cancel Order fail | orderRef " << orderRef << " not found in adapter, querying from server..." << endl;
-		auto iter1 = m_ref2sentOrder.find(orderRef);
-		if (iter1 != m_ref2sentOrder.end())
 		{
-			CThostFtdcQryOrderField qryOrder;
-			memset(&qryOrder, 0, sizeof(CThostFtdcQryOrderField));
-			strncpy(qryOrder.BrokerID, m_loginField.BrokerID, sizeof(qryOrder.BrokerID)-1);
-			strncpy(qryOrder.InvestorID, m_loginField.UserID, sizeof(qryOrder.InvestorID) - 1);
-			strncpy(qryOrder.ExchangeID, iter1->second->ExchangeID, sizeof(qryOrder.ExchangeID) -1);
-			m_pUserApi->ReqQryOrder(&qryOrder, ++m_requestId);
+			//cout << m_adapterID << ": locking m_ref2sentOrder in cancelOrder." << endl;
+			boost::detail::spinlock l1(m_ref2sentOrder_lock);
+			auto iter1 = m_ref2sentOrder.find(orderRef);
+			if (iter1 != m_ref2sentOrder.end())
+			{
+				CThostFtdcQryOrderField qryOrder;
+				memset(&qryOrder, 0, sizeof(CThostFtdcQryOrderField));
+				strncpy(qryOrder.BrokerID, m_loginField.BrokerID, sizeof(qryOrder.BrokerID)-1);
+				strncpy(qryOrder.InvestorID, m_loginField.UserID, sizeof(qryOrder.InvestorID) - 1);
+				strncpy(qryOrder.ExchangeID, iter1->second->ExchangeID, sizeof(qryOrder.ExchangeID) -1);
+				//athenaUtils::getCurrTime(qryOrder.InsertTimeStart, -60 * 10);
+				m_pUserApi->ReqQryOrder(&qryOrder, ++m_requestId);
+				cout << m_adapterID << ": querying old order." << endl;
+			}
+			else
+				cout << m_adapterID << ": cancel Order fail | orderRef " << orderRef << " not found in m_ref2sentOrder, querying from server fail." << endl;
+			//cout << m_adapterID << ": unlocking m_ref2sentOrder in cancelOrder." << endl;
 		}
 		return ORDER_CANCEL_ERROR_NOT_FOUND;
 	}
@@ -544,8 +576,14 @@ int tradeAdapterCTP::cancelOrder(int orderRef)
 	actionField.ActionFlag = THOST_FTDC_AF_Delete;
 	actionField.FrontID = iter->second->FrontID;
 	actionField.SessionID = iter->second->SessionID;
-	int nextOrderRef = updateOrderRef();
-	actionField.OrderActionRef = nextOrderRef;
+	int nextOrderRef = -1;
+	{
+		//cout << m_adapterID << ": locking m_orderRefLock in cancelOrder." << endl;
+		boost::mutex::scoped_lock l2(m_orderRefLock);
+		nextOrderRef = updateOrderRef();
+		actionField.OrderActionRef = nextOrderRef;
+		//cout << m_adapterID << ": unlocking m_orderRefLock in cancelOrder." << endl;
+	}
 	sprintf(actionField.OrderRef, "%012d", orderRef);
 	strncpy(actionField.BrokerID, m_loginField.BrokerID, sizeof(actionField.BrokerID));
 	strncpy(actionField.InvestorID, m_loginField.UserID, sizeof(actionField.InvestorID));

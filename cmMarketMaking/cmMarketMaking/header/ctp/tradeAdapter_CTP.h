@@ -24,13 +24,13 @@ private:
 	//int m_frontId;    //«∞÷√±‡∫≈
 	//int m_sessionId;    //ª·ª∞±‡∫≈
 
-	char m_orderRef[13];
-	boost::mutex                      m_orderRefLock;
+	char             m_orderRef[13];
+	boost::mutex     m_orderRefLock;
 
 	map<int, CThostFtdcInputOrderFieldPtr> m_ref2sentOrder;
 	boost::detail::spinlock     m_ref2sentOrder_lock;
 	map<int, CThostFtdcOrderFieldPtr> m_ref2order;
-	boost::detail::spinlock     m_ref2order_lock;
+	boost::mutex                      m_ref2order_lock;
 
 	CThostFtdcTraderApi*        m_pUserApi;
 	CThostFtdcReqUserLoginField m_loginField;
@@ -39,7 +39,6 @@ private:
 
 private:
 	int updateOrderRef(){
-		boost::mutex::scoped_lock lock(m_orderRefLock);
 		int nextOrderRef = atoi(m_orderRef)+1;
 		sprintf(m_orderRef, "%012d", nextOrderRef);
 		return nextOrderRef;
