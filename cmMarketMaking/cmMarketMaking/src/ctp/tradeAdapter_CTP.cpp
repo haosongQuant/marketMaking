@@ -2,6 +2,7 @@
 #include <time.h>
 #include "ctp/tradeAdapter_CTP.h"
 #include "baseClass/Utils.h"
+#include "glog\logging.h"
 
 using namespace std;
 
@@ -62,7 +63,7 @@ void tradeAdapterCTP::destroyAdapter()
 	}
 	catch (exception& e)
 	{
-		cout << e.what() << endl;
+		LOG(INFO)  << e.what() << endl;
 	}
 };
 
@@ -75,11 +76,11 @@ int tradeAdapterCTP::init()
 
 void tradeAdapterCTP::OnFrontConnected()
 {
-	cout << m_adapterID << ": trade connected!" << endl;
+	LOG(WARNING)  << m_adapterID << ": trade connected!" << endl;
 	if (m_needAuthenticate)
 	{
 		int ret = m_pUserApi->ReqAuthenticate(&m_authenticateField, ++m_requestId);
-		cout << m_adapterID << ":  req | send Authenticate ... " << ((ret == 0) ? "succ" : "fail") << endl;
+		LOG(INFO)  << m_adapterID << ":  req | send Authenticate ... " << ((ret == 0) ? "succ" : "fail") << endl;
 	}
 	else
 		login();
@@ -89,11 +90,11 @@ void tradeAdapterCTP::OnRspAuthenticate(CThostFtdcRspAuthenticateField *pRspAuth
 	CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
 	if (isErrorRespInfo(pRspInfo))
-		cout << m_adapterID << ": Authenticate error | ErrorID: " << pRspInfo->ErrorID <<
+		LOG(INFO)  << m_adapterID << ": Authenticate error | ErrorID: " << pRspInfo->ErrorID <<
 		", ErrorMsg: " << pRspInfo->ErrorMsg << endl;
 	else
 	{
-		cout << m_adapterID << ": Authenticate succ | broker: " << pRspAuthenticateField->BrokerID <<
+		LOG(INFO)  << m_adapterID << ": Authenticate succ | broker: " << pRspAuthenticateField->BrokerID <<
 			", user: " << pRspAuthenticateField->UserID <<
 			", productInfo: " << pRspAuthenticateField->UserProductInfo << endl;
 		login();
@@ -102,7 +103,7 @@ void tradeAdapterCTP::OnRspAuthenticate(CThostFtdcRspAuthenticateField *pRspAuth
 
 void tradeAdapterCTP::OnFrontDisconnected(int nReason)
 {
-	cout << m_adapterID << ": trade adapterCTP disconnected!" << endl;
+	LOG(INFO)  << m_adapterID << ": trade adapterCTP disconnected!" << endl;
 	if (m_status != ADAPTER_STATUS_DISCONNECT && m_OnFrontDisconnected)
 	{
 		m_OnFrontDisconnected(m_adapterID, "trade");
@@ -112,13 +113,13 @@ void tradeAdapterCTP::OnFrontDisconnected(int nReason)
 
 void tradeAdapterCTP::OnHeartBeatWarning(int nTimeLapse)
 {
-	cout << m_adapterID << ": heartbeat warning: " << nTimeLapse << "s." << endl;
+	LOG(INFO)  << m_adapterID << ": heartbeat warning: " << nTimeLapse << "s." << endl;
 };
 
 int tradeAdapterCTP::login()
 {
 	int ret = m_pUserApi->ReqUserLogin(&m_loginField, ++m_requestId);
-	cout << m_adapterID << ":  req | send login ... " << ((ret == 0) ? "succ" : "fail") << endl;
+	LOG(INFO)  << m_adapterID << ":  req | send login ... " << ((ret == 0) ? "succ" : "fail") << endl;
 	return ret;
 };
 
@@ -126,11 +127,11 @@ void tradeAdapterCTP::OnRspUserLogin(CThostFtdcRspUserLoginField *pRspUserLogin,
 	CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
 	if (isErrorRespInfo(pRspInfo))
-		cout << m_adapterID << ": trade login error | ErrorID: " << pRspInfo->ErrorID << ", ErrorMsg: " << pRspInfo->ErrorMsg
+		LOG(INFO)  << m_adapterID << ": trade login error | ErrorID: " << pRspInfo->ErrorID << ", ErrorMsg: " << pRspInfo->ErrorMsg
 		<< ", user: " << m_loginField.UserID << ", pwd:" << m_loginField.Password << ", broker: " << m_loginField.BrokerID<<endl;
 	else
 	{
-		cout << m_adapterID<<": trade login succ!" << endl;
+		LOG(INFO)  << m_adapterID<<": trade login succ!" << endl;
 
 		// 保存会话参数    
 		//m_frontId = pRspUserLogin->FrontID;
@@ -162,7 +163,7 @@ void tradeAdapterCTP::OnRspUserLogin(CThostFtdcRspUserLoginField *pRspUserLogin,
 
 void tradeAdapterCTP::OnRspUserLogout(CThostFtdcUserLogoutField *pUserLogout, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
-	cout << "tradeAdapterCTP logout!" << endl;
+	LOG(INFO)  << "tradeAdapterCTP logout!" << endl;
 
 	m_status = ADAPTER_STATUS_LOGOUT;
 	if (m_OnUserLogout != NULL)
@@ -178,7 +179,7 @@ int tradeAdapterCTP::queryTradingAccount()
 	strncpy(qryTradingAccountField.BrokerID, m_loginField.BrokerID, sizeof(qryTradingAccountField.BrokerID));
 	strncpy(qryTradingAccountField.InvestorID, m_loginField.UserID, sizeof(qryTradingAccountField.InvestorID));
 	int ret = m_pUserApi->ReqQryTradingAccount(&qryTradingAccountField, ++m_requestId);
-	cout << m_adapterID << ":  req | query trading account ... " << ((ret == 0) ? "succ" : "fail") << endl;
+	LOG(INFO)  << m_adapterID << ":  req | query trading account ... " << ((ret == 0) ? "succ" : "fail") << endl;
 	return ret;
 };
 
@@ -187,8 +188,8 @@ void tradeAdapterCTP::OnRspQryTradingAccount(CThostFtdcTradingAccountField *pTra
 {
 	if (pTradingAccount)
 	{
-		//cerr << "经纪公司代码	:" << pTradingAccount->BrokerID << endl
-		cout << "投资者帐号:" << pTradingAccount->AccountID << ", "
+		//LOG(INFO)  << "经纪公司代码	:" << pTradingAccount->BrokerID << endl
+		LOG(INFO)  << "投资者帐号:" << pTradingAccount->AccountID << ", "
 			//	<< "上次质押金额:" << pTradingAccount->PreMortgage << endl
 			//	<< "上次信用额度:" << pTradingAccount->PreCredit << endl
 			//	<< "上次存款额:" << pTradingAccount->PreDeposit << endl
@@ -236,18 +237,18 @@ void tradeAdapterCTP::OnRspQryTradingAccount(CThostFtdcTradingAccountField *pTra
 
 		if (bIsLast)
 		{
-			cout << m_adapterID << ": query trading account done." << endl;
+			LOG(INFO)  << m_adapterID << ": query trading account done." << endl;
 			m_lag_Timer.expires_from_now(boost::posix_time::milliseconds(3000));
 			m_lag_Timer.async_wait(boost::bind(&tradeAdapterCTP::queryInvestorPosition, this));
 		}
 	}
 	else
 	{
-		cerr << "resp | query cash fail ";
+		LOG(INFO)  << "resp | query cash fail ";
 		if (pRspInfo == nullptr)
-			cerr << endl;
+			LOG(INFO)  << endl;
 		else
-			cerr << " ErrorID: " << pRspInfo->ErrorID << ", ErrorMsg : " << pRspInfo->ErrorMsg << endl;
+			LOG(INFO)  << " ErrorID: " << pRspInfo->ErrorID << ", ErrorMsg : " << pRspInfo->ErrorMsg << endl;
 	}
 };
 
@@ -257,11 +258,11 @@ int tradeAdapterCTP::queryInvestorPosition()
 	memset(&qryInvestorPositionField, 0, sizeof(qryInvestorPositionField));
 	strncpy(qryInvestorPositionField.BrokerID, m_loginField.BrokerID, sizeof(qryInvestorPositionField.BrokerID));
 	strncpy(qryInvestorPositionField.InvestorID, m_loginField.UserID, sizeof(qryInvestorPositionField.InvestorID));
-	//cout << qryInvestorPositionField.BrokerID << endl
+	//LOG(INFO)  << qryInvestorPositionField.BrokerID << endl
 	//	<< qryInvestorPositionField.InvestorID << endl
 	//	<< qryInvestorPositionField.InstrumentID << endl;
 	int ret = m_pUserApi->ReqQryInvestorPosition(&qryInvestorPositionField, ++m_requestId);
-	cerr << m_adapterID << ":  req | query position ... " << ((ret == 0) ? "succ" : "fail") << ", ret = " << ret << endl;
+	LOG(INFO)  << m_adapterID << ":  req | query position ... " << ((ret == 0) ? "succ" : "fail") << ", ret = " << ret << endl;
 	return ret;
 };
 
@@ -270,7 +271,7 @@ void tradeAdapterCTP::OnRspQryInvestorPosition(CThostFtdcInvestorPositionField *
 {
 	if (pInvestorPosition)
 	{
-		/*cout<< "合约代码: " << pInvestorPosition->InstrumentID << endl
+		/*LOG(INFO) << "合约代码: " << pInvestorPosition->InstrumentID << endl
 		<< "经纪公司代码: " << pInvestorPosition->BrokerID << endl
 		<< "投资者代码: " << pInvestorPosition->InvestorID << endl
 		<< "持仓多空方向: " << pInvestorPosition->PosiDirection << endl
@@ -318,18 +319,18 @@ void tradeAdapterCTP::OnRspQryInvestorPosition(CThostFtdcInvestorPositionField *
 
 		if (bIsLast)
 		{
-			cout << m_adapterID << ": query investor position done." << endl;
+			LOG(INFO)  << m_adapterID << ": query investor position done." << endl;
 			m_lag_Timer.expires_from_now(boost::posix_time::milliseconds(3000));
 			m_lag_Timer.async_wait(boost::bind(&tradeAdapterCTP::queryAllInstrument, this));
 		}
 	}
 	else
 	{
-		cerr << m_adapterID << ": resp | query position fail";
+		LOG(INFO)  << m_adapterID << ": resp | query position fail";
 		if (pRspInfo == nullptr)
-			cerr << ", pRspInfo is nullptr!" << endl;
+			LOG(INFO)  << ", pRspInfo is nullptr!" << endl;
 		else
-			cerr << ", ErrorID: " << pRspInfo->ErrorID << ", ErrorMsg : " << pRspInfo->ErrorMsg << endl;
+			LOG(INFO)  << ", ErrorID: " << pRspInfo->ErrorID << ", ErrorMsg : " << pRspInfo->ErrorMsg << endl;
 		m_lag_Timer.expires_from_now(boost::posix_time::milliseconds(3000));
 		m_lag_Timer.async_wait(boost::bind(&tradeAdapterCTP::queryAllInstrument, this));
 	}
@@ -340,7 +341,7 @@ int tradeAdapterCTP::queryAllInstrument()
 	CThostFtdcQryInstrumentField qryInstrument;
 	memset(&qryInstrument, 0, sizeof(CThostFtdcQryInstrumentField));
 	int ret = m_pUserApi->ReqQryInstrument(&qryInstrument, ++m_requestId);
-	cerr << m_adapterID << ":  req | query all instruments ... " << ((ret == 0) ? "succ" : "fail") << endl;
+	LOG(INFO)  << m_adapterID << ":  req | query all instruments ... " << ((ret == 0) ? "succ" : "fail") << endl;
 	return ret;
 };
 
@@ -353,14 +354,14 @@ void tradeAdapterCTP::OnRspQryInstrument(CThostFtdcInstrumentField *pInstrument,
 			m_OnInstrumentsRtn(m_adapterID, pInstrument);
 		if (bIsLast)
 		{
-			cout << m_adapterID << ": resp | query instrument done." << endl;
-			cout << "---------- " << m_adapterID << " init done ----------" << endl;
+			LOG(INFO)  << m_adapterID << ": resp | query instrument done." << endl;
+			LOG(WARNING)  << "---------- " << m_adapterID << " init done ----------" << endl;
 			if (m_OnUserLogin != NULL)
 			{
 				m_OnUserLogin(m_adapterID);
 			}
 		}
-		//cerr << "合约代码" << pInstrument->InstrumentID << endl
+		//LOG(INFO)  << "合约代码" << pInstrument->InstrumentID << endl
 		//<< "交易所代码" << pInstrument->ExchangeID << endl
 		//<< "合约名称" << pInstrument->InstrumentName << endl
 		//<< "合约在交易所的代码" << pInstrument->ExchangeInstID << endl
@@ -395,11 +396,11 @@ void tradeAdapterCTP::OnRspQryInstrument(CThostFtdcInstrumentField *pInstrument,
 	}
 	else
 	{
-		cerr << m_adapterID << ": resp | query instrument fail ";
+		LOG(INFO)  << m_adapterID << ": resp | query instrument fail ";
 		if (pRspInfo == nullptr)
-			cerr << endl;
+			LOG(INFO)  << endl;
 		else
-			cerr << m_adapterID << ": ErrorID: " << pRspInfo->ErrorID << ", ErrorMsg : " << pRspInfo->ErrorMsg << endl;
+			LOG(INFO)  << m_adapterID << ": ErrorID: " << pRspInfo->ErrorID << ", ErrorMsg : " << pRspInfo->ErrorMsg << endl;
 	}
 }
 
@@ -415,11 +416,11 @@ int tradeAdapterCTP::OrderInsert(string instrument, string exchange, char priceT
 	strncpy(pInputOrder->UserID, m_loginField.UserID, sizeof(pInputOrder->UserID));
 	int nextOrderRef = -1;
 	{
-		//cout << m_adapterID << ": locking m_orderRefLock in OrderInsert." << endl;
+		//LOG(INFO)  << m_adapterID << ": locking m_orderRefLock in OrderInsert." << endl;
 		boost::mutex::scoped_lock l0(m_orderRefLock);
 		nextOrderRef = updateOrderRef();
 		strncpy(pInputOrder->OrderRef, m_orderRef, sizeof(pInputOrder->OrderRef) - 1);  //报单引用
-		//cout << m_adapterID << ": unlocking m_orderRefLock in OrderInsert." << endl;
+		//LOG(INFO)  << m_adapterID << ": unlocking m_orderRefLock in OrderInsert." << endl;
 	}
 	strncpy(pInputOrder->InstrumentID, instrument.c_str(), sizeof(pInputOrder->InstrumentID) - 1);
 	strncpy(pInputOrder->ExchangeID, exchange.c_str(), sizeof(pInputOrder->ExchangeID) - 1);
@@ -450,21 +451,21 @@ int tradeAdapterCTP::OrderInsert(string instrument, string exchange, char priceT
 	int ret = m_pUserApi->ReqOrderInsert(pInputOrder, reqId);
 
 	{
-		//cout << m_adapterID << ": locking m_ref2sentOrder in OrderInsert." << endl;
+		//LOG(INFO)  << m_adapterID << ": locking m_ref2sentOrder in OrderInsert." << endl;
 		boost::detail::spinlock l1(m_ref2sentOrder_lock);
 		m_ref2sentOrder[nextOrderRef] = CThostFtdcInputOrderFieldPtr(pInputOrder);
-		//cout << m_adapterID << ": unlocking m_ref2sentOrder in OrderInsert." << endl;
+		//LOG(INFO)  << m_adapterID << ": unlocking m_ref2sentOrder in OrderInsert." << endl;
 	}
 
 	if (ret == 0)
 	{
-		cout << m_adapterID << ": req | order insert succ, orderRef: " << nextOrderRef <<
+		LOG(INFO) << m_adapterID << ": req | order insert succ, orderRef: " << nextOrderRef <<
 			", inst: " << instrument<< ", price: "<< price << ", volume: "<<volume<< endl;
 		return nextOrderRef;
 	}
 	else
 	{
-		cout << m_adapterID << ": req | order insert fail! retCode: " << ret << endl;
+		LOG(INFO) << m_adapterID << ": req | order insert fail! retCode: " << ret << endl;
 		return -1;
 	}
 }
@@ -474,20 +475,20 @@ void tradeAdapterCTP::OnRspOrderInsert(CThostFtdcInputOrderField *pInputOrder, C
 {
 	if (!isErrorRespInfo(pRspInfo)){
 		if (pInputOrder)
-			cout << m_adapterID << ":resp | order insert succ, orderRef: " << pInputOrder->OrderRef << endl;
+			LOG(INFO)  << m_adapterID << ":resp | order insert succ, orderRef: " << pInputOrder->OrderRef << endl;
 	}
 	else
-		cout << m_adapterID << ":resp | order insert fail, ErrorID: " << pRspInfo->ErrorID << ", ErrorMsg: " << pRspInfo->ErrorMsg << endl;
+		LOG(INFO)  << m_adapterID << ":resp | order insert fail, ErrorID: " << pRspInfo->ErrorID << ", ErrorMsg: " << pRspInfo->ErrorMsg << endl;
 };
 
 void tradeAdapterCTP::OnErrRtnOrderInsert(CThostFtdcInputOrderField *pInputOrder, CThostFtdcRspInfoField *pRspInfo)
 {
 	if (!isErrorRespInfo(pRspInfo)){
 		if (pInputOrder)
-			cout << "resp | order insert succ, orderRef: " << pInputOrder->OrderRef << endl;
+			LOG(INFO)  << "resp | order insert succ, orderRef: " << pInputOrder->OrderRef << endl;
 	}
 	else
-		cout << "resp | order insert fail, ErrorID: " << pRspInfo->ErrorID << ", ErrorMsg: " << pRspInfo->ErrorMsg << endl;
+		LOG(INFO)  << "resp | order insert fail, ErrorID: " << pRspInfo->ErrorID << ", ErrorMsg: " << pRspInfo->ErrorMsg << endl;
 };
 
 void tradeAdapterCTP::OnRspQryOrder(CThostFtdcOrderField *pOrder, CThostFtdcRspInfoField *pRspInfo, 
@@ -496,10 +497,10 @@ void tradeAdapterCTP::OnRspQryOrder(CThostFtdcOrderField *pOrder, CThostFtdcRspI
 	CThostFtdcOrderFieldPtr orderPtr = CThostFtdcOrderFieldPtr(new CThostFtdcOrderField(*pOrder));
 	int orderRef = atoi(pOrder->OrderRef);
 	{
-		//cout << m_adapterID << ": locking m_ref2order in OnRspQryOrder." << endl;
+		//LOG(INFO)  << m_adapterID << ": locking m_ref2order in OnRspQryOrder." << endl;
 		boost::mutex::scoped_lock l(m_ref2order_lock);
 		m_ref2order[orderRef] = orderPtr;
-		//cout << m_adapterID << ": unlocking m_ref2order in OnRspQryOrder." << endl;
+		//LOG(INFO)  << m_adapterID << ": unlocking m_ref2order in OnRspQryOrder." << endl;
 	}
 	if (bIsLast) //返回报单完成
 	{
@@ -513,15 +514,15 @@ void tradeAdapterCTP::OnRtnOrder(CThostFtdcOrderField *pOrder)
 	CThostFtdcOrderFieldPtr orderPtr = CThostFtdcOrderFieldPtr(new CThostFtdcOrderField(*pOrder));
 	int orderRef = atoi(pOrder->OrderRef);
 	{
-		//cout << m_adapterID << ": locking m_ref2order in OnRtnOrder." << endl;
+		//LOG(INFO)  << m_adapterID << ": locking m_ref2order in OnRtnOrder." << endl;
 		boost::mutex::scoped_lock l(m_ref2order_lock);
 		m_ref2order[orderRef] = orderPtr;
-		//cout << m_adapterID << ": unlocking m_ref2order in OnRtnOrder." << endl;
+		//LOG(INFO)  << m_adapterID << ": unlocking m_ref2order in OnRtnOrder." << endl;
 	}
 	if (m_OnOrderRtn)
 		m_OnOrderRtn(m_adapterID, pOrder);
 	/*
-	cerr << " 回报 | 报单已提交...序号:" << pOrder->BrokerOrderSeq
+	LOG(INFO)  << " 回报 | 报单已提交...序号:" << pOrder->BrokerOrderSeq
 	<< ", OrderStatus:" << pOrder->OrderStatus
 	<< ", CombHedgeFlag:" << pOrder->CombHedgeFlag
 	<< ", CombOffsetFlag:" << pOrder->CombOffsetFlag
@@ -538,7 +539,7 @@ void tradeAdapterCTP::OnRtnOrder(CThostFtdcOrderField *pOrder)
 void tradeAdapterCTP::OnRtnTrade(CThostFtdcTradeField *pTrade)
 {
 
-	//cerr << " tradeAdapterCTP | 报单已成交...成交编号:" << pTrade->TradeID << endl;
+	//LOG(INFO)  << " tradeAdapterCTP | 报单已成交...成交编号:" << pTrade->TradeID << endl;
 
 	if (m_OnTradeRtn)
 		m_OnTradeRtn(m_adapterID, pTrade);
@@ -548,16 +549,16 @@ int tradeAdapterCTP::cancelOrder(int orderRef)
 {
 	auto iter = m_ref2order.begin();
 	{
-		//cout << m_adapterID << ": locking m_ref2order in cancelOrder." << endl;
+		//LOG(INFO)  << m_adapterID << ": locking m_ref2order in cancelOrder." << endl;
 		boost::mutex::scoped_lock l0(m_ref2order_lock);
 		iter = m_ref2order.find(orderRef);
-		//cout << m_adapterID << ": unlocking m_ref2order in cancelOrder." << endl;
+		//LOG(INFO)  << m_adapterID << ": unlocking m_ref2order in cancelOrder." << endl;
 	}
 	if (iter == m_ref2order.end())
 	{
-		cout << m_adapterID << ": cancel Order fail | orderRef " << orderRef << " not found in adapter, querying from server..." << endl;
+		LOG(WARNING) << m_adapterID << ": cancel Order fail | orderRef " << orderRef << " not found in adapter, querying from server..." << endl;
 		{
-			//cout << m_adapterID << ": locking m_ref2sentOrder in cancelOrder." << endl;
+			//LOG(INFO)  << m_adapterID << ": locking m_ref2sentOrder in cancelOrder." << endl;
 			boost::detail::spinlock l1(m_ref2sentOrder_lock);
 			if (!m_qryingOrder)
 			{
@@ -572,17 +573,17 @@ int tradeAdapterCTP::cancelOrder(int orderRef)
 					//athenaUtils::getCurrTime(qryOrder.InsertTimeStart, -60 * 10);
 					closeOrderQrySwitch();
 					m_pUserApi->ReqQryOrder(&qryOrder, ++m_requestId);
-					cout << m_adapterID << ": Req | querying old order." << endl;
+					LOG(INFO)  << m_adapterID << ": Req | querying old order." << endl;
 					m_qryOrder_Timer.expires_from_now(boost::posix_time::milliseconds(60*1000));
 					m_qryOrder_Timer.async_wait(boost::bind(&tradeAdapterCTP::openOrderQrySwitch, this,
 						boost::asio::placeholders::error));
 				}
 				else
-					cout << m_adapterID << ": orderRef " << orderRef << " not found in m_ref2sentOrder, querying from server fail." << endl;
+					LOG(WARNING) << m_adapterID << ": orderRef " << orderRef << " not found in m_ref2sentOrder, querying from server fail." << endl;
 			}
 			else
-				cout << m_adapterID << ": query order is in process, no more query lunched." << endl;
-			//cout << m_adapterID << ": unlocking m_ref2sentOrder in cancelOrder." << endl;
+				LOG(WARNING) << m_adapterID << ": query order is in process, no more query lunched." << endl;
+			//LOG(INFO)  << m_adapterID << ": unlocking m_ref2sentOrder in cancelOrder." << endl;
 		}
 		return ORDER_CANCEL_ERROR_NOT_FOUND;
 	}
@@ -593,11 +594,11 @@ int tradeAdapterCTP::cancelOrder(int orderRef)
 	actionField.SessionID = iter->second->SessionID;
 	int nextOrderRef = -1;
 	{
-		//cout << m_adapterID << ": locking m_orderRefLock in cancelOrder." << endl;
+		//LOG(INFO)  << m_adapterID << ": locking m_orderRefLock in cancelOrder." << endl;
 		boost::mutex::scoped_lock l2(m_orderRefLock);
 		nextOrderRef = updateOrderRef();
 		actionField.OrderActionRef = nextOrderRef;
-		//cout << m_adapterID << ": unlocking m_orderRefLock in cancelOrder." << endl;
+		//LOG(INFO)  << m_adapterID << ": unlocking m_orderRefLock in cancelOrder." << endl;
 	}
 	sprintf(actionField.OrderRef, "%012d", orderRef);
 	strncpy(actionField.BrokerID, m_loginField.BrokerID, sizeof(actionField.BrokerID));
@@ -607,7 +608,7 @@ int tradeAdapterCTP::cancelOrder(int orderRef)
 	int ret = m_pUserApi->ReqOrderAction(&actionField, ++m_requestId);
 	if (ret == 0)
 	{
-		cout << m_adapterID << ": req | cancel order succ, orderRef: " << orderRef << endl;
+		LOG(INFO)  << m_adapterID << ": req | cancel order succ, orderRef: " << orderRef << endl;
 		if (iter->second->VolumeTraded > 0)
 			return ORDER_CANCEL_ERROR_TRADED;
 		else
@@ -615,7 +616,7 @@ int tradeAdapterCTP::cancelOrder(int orderRef)
 	}
 	else
 	{
-		cout << m_adapterID << ": req | cancel order fail, orderRef: " << orderRef << endl;
+		LOG(INFO)  << m_adapterID << ": req | cancel order fail, orderRef: " << orderRef << endl;
 		return ORDER_CANCEL_ERROR_SEND_FAIL;
 	}
 };
@@ -626,16 +627,16 @@ void tradeAdapterCTP::OnRspOrderAction(CThostFtdcInputOrderActionField *pInputOr
 {
 	/*if (!isErrorRespInfo(pRspInfo)){
 		if (pInputOrderAction)
-			cout << m_adapterID << ":resp | send order action succ, orderRef: " << pInputOrderAction->OrderRef << ", orderActionRef: " << pInputOrderAction->OrderActionRef << endl;
+			LOG(INFO)  << m_adapterID << ":resp | send order action succ, orderRef: " << pInputOrderAction->OrderRef << ", orderActionRef: " << pInputOrderAction->OrderActionRef << endl;
 	}
 	else
-		cout << m_adapterID << ":resp | send order action fail, ErrorID: " << pRspInfo->ErrorID << ", ErrorMsg: " << pRspInfo->ErrorMsg << endl;*/
+		LOG(INFO)  << m_adapterID << ":resp | send order action fail, ErrorID: " << pRspInfo->ErrorID << ", ErrorMsg: " << pRspInfo->ErrorMsg << endl;*/
 };
 
 void tradeAdapterCTP::OnErrRtnOrderAction(CThostFtdcOrderActionField *pOrderAction, CThostFtdcRspInfoField *pRspInfo)
 {
 	if (isErrorRespInfo(pRspInfo))
-		cout << m_adapterID << ":resp | send order action fail, OrderRef:" << pOrderAction->OrderRef << ", ErrorID: " << pRspInfo->ErrorID << ", ErrorMsg: " << pRspInfo->ErrorMsg << endl;
+		LOG(INFO)  << m_adapterID << ":resp | send order action fail, OrderRef:" << pOrderAction->OrderRef << ", ErrorID: " << pRspInfo->ErrorID << ", ErrorMsg: " << pRspInfo->ErrorMsg << endl;
 };
 
 bool tradeAdapterCTP::isErrorRespInfo(CThostFtdcRspInfoField *pRspInfo)

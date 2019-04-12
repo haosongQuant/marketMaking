@@ -1,4 +1,5 @@
 #include "strategy/cmMM01.h"
+#include "glog\logging.h"
 
 cmMM01::cmMM01(string strategyId, string strategyTyp, string productId, string exchange,
 	string quoteAdapterID, string tradeAdapterID, double tickSize, double miniOrderSpread,
@@ -24,7 +25,7 @@ void cmMM01::resetStrategyStatus(){
 };
 
 void cmMM01::startStrategy(){
-	cout << m_strategyId << " starting..." << endl;
+	LOG(INFO)  << m_strategyId << " starting..." << endl;
 	if (STRATEGY_STATUS_START == m_strategyStatus)
 		m_infra->subscribeFutures(m_quoteAdapterID, m_exchange, m_productId, bind(&cmMM01::onRtnMD, this, _1));
 	resetStrategyStatus();
@@ -64,7 +65,7 @@ void cmMM01::sendOrder()
 	orderPrice(&bidprice, &askprice);
 	if (0.0 == bidprice || 0.0 == askprice)
 	{
-		cout << m_strategyId << ": warning | spread is too wide, no order sent." << endl;
+		LOG(INFO)  << m_strategyId << ": warning | spread is too wide, no order sent." << endl;
 		return;
 	}
 
@@ -139,14 +140,14 @@ void cmMM01::CancelOrder()
 	if (m_cancelBidOrderRC == ORDER_CANCEL_ERROR_NOT_FOUND || m_cancelBidOrderRC == ORDER_CANCEL_ERROR_SEND_FAIL ||
 		m_cancelAskOrderRC == ORDER_CANCEL_ERROR_NOT_FOUND || m_cancelAskOrderRC == ORDER_CANCEL_ERROR_SEND_FAIL)
 	{
-		cout << m_strategyId << ": waiting to cancel order." << endl;
+		LOG(WARNING) << m_strategyId << ": waiting to cancel order." << endl;
 		m_cancelConfirmTimer.expires_from_now(boost::posix_time::milliseconds(5000));
 		m_cancelConfirmTimer.async_wait(boost::bind(&cmMM01::CancelOrder, this));
 	}
 	else if (m_cancelBidOrderRC == ORDER_CANCEL_ERROR_TRADED ||
 		     m_cancelAskOrderRC == ORDER_CANCEL_ERROR_TRADED)
 	{
-		cout << m_strategyId << ": traded before cancel." << endl;
+		LOG(WARNING) << m_strategyId << ": traded before cancel." << endl;
 	}
 	else
 	{
@@ -199,7 +200,7 @@ void cmMM01::onTradeRtn(tradeRtnPtr ptrade)
 	//等待1s
 	if (STRATEGY_STATUS_TRADED_HEDGING != status)
 	{
-		cout << m_strategyId << ": waiting 1s to cancel hedge order!" << endl;
+		LOG(INFO)  << m_strategyId << ": waiting 1s to cancel hedge order!" << endl;
 		m_cancelHedgeTimer.expires_from_now(boost::posix_time::milliseconds(1000));
 		m_cancelHedgeTimer.async_wait(boost::bind(&cmMM01::cancelHedgeOrder, this,
 			boost::asio::placeholders::error));
@@ -241,7 +242,7 @@ void cmMM01::cancelHedgeOrder(const boost::system::error_code& error){
 
 	if (error)
 	{
-		cout << m_strategyId << ": hedge timer cancelled" << endl;
+		LOG(INFO)  << m_strategyId << ": hedge timer cancelled" << endl;
 		return;
 	}
 
@@ -266,7 +267,7 @@ void cmMM01::cancelHedgeOrder(const boost::system::error_code& error){
 		}
 		if (!isHedgeOrderConfirmed)
 		{
-			cout << m_strategyId << ": waiting to cancel hedge order." << endl;
+			LOG(INFO)  << m_strategyId << ": waiting to cancel hedge order." << endl;
 			m_cancelHedgeTimer.expires_from_now(boost::posix_time::milliseconds(100));
 			m_cancelHedgeTimer.async_wait(boost::bind(&cmMM01::cancelHedgeOrder, this,
 				boost::asio::placeholders::error));
@@ -305,7 +306,7 @@ void cmMM01::confirmCancel_hedgeOrder()
 				m_hedgeOrderVol.clear();
 			}
 			else
-				cout << m_strategyId << " ERROR: send net hedge order failed, rc = " << netHedgeOrderRef << endl;
+				LOG(INFO)  << m_strategyId << " ERROR: send net hedge order failed, rc = " << netHedgeOrderRef << endl;
 		}
 		else
 			confirmCancel_resetStatus();
@@ -319,7 +320,7 @@ void cmMM01::onNetHedgeTradeRtn(tradeRtnPtr ptrade)
 	m_NetHedgeOrderVol -= ((ptrade->m_orderDir == ORDER_DIR_BUY)
 		? ptrade->m_volume : (ptrade->m_volume*-1));
 
-	cout << m_strategyId << ": net hedge order left: " << m_NetHedgeOrderVol << endl;
+	LOG(INFO)  << m_strategyId << ": net hedge order left: " << m_NetHedgeOrderVol << endl;
 	if (0.0 == m_NetHedgeOrderVol) //轧差对冲全部成交
 	{
 		confirmCancel_resetStatus();

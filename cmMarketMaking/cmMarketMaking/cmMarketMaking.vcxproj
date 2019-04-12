@@ -87,12 +87,12 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;_CRT_SECURE_NO_WARNINGS;GLOG_NO_ABBREVIATED_SEVERITIES;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>thostmduserapi.lib;thosttraderapi.lib;TapQuoteAPI.lib;TapTradeAPI.lib;lib_json.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>thostmduserapi.lib;thosttraderapi.lib;TapQuoteAPI.lib;TapTradeAPI.lib;lib_json.lib;libglog.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>copy  .\lib\ctp\*  ..\Debug\
@@ -168,6 +168,7 @@ copy  .\lib\*.lib  ..\Debug\</Command>
     <ClInclude Include="header\baseClass\Utils.h" />
     <ClInclude Include="header\ctp\quoteAdapter_CTP.h" />
     <ClInclude Include="header\ctp\tradeAdapter_CTP.h" />
+    <ClInclude Include="header\glog\initLog.h" />
     <ClInclude Include="header\infrastructure.h" />
     <ClInclude Include="header\infrastructureStruct.h" />
     <ClInclude Include="header\json\configloader.h" />
