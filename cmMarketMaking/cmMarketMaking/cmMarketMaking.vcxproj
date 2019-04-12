@@ -97,7 +97,8 @@
     <PostBuildEvent>
       <Command>copy  .\lib\ctp\*  ..\Debug\
 copy  .\lib\tap\*  ..\Debug\
-copy  .\lib\*.lib  ..\Debug\</Command>
+copy  .\lib\*.lib  ..\Debug\
+copy  .\lib\*.dll  ..\Debug\</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">

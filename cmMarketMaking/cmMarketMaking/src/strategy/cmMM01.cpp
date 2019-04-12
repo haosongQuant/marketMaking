@@ -25,7 +25,7 @@ void cmMM01::resetStrategyStatus(){
 };
 
 void cmMM01::startStrategy(){
-	LOG(INFO)  << m_strategyId << " starting..." << endl;
+	cout  << m_strategyId << " starting..." << endl;
 	if (STRATEGY_STATUS_START == m_strategyStatus)
 		m_infra->subscribeFutures(m_quoteAdapterID, m_exchange, m_productId, bind(&cmMM01::onRtnMD, this, _1));
 	resetStrategyStatus();

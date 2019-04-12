@@ -521,28 +521,37 @@ void tradeAdapterCTP::OnRtnOrder(CThostFtdcOrderField *pOrder)
 	}
 	if (m_OnOrderRtn)
 		m_OnOrderRtn(m_adapterID, pOrder);
-	/*
-	LOG(INFO)  << " 回报 | 报单已提交...序号:" << pOrder->BrokerOrderSeq
-	<< ", OrderStatus:" << pOrder->OrderStatus
-	<< ", CombHedgeFlag:" << pOrder->CombHedgeFlag
-	<< ", CombOffsetFlag:" << pOrder->CombOffsetFlag
-	<< ", Direction:" << pOrder->Direction
+	
+	LOG(INFO) << m_adapterID << " Rsp | order Rtn: orderRef: " << pOrder->OrderRef //<< pOrder->BrokerOrderSeq
 	<< ", InstrumentID:" << pOrder->InstrumentID
-	<< ", LimitPrice:" << opOrderrder->LimitPrice
-	<< ", MinVolume:" << pOrder->MinVolume
-	<< ", OrderPriceType:" << pOrder->OrderPriceType
+	<< ", Direction:" << pOrder->Direction
+	<< ", LimitPrice:" << pOrder->LimitPrice
+	<< ", OrderStatus:" << pOrder->OrderStatus
 	<< ", StatusMsg:" << pOrder->StatusMsg
-	<< ", orderRef:" << pOrder->OrderRef
-	<< endl;*/
+	//<< ", CombHedgeFlag:" << pOrder->CombHedgeFlag
+	//<< ", CombOffsetFlag:" << pOrder->CombOffsetFlag
+	//<< ", MinVolume:" << pOrder->MinVolume
+	//<< ", OrderPriceType:" << pOrder->OrderPriceType
+	//<< ", orderRef:" << pOrder->OrderRef
+	<< endl;
 };
 
 void tradeAdapterCTP::OnRtnTrade(CThostFtdcTradeField *pTrade)
 {
-
-	//LOG(INFO)  << " tradeAdapterCTP | 报单已成交...成交编号:" << pTrade->TradeID << endl;
-
 	if (m_OnTradeRtn)
 		m_OnTradeRtn(m_adapterID, pTrade);
+	LOG(INFO) << m_adapterID<< " Rsp | trade Rtn: orderRef: " << pTrade->OrderRef //<< pOrder->BrokerOrderSeq
+		<< ", tradeTime:" << pTrade->TradeTime
+		<< ", InstrumentID:" << pTrade->InstrumentID
+		<< ", Direction:" << pTrade->Direction
+		<< ", Price:" << pTrade->Price
+		<< ", volume:" << pTrade->Volume
+		//<< ", CombHedgeFlag:" << pOrder->CombHedgeFlag
+		//<< ", CombOffsetFlag:" << pOrder->CombOffsetFlag
+		//<< ", MinVolume:" << pOrder->MinVolume
+		//<< ", OrderPriceType:" << pOrder->OrderPriceType
+		//<< ", orderRef:" << pOrder->OrderRef
+		<< endl;
 };
 
 int tradeAdapterCTP::cancelOrder(int orderRef)
