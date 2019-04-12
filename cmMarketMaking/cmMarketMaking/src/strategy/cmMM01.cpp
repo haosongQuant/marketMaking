@@ -127,19 +127,26 @@ void cmMM01::onRspCancel(cancelRtnPtr pCancel)
 
 void cmMM01::CancelOrder()
 {
-	if (m_cancelBidOrderRC == 0 || m_cancelBidOrderRC == ORDER_CANCEL_ERROR_NOT_FOUND)
+	if (m_cancelBidOrderRC == 0 || m_cancelBidOrderRC == ORDER_CANCEL_ERROR_NOT_FOUND ||
+		m_cancelBidOrderRC == ORDER_CANCEL_ERROR_SEND_FAIL)
 		m_cancelBidOrderRC = m_infra->cancelOrder(m_tradeAdapterID, m_bidOrderRef,
 			bind(&cmMM01::onRspCancel, this, _1));
-	if (m_cancelAskOrderRC == 0 || m_cancelAskOrderRC == ORDER_CANCEL_ERROR_NOT_FOUND)
+	if (m_cancelAskOrderRC == 0 || m_cancelAskOrderRC == ORDER_CANCEL_ERROR_NOT_FOUND ||
+		m_cancelAskOrderRC == ORDER_CANCEL_ERROR_SEND_FAIL)
 		m_cancelAskOrderRC = m_infra->cancelOrder(m_tradeAdapterID, m_askOrderRef,
 			bind(&cmMM01::onRspCancel, this, _1));
 
-	if (m_cancelBidOrderRC == ORDER_CANCEL_ERROR_NOT_FOUND ||
-		m_cancelAskOrderRC == ORDER_CANCEL_ERROR_NOT_FOUND)
+	if (m_cancelBidOrderRC == ORDER_CANCEL_ERROR_NOT_FOUND || m_cancelBidOrderRC == ORDER_CANCEL_ERROR_SEND_FAIL ||
+		m_cancelAskOrderRC == ORDER_CANCEL_ERROR_NOT_FOUND || m_cancelAskOrderRC == ORDER_CANCEL_ERROR_SEND_FAIL)
 	{
 		cout << m_strategyId << ": waiting to cancel order." << endl;
 		m_cancelConfirmTimer.expires_from_now(boost::posix_time::milliseconds(5000));
 		m_cancelConfirmTimer.async_wait(boost::bind(&cmMM01::CancelOrder, this));
+	}
+	else if (m_cancelBidOrderRC == ORDER_CANCEL_ERROR_TRADED ||
+		     m_cancelAskOrderRC == ORDER_CANCEL_ERROR_TRADED)
+	{
+		cout << m_strategyId << ": traded before cancel." << endl;
 	}
 	else
 	{

@@ -88,10 +88,7 @@ int infrastructure::cancelOrder(string adapterID, int orderRef, boost::function<
 		tradeAdapterCTP * pTradeAdapter = (tradeAdapterCTP *)m_adapters[adapterID];
 		cancelRtnCd = pTradeAdapter->cancelOrder(orderRef);
 		if (cancelRtnCd > 0)
-		{
 			m_cancelRtnHandlers[adapterID][cancelRtnCd] = cancelRtnhandler;
-			return cancelRtnCd;
-		}
 		break;
 	}
 	case ADAPTER_TAP_TRADE:

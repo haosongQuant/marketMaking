@@ -608,12 +608,15 @@ int tradeAdapterCTP::cancelOrder(int orderRef)
 	if (ret == 0)
 	{
 		cout << m_adapterID << ": req | cancel order succ, orderRef: " << orderRef << endl;
-		return nextOrderRef;
+		if (iter->second->VolumeTraded > 0)
+			return ORDER_CANCEL_ERROR_TRADED;
+		else
+			return nextOrderRef;
 	}
 	else
 	{
 		cout << m_adapterID << ": req | cancel order fail, orderRef: " << orderRef << endl;
-		return -1;
+		return ORDER_CANCEL_ERROR_SEND_FAIL;
 	}
 };
 
