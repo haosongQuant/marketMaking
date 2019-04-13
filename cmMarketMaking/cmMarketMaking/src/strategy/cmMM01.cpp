@@ -12,20 +12,11 @@ cmMM01::cmMM01(string strategyId, string strategyTyp, string productId, string e
 	m_cancelConfirmTimer(tradeTP->getDispatcher()), m_cancelHedgeTimer(tradeTP->getDispatcher()),
 	m_resetStatusTimer(tradeTP->getDispatcher())
 {
-	m_strategyStatus  = STRATEGY_STATUS_START;
-};
-
-void cmMM01::resetStrategyStatus(){
-	m_strategyStatus = STRATEGY_STATUS_READY;
-	m_bidOrderRef = 0;
-	m_askOrderRef = 0;
-	m_cancelBidOrderRC = 0;
-	m_cancelAskOrderRC = 0;
-	m_isOrderCanceled = false;
+	m_strategyStatus = STRATEGY_STATUS_START;
 };
 
 void cmMM01::startStrategy(){
-	cout  << m_strategyId << " starting..." << endl;
+	cout << m_strategyId << " starting..." << endl;
 	if (STRATEGY_STATUS_START == m_strategyStatus)
 		m_infra->subscribeFutures(m_quoteAdapterID, m_exchange, m_productId, bind(&cmMM01::onRtnMD, this, _1));
 	resetStrategyStatus();
@@ -33,6 +24,50 @@ void cmMM01::startStrategy(){
 
 void cmMM01::stopStrategy(){
 	m_strategyStatus = STRATEGY_STATUS_STOP;
+};
+
+void cmMM01::resetStrategyStatus(){
+	m_bidOrderRef = 0;
+	m_askOrderRef = 0;
+	m_cancelBidOrderRC = 0;
+	m_cancelAskOrderRC = 0;
+	m_strategyStatus = STRATEGY_STATUS_READY;
+	m_isOrderCanceled = false;
+};
+
+//行情响应函数: 更新最新行情，调用quoteEngine处理行情
+void cmMM01::onRtnMD(futuresMDPtr pFuturesMD)
+{
+	{
+		boost::mutex::scoped_lock lock(m_lastQuoteLock);
+		m_lastQuotePtr = pFuturesMD;
+	}
+	m_quoteTP->getDispatcher().post(bind(&cmMM01::quoteEngine, this));
+};
+
+
+//行情处理
+//    如果策略处于 READY      状态，下单
+//    如果策略处于 ORDER_SENT 状态，撤单并异步调用confirmCancel_sendOrder(),重新下单
+void cmMM01::quoteEngine()
+{
+	boost::recursive_mutex::scoped_lock lock(m_strategyStatusLock);
+	switch (m_strategyStatus)
+	{
+	case STRATEGY_STATUS_READY:
+	{
+		sendOrder();
+		break;
+	}
+	case STRATEGY_STATUS_ORDER_SENT:
+	{
+		m_strategyStatus = STRATEGY_STATUS_CLOSING_POSITION;
+		m_cancelBidOrderRC = 0;
+		m_cancelAskOrderRC = 0;
+		CancelOrder();
+		break;
+	}
+	}
 };
 
 void cmMM01::orderPrice(double* bidprice, double* askprice)
@@ -84,41 +119,6 @@ void cmMM01::sendOrder()
 	m_strategyStatus = STRATEGY_STATUS_ORDER_SENT;
 };
 
-
-//行情响应函数: 更新最新行情，调用quoteEngine处理行情
-void cmMM01::onRtnMD(futuresMDPtr pFuturesMD)
-{
-	{
-		boost::mutex::scoped_lock lock(m_lastQuoteLock);
-		m_lastQuotePtr = pFuturesMD;
-	}
-	m_quoteTP->getDispatcher().post(bind(&cmMM01::quoteEngine, this));
-};
-
-
-//行情处理
-//    如果策略处于 READY      状态，下单
-//    如果策略处于 ORDER_SENT 状态，撤单并异步调用confirmCancel_sendOrder(),重新下单
-void cmMM01::quoteEngine()
-{
-	boost::recursive_mutex::scoped_lock lock(m_strategyStatusLock);
-	switch (m_strategyStatus)
-	{
-	case STRATEGY_STATUS_READY:
-	{
-		sendOrder();
-		break;
-	}
-	case STRATEGY_STATUS_ORDER_SENT:
-	{
-		m_strategyStatus = STRATEGY_STATUS_CLOSING_POSITION;
-		m_cancelBidOrderRC = 0;
-		m_cancelAskOrderRC = 0;
-		CancelOrder();
-		break;
-	}
-	}
-};
 
 //撤单响应函数
 void cmMM01::onRspCancel(cancelRtnPtr pCancel)
