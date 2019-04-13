@@ -101,6 +101,7 @@ void cmMM01::onRtnMD(futuresMDPtr pFuturesMD)
 //    如果策略处于 ORDER_SENT 状态，撤单并异步调用confirmCancel_sendOrder(),重新下单
 void cmMM01::quoteEngine()
 {
+	boost::recursive_mutex::scoped_lock lock(m_strategyStatusLock);
 	switch (m_strategyStatus)
 	{
 	case STRATEGY_STATUS_READY:
@@ -111,11 +112,9 @@ void cmMM01::quoteEngine()
 	case STRATEGY_STATUS_ORDER_SENT:
 	{
 		m_strategyStatus = STRATEGY_STATUS_CLOSING_POSITION;
-
 		m_cancelBidOrderRC = 0;
 		m_cancelAskOrderRC = 0;
 		CancelOrder();
-
 		break;
 	}
 	}
@@ -152,6 +151,7 @@ void cmMM01::CancelOrder()
 	else
 	{
 		m_isOrderCanceled = true;
+		boost::recursive_mutex::scoped_lock lock(m_strategyStatusLock);
 		if (STRATEGY_STATUS_CLOSING_POSITION == m_strategyStatus)
 		{//重新下单
 			sendOrder();
@@ -175,13 +175,17 @@ void cmMM01::onOrderRtn(orderRtnPtr pOrder)
 //    4、等待1s钟，调用对冲指令处理函数 cancelHedgeOrder()
 void cmMM01::onTradeRtn(tradeRtnPtr ptrade)
 {
-	enum_cmMM01_strategy_status status = m_strategyStatus;
-	m_strategyStatus = STRATEGY_STATUS_TRADED_HEDGING;
-	if (STRATEGY_STATUS_ORDER_SENT == status)
-	{//撤单
-		m_cancelBidOrderRC = 0;
-		m_cancelAskOrderRC = 0;
-		CancelOrder();
+	enum_cmMM01_strategy_status status;
+	{
+		boost::recursive_mutex::scoped_lock lock(m_strategyStatusLock);
+		status = m_strategyStatus;
+		m_strategyStatus = STRATEGY_STATUS_TRADED_HEDGING;
+		if (STRATEGY_STATUS_ORDER_SENT == status)
+		{//撤单
+			m_cancelBidOrderRC = 0;
+			m_cancelAskOrderRC = 0;
+			CancelOrder();
+		}
 	}
 
 	//同价对冲
@@ -284,8 +288,10 @@ void cmMM01::confirmCancel_hedgeOrder()
 	//boost::mutex::scoped_lock lock(m_hedgeOrderVolLock); //在 cancelHedgeOrder() 中互斥
 	if (m_hedgeOrderVol.size() > 0)
 	{
-		m_strategyStatus = STRATEGY_STATUS_TRADED_NET_HEDGING;
-
+		{
+			boost::recursive_mutex::scoped_lock lock(m_strategyStatusLock);
+			m_strategyStatus = STRATEGY_STATUS_TRADED_NET_HEDGING;
+		}
 		double netHedgeVol = 0.0;
 		for (auto iter = m_hedgeOrderVol.begin(); iter != m_hedgeOrderVol.end(); iter++) 
 			netHedgeVol += iter->second;

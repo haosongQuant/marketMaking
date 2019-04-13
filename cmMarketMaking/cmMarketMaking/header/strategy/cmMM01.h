@@ -59,7 +59,7 @@ private:
 
 private:
 	enum_cmMM01_strategy_status m_strategyStatus;
-	//boost::mutex                m_strategyStatusLock;
+	boost::recursive_mutex      m_strategyStatusLock;
 
 public:
 	void onRtnMD(futuresMDPtr pFuturesMD);
