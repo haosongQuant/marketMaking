@@ -134,29 +134,9 @@ private:
 public:
 	infrastructure(Json::Value config);
 	void init();
-	//bool isInfrastructureReady();
 
-	//for adapter logout or disconnection.
-private:
-	//boost::unordered_map<string, list<boost::function<void(string, bool)> > > m_adapterMonitorList;
-	//boost::mutex m_adapterMonitorListLock;
-	//void callAdapterMonitor(string adapterID, bool isAdapterAlive);
-	//bool isAdapterReady(string adapterID);
 public:
-	//bool registerAdapterMonitor(string adapterID, boost::function<void(string, bool)> adapterMonitor);
-
-	//∫œ‘º
-private: //futures contract
-	//map<string,  // adapterID
-	//	map<string, futuresContractDetailPtr> > m_futuresContracts0; // contract code -> contract detail
-	//boost::unordered_map<string,        //adapterID
-	//	boost::unordered_map<string,    //exchange
-	//	boost::unordered_map<string,    //productID
-	//	boost::unordered_map<string, futuresContractDetailPtr> > > > m_futuresContracts1;
-	//map<string,        //adapterID
-	//	map<string,    //exchange
-	//	map<string,    //productID
-	//	map<string, futuresContractDetailPtr> > > > m_futuresContracts1; // contract code -> contract detail
+	void queryOrder(string adapterID);
 
 public:
 	void onRtnCtpInstruments(string adapterID, CThostFtdcInstrumentField* inst);
@@ -164,31 +144,14 @@ public:
 	void onRtnCtpTrade(string adapterID, CThostFtdcTradeField *pTrade);
 	void onRtnTapOrder(string adapterID, TapAPIOrderInfoNotice *pOrder);
 	void onRtnTapTrade(string adapterID, TapAPIFillInfo *pTrade);
-/*	map<string, map<string, futuresContractDetailPtr> > & getFuturesContracts(){ return m_futuresContracts0; };
-	map<string,map<string,map<string,
-		map<string, futuresContractDetailPtr> > > >& getFuturesContracts1(){ return m_futuresContracts1; }*/;
 
 private: // adapter
 
 	map<string, enum_adapterType> m_adapterTypeMap; // adapterID -> adapterType
 	void registerAdapterType(string, string);
-	//map<string, queryAdapterCfgStru> m_queryAdapterCfg;  // adapterID -> config
-	//map<string, quoteAdapterCfgStru> m_quoteAdapterCfg;  // adapterID -> config
 
-	boost::unordered_map<string, adapterBase*> m_adapters; // adapterID -> adapterBase*
-	//boost::unordered_map<string, quoteAdapterBase*> m_quoteAdapters; // adapterID -> quoteAdapterBase*
-	//boost::unordered_map<string, traderAdapterBase*> m_tradeAdapters; // adapterID-> tradeAdapterBase*
-	//map<string, adapter_status> m_adapterStatus; //adapterID->adapter status
-	//boost::mutex m_adapterStatusLock;
-
-private:
-	//void loadAdapterConfig();
-	//void createTradeAdapter(string adapterID, string tradeFront, string broker, string user,
-	//	string pwd, string userproductID, string authenticateCode, athenathreadpoolPtr tp);
-	//void createQuoteAdapter(string adapterID, string mdFront, string broker, string user, string pwd);
-	//void deleteTradeAdapter(string adapterID, bool reCreate);
-	//void deleteQuoteAdapter(string adapterID, bool reCreate);
-
+	boost::unordered_map<string, adapterBase*> m_adapters;
+	
 public:
 	void onAdapterLogin(string adapterID);
 	void onAdapterLogout(string adapterID);
@@ -233,6 +196,8 @@ public:
 private:
 	map<enum_adapterType, map<enum_order_type, char> > m_orderTypeMap;
 	map<enum_adapterType, map<enum_order_dir_type, char> > m_orderDirMap;
+	map<enum_adapterType, map<char, enum_order_dir_type> > m_orderDirMapRev;
+	map<enum_adapterType, map<char, enum_order_status> > m_orderStatusMapRev;
 	map<enum_adapterType, map<enum_position_effect_type, char> > m_positinEffectMap;
 	map<enum_adapterType, map<enum_hedge_flag, char> > m_hedgeFlagMap;
 	void genOrderParmMap();

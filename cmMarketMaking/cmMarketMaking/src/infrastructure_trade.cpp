@@ -1,32 +1,6 @@
 #include "baseClass\Utils.h"
 #include "infrastructure.h"
 
-void infrastructure::genOrderParmMap()
-{
-	//委托类型: 限价单、市价单
-	m_orderTypeMap[ADAPTER_CTP_TRADE][ORDER_TYPE_MARKET] = THOST_FTDC_OPT_AnyPrice;
-	m_orderTypeMap[ADAPTER_CTP_TRADE][ORDER_TYPE_LIMIT] = THOST_FTDC_OPT_LimitPrice;
-	m_orderTypeMap[ADAPTER_TAP_TRADE][ORDER_TYPE_MARKET] = TAPI_ORDER_TYPE_MARKET;
-	m_orderTypeMap[ADAPTER_TAP_TRADE][ORDER_TYPE_LIMIT] = TAPI_ORDER_TYPE_LIMIT;
-
-	//委托方向: 买、卖
-	m_orderDirMap[ADAPTER_CTP_TRADE][ORDER_DIR_BUY] = THOST_FTDC_D_Buy;
-	m_orderDirMap[ADAPTER_CTP_TRADE][ORDER_DIR_SELL] = THOST_FTDC_D_Sell;
-	m_orderDirMap[ADAPTER_TAP_TRADE][ORDER_DIR_BUY] = TAPI_SIDE_BUY;
-	m_orderDirMap[ADAPTER_TAP_TRADE][ORDER_DIR_SELL] = TAPI_SIDE_SELL;
-
-	//开平标志
-	m_positinEffectMap[ADAPTER_CTP_TRADE][POSITION_EFFECT_OPEN] = THOST_FTDC_OFEN_Open;
-	m_positinEffectMap[ADAPTER_CTP_TRADE][POSITION_EFFECT_CLOSE] = THOST_FTDC_OFEN_Close;
-	m_positinEffectMap[ADAPTER_TAP_TRADE][POSITION_EFFECT_OPEN] = TAPI_PositionEffect_OPEN;
-	m_positinEffectMap[ADAPTER_TAP_TRADE][POSITION_EFFECT_CLOSE] = TAPI_PositionEffect_COVER;
-
-	//投机套保标志
-	m_hedgeFlagMap[ADAPTER_CTP_TRADE][FLAG_SPECULATION] = THOST_FTDC_HF_Speculation;
-	m_hedgeFlagMap[ADAPTER_CTP_TRADE][FLAG_MARKETMAKER] = THOST_FTDC_HF_MarketMaker;
-
-};
-
 int infrastructure::insertOrder(string adapterID, string instrument, string exchange, 
 	enum_order_type orderType, enum_order_dir_type dir, enum_position_effect_type positionEffect, 
 	enum_hedge_flag hedgeflag, double price, unsigned int volume,
@@ -118,11 +92,37 @@ void infrastructure::onRespCtpCancel(string adapterID, CThostFtdcInputOrderActio
 	}
 
 };
-
+void infrastructure::queryOrder(string adapterID)
+{
+	switch (m_adapterTypeMap[adapterID])
+	{
+	case ADAPTER_CTP_TRADE:
+	{
+		tradeAdapterCTP * pTradeAdapter = (tradeAdapterCTP *)m_adapters[adapterID];
+		pTradeAdapter->queryOrder();
+		break;
+	}
+	case ADAPTER_TAP_TRADE:
+	{
+		break;
+	}
+	}
+	return;
+};
 void infrastructure::onRtnCtpOrder(string adapterID, CThostFtdcOrderField *pOrder)
 {
 	orderRtnPtr orderPtr = orderRtnPtr(new orderRtn_struct());
 	int orderRef = atoi(pOrder->OrderRef);
+	orderPtr->m_orderRef = orderRef;
+	orderPtr->m_direction = m_orderDirMapRev[ADAPTER_CTP_TRADE][pOrder->Direction];
+	orderPtr->m_InstrumentID = string(pOrder->InstrumentID);
+	orderPtr->m_orderStatus = m_orderStatusMapRev[ADAPTER_CTP_TRADE][pOrder->OrderStatus];
+	orderPtr->m_price = pOrder->LimitPrice;
+	orderPtr->m_statusMsg = string(pOrder->StatusMsg);
+	orderPtr->m_volumeTotal = pOrder->VolumeTotal;
+	orderPtr->m_VolumeTotalOriginal = pOrder->VolumeTotalOriginal;
+	orderPtr->m_volumeTraded = pOrder->VolumeTraded;
+	orderPtr->m_ZCETotalTradedVolume = pOrder->ZCETotalTradedVolume;
 	auto iter1 = m_orderRtnHandlers.find(adapterID);
 	if (iter1 != m_orderRtnHandlers.end())
 	{

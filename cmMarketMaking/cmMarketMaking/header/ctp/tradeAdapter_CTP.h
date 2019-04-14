@@ -24,16 +24,7 @@ private:
 	//int m_frontId;    //前置编号
 	//int m_sessionId;    //会话编号
 
-	char             m_orderRef[13];
-	boost::mutex     m_orderRefLock;
 
-	bool m_qryingOrder; //主动查询报单标识
-	void openOrderQrySwitch(const boost::system::error_code& error){
-		if (error)
-			return;
-		m_qryingOrder = false;
-	};
-	void closeOrderQrySwitch(){ m_qryingOrder = true; };
 
 	map<int, CThostFtdcInputOrderFieldPtr> m_ref2sentOrder;
 	boost::detail::spinlock     m_ref2sentOrder_lock;
@@ -46,6 +37,9 @@ private:
 	CThostFtdcReqAuthenticateField m_authenticateField;
 
 private:
+
+	char             m_orderRef[13];
+	boost::mutex     m_orderRefLock;
 	int updateOrderRef(){
 		int nextOrderRef = atoi(m_orderRef)+1;
 		sprintf(m_orderRef, "%012d", nextOrderRef);
@@ -66,6 +60,7 @@ public:
 	int queryTradingAccount();//查询资金
 	int queryInvestorPosition();//查询持仓
 	int queryAllInstrument();//查询全部合约
+	int confirmSettlementInfo();//确认结算结果
 
 	//下单
 	virtual int OrderInsert(string instrument, string exchange, char priceType, char dir,
@@ -76,9 +71,17 @@ public:
 	virtual int cancelOrder(int orderRef);
 
 private:
+	bool m_qryingOrder; //主动查询报单标识
+	boost::mutex     m_qryOrderLock;
+	void openOrderQrySwitch(){ m_qryingOrder = false; };
+	void closeOrderQrySwitch(){ m_qryingOrder = true; };
+public:
+	void queryOrder();
+
+private:
 	athenathreadpoolPtr m_threadpool;
 	athena_lag_timer    m_lag_Timer;
-	athena_lag_timer    m_qryOrder_Timer;
+	//athena_lag_timer    m_qryOrder_Timer;
 public:
 	boost::function<void(string adapterID)> m_OnUserLogin;
 	boost::function<void(string adapterID)> m_OnUserLogout;
@@ -125,6 +128,8 @@ public:
 	virtual void OnRspQryInvestorPosition(CThostFtdcInvestorPositionField *pInvestorPosition, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
 	///请求查询合约响应
 	virtual void OnRspQryInstrument(CThostFtdcInstrumentField *pInstrument, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
+	///投资者结算结果确认响应
+	virtual void OnRspSettlementInfoConfirm(CThostFtdcSettlementInfoConfirmField *pSettlementInfoConfirm, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
 
 	///报单录入请求响应
 	virtual void OnRspOrderInsert(CThostFtdcInputOrderField *pInputOrder, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);

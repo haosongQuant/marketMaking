@@ -50,8 +50,49 @@ enum enum_order_error
 	ORDER_CANCEL_ERROR_SEND_FAIL,
 };
 
+enum enum_order_status
+{	///全部成交,
+	ORDER_STATUS_AllTraded,
+	///部分成交还在队列中,
+	ORDER_STATUS_PartTradedQueueing,
+	///部分成交不在队列中,
+	ORDER_STATUS_PartTradedNotQueueing,
+	///未成交还在队列中,
+	ORDER_STATUS_NoTradeQueueing,
+	///未成交不在队列中,
+	ORDER_STATUS_NoTradeNotQueueing,
+	///撤单,
+	ORDER_STATUS_Canceled,
+	///未知,
+	ORDER_STATUS_Unknown,
+	///尚未触发,
+	ORDER_STATUS_NotTouched,
+	///已触发,
+	ORDER_STATUS_Touched,
+};
+
 struct orderRtn_struct
 {
+	///报单引用
+	int m_orderRef;
+	///合约代码
+	string m_InstrumentID;
+	///报单状态
+	enum_order_status m_orderStatus;
+	///状态信息
+	string m_statusMsg;
+	///买卖方向
+	enum_order_dir_type	m_direction;
+	///价格
+	double m_price;
+	///数量
+	int	   m_VolumeTotalOriginal;
+	///今成交数量
+	int    m_volumeTraded;
+	///剩余数量
+	int    m_volumeTotal;
+	///郑商所成交数量 ??什么鬼
+	int	m_ZCETotalTradedVolume;
 };
 typedef boost::shared_ptr<orderRtn_struct> orderRtnPtr;
 

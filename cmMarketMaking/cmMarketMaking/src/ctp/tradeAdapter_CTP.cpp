@@ -8,7 +8,7 @@ using namespace std;
 
 tradeAdapterCTP::tradeAdapterCTP(string adapterID, char * tradeFront, char * broker, char * user, char * pwd,
 	athenathreadpoolPtr tp)// :m_onLogin(NULL)
-	:m_threadpool(tp), m_lag_Timer(tp->getDispatcher()), m_qryOrder_Timer(tp->getDispatcher())
+	:m_threadpool(tp), m_lag_Timer(tp->getDispatcher())//, m_qryOrder_Timer(tp->getDispatcher())
 {
 	m_adapterID = adapterID;
 
@@ -30,7 +30,7 @@ tradeAdapterCTP::tradeAdapterCTP(string adapterID, char * tradeFront, char * bro
 
 tradeAdapterCTP::tradeAdapterCTP(string adapterID, char* tradeFront, char* broker, char* user, char* pwd,
 	char * userproductID, char * authenticateCode, athenathreadpoolPtr tp)
-	:m_threadpool(tp), m_lag_Timer(tp->getDispatcher()), m_qryOrder_Timer(tp->getDispatcher())
+	:m_threadpool(tp), m_lag_Timer(tp->getDispatcher())//, m_qryOrder_Timer(tp->getDispatcher())
 {
 	m_adapterID = adapterID;
 
@@ -321,7 +321,7 @@ void tradeAdapterCTP::OnRspQryInvestorPosition(CThostFtdcInvestorPositionField *
 		{
 			LOG(INFO)  << m_adapterID << ": query investor position done." << endl;
 			m_lag_Timer.expires_from_now(boost::posix_time::milliseconds(3000));
-			m_lag_Timer.async_wait(boost::bind(&tradeAdapterCTP::queryAllInstrument, this));
+			m_lag_Timer.async_wait(boost::bind(&tradeAdapterCTP::confirmSettlementInfo, this));
 		}
 	}
 	else
@@ -331,6 +331,41 @@ void tradeAdapterCTP::OnRspQryInvestorPosition(CThostFtdcInvestorPositionField *
 			LOG(INFO)  << ", pRspInfo is nullptr!" << endl;
 		else
 			LOG(INFO)  << ", ErrorID: " << pRspInfo->ErrorID << ", ErrorMsg : " << pRspInfo->ErrorMsg << endl;
+		m_lag_Timer.expires_from_now(boost::posix_time::milliseconds(3000));
+		m_lag_Timer.async_wait(boost::bind(&tradeAdapterCTP::confirmSettlementInfo, this));
+	}
+};
+int tradeAdapterCTP::confirmSettlementInfo()
+{
+	CThostFtdcSettlementInfoConfirmField* pConfirm = new CThostFtdcSettlementInfoConfirmField();
+	memset(pConfirm, 0, sizeof(CThostFtdcSettlementInfoConfirmField));
+	strncpy(pConfirm->BrokerID, m_loginField.BrokerID, sizeof(pConfirm->BrokerID) - 1);
+	strncpy(pConfirm->InvestorID, m_loginField.UserID, sizeof(pConfirm->InvestorID) - 1);
+	m_pUserApi->ReqSettlementInfoConfirm(pConfirm, ++m_requestId);
+	return 0;
+};
+
+
+///投资者结算结果确认响应
+void tradeAdapterCTP::OnRspSettlementInfoConfirm(CThostFtdcSettlementInfoConfirmField *pSettlementInfoConfirm, 
+	CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
+{
+	if (pSettlementInfoConfirm)
+	{
+		if (bIsLast)
+		{
+			LOG(INFO) << m_adapterID << ": resp | confirm Settlement info succ." << endl;
+			m_lag_Timer.expires_from_now(boost::posix_time::milliseconds(3000));
+			m_lag_Timer.async_wait(boost::bind(&tradeAdapterCTP::queryAllInstrument, this));
+		}
+	}
+	else
+	{
+		LOG(INFO) << m_adapterID << ": resp | confirm Settlement info fail";
+		if (pRspInfo == nullptr)
+			LOG(INFO) << ", pRspInfo is nullptr!" << endl;
+		else
+			LOG(INFO) << ", ErrorID: " << pRspInfo->ErrorID << ", ErrorMsg : " << pRspInfo->ErrorMsg << endl;
 		m_lag_Timer.expires_from_now(boost::posix_time::milliseconds(3000));
 		m_lag_Timer.async_wait(boost::bind(&tradeAdapterCTP::queryAllInstrument, this));
 	}
@@ -491,21 +526,41 @@ void tradeAdapterCTP::OnErrRtnOrderInsert(CThostFtdcInputOrderField *pInputOrder
 		LOG(INFO)  << "resp | order insert fail, ErrorID: " << pRspInfo->ErrorID << ", ErrorMsg: " << pRspInfo->ErrorMsg << endl;
 };
 
+void tradeAdapterCTP::queryOrder()
+{
+	boost::mutex::scoped_lock lock(m_qryOrderLock);
+	if (!m_qryingOrder)
+	{
+		CThostFtdcQryOrderField qryOrder;
+		memset(&qryOrder, 0, sizeof(CThostFtdcQryOrderField));
+		strncpy(qryOrder.BrokerID, m_loginField.BrokerID, sizeof(qryOrder.BrokerID) - 1);
+		strncpy(qryOrder.InvestorID, m_loginField.UserID, sizeof(qryOrder.InvestorID) - 1);
+		m_pUserApi->ReqQryOrder(&qryOrder, ++m_requestId);
+		LOG(WARNING) << m_adapterID << ": Req | query order start ..." << endl;
+		closeOrderQrySwitch();
+	}
+	else
+		LOG(WARNING) << m_adapterID << ": query order is in process, no more query lunched." << endl;
+};
+
 void tradeAdapterCTP::OnRspQryOrder(CThostFtdcOrderField *pOrder, CThostFtdcRspInfoField *pRspInfo, 
 	int nRequestID, bool bIsLast)
 {
-	CThostFtdcOrderFieldPtr orderPtr = CThostFtdcOrderFieldPtr(new CThostFtdcOrderField(*pOrder));
-	int orderRef = atoi(pOrder->OrderRef);
-	{
-		//LOG(INFO)  << m_adapterID << ": locking m_ref2order in OnRspQryOrder." << endl;
-		boost::mutex::scoped_lock l(m_ref2order_lock);
-		m_ref2order[orderRef] = orderPtr;
-		//LOG(INFO)  << m_adapterID << ": unlocking m_ref2order in OnRspQryOrder." << endl;
-	}
-	if (bIsLast) //返回报单完成
-	{
-		m_qryingOrder = false;
-		m_qryOrder_Timer.cancel();
+	if (!isErrorRespInfo(pRspInfo)){
+		CThostFtdcOrderFieldPtr orderPtr = CThostFtdcOrderFieldPtr(new CThostFtdcOrderField(*pOrder));
+		int orderRef = atoi(pOrder->OrderRef);
+		{
+			boost::mutex::scoped_lock l(m_ref2order_lock);
+			m_ref2order[orderRef] = orderPtr;
+		}
+		if (m_OnOrderRtn)
+			m_OnOrderRtn(m_adapterID, pOrder);
+		if (bIsLast) //返回报单完成
+		{
+			boost::mutex::scoped_lock lock(m_qryOrderLock);
+			openOrderQrySwitch();
+			//m_qryOrder_Timer.cancel();
+		}
 	}
 };
 
@@ -565,35 +620,7 @@ int tradeAdapterCTP::cancelOrder(int orderRef)
 	}
 	if (iter == m_ref2order.end())
 	{
-		LOG(WARNING) << m_adapterID << ": cancel Order fail | orderRef " << orderRef << " not found in adapter, querying from server..." << endl;
-		{
-			//LOG(INFO)  << m_adapterID << ": locking m_ref2sentOrder in cancelOrder." << endl;
-			boost::detail::spinlock l1(m_ref2sentOrder_lock);
-			if (!m_qryingOrder)
-			{
-				auto iter1 = m_ref2sentOrder.find(orderRef);
-				if (iter1 != m_ref2sentOrder.end())
-				{
-					CThostFtdcQryOrderField qryOrder;
-					memset(&qryOrder, 0, sizeof(CThostFtdcQryOrderField));
-					strncpy(qryOrder.BrokerID, m_loginField.BrokerID, sizeof(qryOrder.BrokerID) - 1);
-					strncpy(qryOrder.InvestorID, m_loginField.UserID, sizeof(qryOrder.InvestorID) - 1);
-					strncpy(qryOrder.ExchangeID, iter1->second->ExchangeID, sizeof(qryOrder.ExchangeID) - 1);
-					//athenaUtils::getCurrTime(qryOrder.InsertTimeStart, -60 * 10);
-					closeOrderQrySwitch();
-					m_pUserApi->ReqQryOrder(&qryOrder, ++m_requestId);
-					LOG(INFO)  << m_adapterID << ": Req | querying old order." << endl;
-					m_qryOrder_Timer.expires_from_now(boost::posix_time::milliseconds(60*1000));
-					m_qryOrder_Timer.async_wait(boost::bind(&tradeAdapterCTP::openOrderQrySwitch, this,
-						boost::asio::placeholders::error));
-				}
-				else
-					LOG(WARNING) << m_adapterID << ": orderRef " << orderRef << " not found in m_ref2sentOrder, querying from server fail." << endl;
-			}
-			else
-				LOG(WARNING) << m_adapterID << ": query order is in process, no more query lunched." << endl;
-			//LOG(INFO)  << m_adapterID << ": unlocking m_ref2sentOrder in cancelOrder." << endl;
-		}
+		LOG(WARNING) << m_adapterID << ": cancel Order fail | order return not received, orderRef: " << orderRef << endl;
 		return ORDER_CANCEL_ERROR_NOT_FOUND;
 	}
 	CThostFtdcInputOrderActionField actionField;
@@ -603,11 +630,9 @@ int tradeAdapterCTP::cancelOrder(int orderRef)
 	actionField.SessionID = iter->second->SessionID;
 	int nextOrderRef = -1;
 	{
-		//LOG(INFO)  << m_adapterID << ": locking m_orderRefLock in cancelOrder." << endl;
 		boost::mutex::scoped_lock l2(m_orderRefLock);
 		nextOrderRef = updateOrderRef();
 		actionField.OrderActionRef = nextOrderRef;
-		//LOG(INFO)  << m_adapterID << ": unlocking m_orderRefLock in cancelOrder." << endl;
 	}
 	sprintf(actionField.OrderRef, "%012d", orderRef);
 	strncpy(actionField.BrokerID, m_loginField.BrokerID, sizeof(actionField.BrokerID));
@@ -618,10 +643,7 @@ int tradeAdapterCTP::cancelOrder(int orderRef)
 	if (ret == 0)
 	{
 		LOG(INFO)  << m_adapterID << ": req | cancel order succ, orderRef: " << orderRef << endl;
-		if (iter->second->VolumeTraded > 0)
-			return ORDER_CANCEL_ERROR_TRADED;
-		else
-			return nextOrderRef;
+		return nextOrderRef;
 	}
 	else
 	{

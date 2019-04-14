@@ -138,61 +138,41 @@ void infrastructure::initAdapters()
 	}
 }
 
+void infrastructure::genOrderParmMap()
+{
+	//委托类型: 限价单、市价单
+	m_orderTypeMap[ADAPTER_CTP_TRADE][ORDER_TYPE_MARKET] = THOST_FTDC_OPT_AnyPrice;
+	m_orderTypeMap[ADAPTER_CTP_TRADE][ORDER_TYPE_LIMIT] = THOST_FTDC_OPT_LimitPrice;
+	m_orderTypeMap[ADAPTER_TAP_TRADE][ORDER_TYPE_MARKET] = TAPI_ORDER_TYPE_MARKET;
+	m_orderTypeMap[ADAPTER_TAP_TRADE][ORDER_TYPE_LIMIT] = TAPI_ORDER_TYPE_LIMIT;
 
-//
-//void infrastructure::loadAdapterConfig()
-//{
-//	int adapterNum = m_config["tradeAdapters"].size();
-//	for (int i = 0; i < adapterNum; ++i)
-//	{
-//		string adapterID;
-//		tradeAdapterCfgStru tradeAdapter;
-//		Json::Value adapterConfig = m_config["tradeAdapters"][i];
-//		adapterID = adapterConfig["adapterID"].asString();
-//		tradeAdapter.m_adapterID = adapterID;
-//		tradeAdapter.m_frontIP = adapterConfig["frontIP"].asString();
-//		tradeAdapter.m_broker = adapterConfig["broker"].asString();
-//		tradeAdapter.m_user = adapterConfig["user"].asString();
-//		tradeAdapter.m_pwd = adapterConfig["pwd"].asString();
-//		tradeAdapter.m_Authenticate = adapterConfig["Authenticate"].asBool();
-//		tradeAdapter.m_productID = adapterConfig["productID"].asString();
-//		tradeAdapter.m_authCode = adapterConfig["authCode"].asString();
-//		m_tradeAdapterCfg[adapterID] = tradeAdapter;
-//		Json::Value openConfig = adapterConfig["openTime"];
-//		loadOpenTime(adapterID, "trade", openConfig);
-//	}
-//	adapterNum = m_config["queryAdapters"].size();
-//	for (int i = 0; i < adapterNum; ++i)
-//	{
-//		string adapterID;
-//		queryAdapterCfgStru queryAdapter;
-//		Json::Value adapterConfig = m_config["queryAdapters"][i];
-//		adapterID = adapterConfig["adapterID"].asString();
-//		queryAdapter.m_adapterID = adapterID;
-//		queryAdapter.m_frontIP = adapterConfig["frontIP"].asString();
-//		queryAdapter.m_broker = adapterConfig["broker"].asString();
-//		queryAdapter.m_user = adapterConfig["user"].asString();
-//		queryAdapter.m_pwd = adapterConfig["pwd"].asString();
-//		queryAdapter.m_productID = adapterConfig["productID"].asString();
-//		queryAdapter.m_authCode = adapterConfig["authCode"].asString();
-//		m_queryAdapterCfg[adapterID] = queryAdapter;
-//		Json::Value openConfig = adapterConfig["openTime"];
-//		loadOpenTime(adapterID, "query", openConfig);
-//	}
-//	adapterNum = m_config["quoteAdapters"].size();
-//	for (int i = 0; i < adapterNum; ++i)
-//	{
-//		string adapterID;
-//		quoteAdapterCfgStru quoteAdapter;
-//		Json::Value adapterConfig = m_config["quoteAdapters"][i];
-//		adapterID = adapterConfig["adapterID"].asString();
-//		quoteAdapter.m_adapterID = adapterID;
-//		quoteAdapter.m_frontIP = adapterConfig["frontIP"].asString();
-//		quoteAdapter.m_broker = adapterConfig["broker"].asString();
-//		quoteAdapter.m_user = adapterConfig["user"].asString();
-//		quoteAdapter.m_pwd = adapterConfig["pwd"].asString();
-//		m_quoteAdapterCfg[adapterID] = quoteAdapter;
-//		Json::Value openConfig = adapterConfig["openTime"];
-//		loadOpenTime(adapterID, "quote", openConfig);
-//	}
-//};
+	//委托方向: 买、卖
+	m_orderDirMap[ADAPTER_CTP_TRADE][ORDER_DIR_BUY] = THOST_FTDC_D_Buy;
+	m_orderDirMap[ADAPTER_CTP_TRADE][ORDER_DIR_SELL] = THOST_FTDC_D_Sell;
+	m_orderDirMap[ADAPTER_TAP_TRADE][ORDER_DIR_BUY] = TAPI_SIDE_BUY;
+	m_orderDirMap[ADAPTER_TAP_TRADE][ORDER_DIR_SELL] = TAPI_SIDE_SELL;
+	m_orderDirMapRev[ADAPTER_CTP_TRADE][THOST_FTDC_D_Buy] = ORDER_DIR_BUY;
+	m_orderDirMapRev[ADAPTER_CTP_TRADE][THOST_FTDC_D_Sell] = ORDER_DIR_SELL;
+
+	//开平标志
+	m_positinEffectMap[ADAPTER_CTP_TRADE][POSITION_EFFECT_OPEN] = THOST_FTDC_OFEN_Open;
+	m_positinEffectMap[ADAPTER_CTP_TRADE][POSITION_EFFECT_CLOSE] = THOST_FTDC_OFEN_Close;
+	m_positinEffectMap[ADAPTER_TAP_TRADE][POSITION_EFFECT_OPEN] = TAPI_PositionEffect_OPEN;
+	m_positinEffectMap[ADAPTER_TAP_TRADE][POSITION_EFFECT_CLOSE] = TAPI_PositionEffect_COVER;
+
+	//报单状态
+	m_orderStatusMapRev[ADAPTER_CTP_TRADE][THOST_FTDC_OST_AllTraded] = ORDER_STATUS_AllTraded;
+	m_orderStatusMapRev[ADAPTER_CTP_TRADE][THOST_FTDC_OST_PartTradedQueueing] = ORDER_STATUS_PartTradedQueueing;
+	m_orderStatusMapRev[ADAPTER_CTP_TRADE][THOST_FTDC_OST_PartTradedNotQueueing] = ORDER_STATUS_PartTradedNotQueueing;
+	m_orderStatusMapRev[ADAPTER_CTP_TRADE][THOST_FTDC_OST_NoTradeQueueing] = ORDER_STATUS_NoTradeQueueing;
+	m_orderStatusMapRev[ADAPTER_CTP_TRADE][THOST_FTDC_OST_NoTradeNotQueueing] = ORDER_STATUS_NoTradeNotQueueing;
+	m_orderStatusMapRev[ADAPTER_CTP_TRADE][THOST_FTDC_OST_Canceled] = ORDER_STATUS_Canceled;
+	m_orderStatusMapRev[ADAPTER_CTP_TRADE][THOST_FTDC_OST_Unknown] = ORDER_STATUS_Unknown;
+	m_orderStatusMapRev[ADAPTER_CTP_TRADE][THOST_FTDC_OST_NotTouched] = ORDER_STATUS_NotTouched;
+	m_orderStatusMapRev[ADAPTER_CTP_TRADE][THOST_FTDC_OST_Touched] = ORDER_STATUS_Touched;
+
+	//投机套保标志
+	m_hedgeFlagMap[ADAPTER_CTP_TRADE][FLAG_SPECULATION] = THOST_FTDC_HF_Speculation;
+	m_hedgeFlagMap[ADAPTER_CTP_TRADE][FLAG_MARKETMAKER] = THOST_FTDC_HF_MarketMaker;
+
+};

@@ -3,6 +3,28 @@
         {
             "adapterID": "tradeCTP01",
             "adapterType": "tradeCtp",
+            "frontIP": "tcp://180.168.146.187:10030",
+            "broker": "9999",
+            "user": "140108",
+            "pwd": "1qazxc",
+            "Authenticate": false,
+            "productID": "nan",
+            "authCode": "nan"
+        },
+        {
+            "adapterID": "quoteCTP01",
+            "adapterType": "quoteCtp",
+            "frontIP": "tcp://180.168.146.187:10031",
+            "broker": "9999",
+            "user": "ctpTestUser01",
+            "pwd": "1234qwer"
+        }
+    ],
+
+    "adapters_backup": [
+        {
+            "adapterID": "tradeCTP01",
+            "adapterType": "tradeCtp",
             "frontIP": "tcp://180.168.146.187:10000",
             "broker": "9999",
             "user": "140108",
@@ -18,10 +40,7 @@
             "broker": "9999",
             "user": "ctpTestUser01",
             "pwd": "1234qwer"
-        }
-    ],
-
-    "adapters_backup": [
+        },
         {
             "adapterID": "tradeTAP01",
             "adapterType": "tradeTAP",

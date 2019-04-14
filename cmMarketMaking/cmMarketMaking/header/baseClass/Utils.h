@@ -2,6 +2,9 @@
 #include <boost\asio.hpp>
 #include <boost\thread.hpp>
 
+typedef boost::shared_lock<boost::shared_mutex> read_lock;
+typedef boost::unique_lock<boost::shared_mutex> write_lock;
+
 class athenaUtils
 {
 public:
