@@ -21,108 +21,6 @@
 
 using namespace std;
 
-struct futuresContractDetail
-{
-public:
-	///合约代码
-	string m_code;
-	///交易所代码
-	string m_exchange;
-	///合约名称
-	string m_InstrumentName;
-	///合约在交易所的代码
-	string m_ExchangeInstID;
-	///产品代码
-	string m_ProductID;
-	///产品类型
-	char m_ProductClass;
-	///交割年份
-	int m_DeliveryYear;
-	///交割月
-	int m_DeliveryMonth;
-	///市价单最大下单量
-	int m_MaxMarketOrderVolume;
-	///市价单最小下单量
-	int m_MinMarketOrderVolume;
-	///限价单最大下单量
-	int m_MaxLimitOrderVolume;
-	///限价单最小下单量
-	int m_MinLimitOrderVolume;
-	///合约数量乘数
-	int m_VolumeMultiple;
-	///最小变动价位
-	double m_PriceTick;
-	///创建日
-	string m_CreateDate;
-	///上市日
-	string m_OpenDate;
-	///到期日
-	string m_ExpireDate;
-	///开始交割日
-	string m_StartDelivDate;
-	///结束交割日
-	string m_EndDelivDate;
-	///合约生命周期状态
-	char m_InstLifePhase;
-	///当前是否交易
-	int m_IsTrading;
-	///持仓类型
-	char m_PositionType;
-	///持仓日期类型
-	char m_PositionDateType;
-	///多头保证金率
-	double m_LongMarginRatio;
-	///空头保证金率
-	double m_ShortMarginRatio;
-	///是否使用大额单边保证金算法
-	char m_MaxMarginSideAlgorithm;
-	///基础商品代码
-	string m_UnderlyingInstrID;
-	///执行价
-	double m_StrikePrice;
-	///合约基础商品乘数
-	double m_UnderlyingMultiple;
-	///组合类型
-	char m_CombinationType;
-
-public:
-	futuresContractDetail(){};
-
-	futuresContractDetail(CThostFtdcInstrumentField* inst):m_code(string(inst->InstrumentID)), m_exchange(string(inst->ExchangeID)),
-		m_InstrumentName(string(inst->InstrumentName)), m_ExchangeInstID(string(inst->ExchangeInstID)),
-		m_ProductID(string(inst->ProductID)), m_ProductClass(inst->ProductClass), m_DeliveryYear(inst->DeliveryYear),
-		m_DeliveryMonth(inst->DeliveryMonth), m_MaxMarketOrderVolume(inst->MaxMarketOrderVolume),
-		m_MinMarketOrderVolume(inst->MinMarketOrderVolume), m_MaxLimitOrderVolume(inst->MaxLimitOrderVolume),
-		m_MinLimitOrderVolume(inst->MinLimitOrderVolume), m_VolumeMultiple(inst->VolumeMultiple), m_PriceTick(inst->PriceTick),
-		m_CreateDate(string(inst->CreateDate)), m_OpenDate(string(inst->OpenDate)),	m_ExpireDate(string(inst->ExpireDate)),
-		m_StartDelivDate(string(inst->StartDelivDate)), m_EndDelivDate(string(inst->EndDelivDate)), m_InstLifePhase(inst->InstLifePhase),
-		m_IsTrading(inst->IsTrading), m_PositionType(inst->PositionType), m_PositionDateType(inst->PositionDateType),
-		m_LongMarginRatio(inst->LongMarginRatio), m_ShortMarginRatio(inst->ShortMarginRatio),
-		m_MaxMarginSideAlgorithm(inst->MaxMarginSideAlgorithm), m_UnderlyingInstrID(string(inst->UnderlyingInstrID)),
-		m_StrikePrice(inst->StrikePrice), m_UnderlyingMultiple(inst->UnderlyingMultiple), m_CombinationType(inst->CombinationType)
-	{};
-
-	friend ostream& operator<<(ostream& out, const futuresContractDetail& s)
-	{
-		out << "合约代码: " << s.m_code << endl	<< "交易所代码: " << s.m_exchange << endl	<< "合约名称: " << s.m_InstrumentName << endl
-			<< "合约在交易所的代码: " << s.m_ExchangeInstID << endl	<< "产品代码: " << s.m_ProductID << endl
-			<< "产品类型: " << s.m_ProductClass << endl	<< "交割年份: " << s.m_DeliveryYear << endl	<< "交割月: " << s.m_DeliveryMonth << endl
-			<< "市价单最大下单量: " << s.m_MaxMarketOrderVolume << endl	<< "市价单最小下单量: " << s.m_MinMarketOrderVolume << endl
-			<< "限价单最大下单量: " << s.m_MaxLimitOrderVolume << endl	<< "限价单最小下单量: " << s.m_MinLimitOrderVolume << endl
-			<< "合约数量乘数: " << s.m_VolumeMultiple << endl	<< "最小变动价位: " << s.m_PriceTick << endl
-			<< "创建日: " << s.m_CreateDate << endl	<< "上市日: " << s.m_OpenDate << endl	<< "到期日: " << s.m_ExpireDate << endl
-			<< "开始交割日: " << s.m_StartDelivDate << endl	<< "结束交割日: " << s.m_EndDelivDate << endl	<< "合约生命周期状态: " << s.m_InstLifePhase << endl
-			<< "当前是否交易: " << s.m_IsTrading << endl	<< "持仓类型: " << s.m_PositionType << endl	<< "持仓日期类型: " << s.m_PositionDateType << endl
-			<< "多头保证金率: " << s.m_LongMarginRatio << endl	<< "空头保证金率: " << s.m_ShortMarginRatio << endl
-			<< "是否使用大额单边保证金算法: " << s.m_MaxMarginSideAlgorithm << endl	<< "基础商品代码: " << s.m_UnderlyingInstrID << endl
-			<< "执行价: " << s.m_StrikePrice << endl << "合约基础商品乘数: " << s.m_UnderlyingMultiple << endl
-			<< "组合类型: " << s.m_CombinationType << endl;
-		return out;
-	}
-
-};
-typedef boost::shared_ptr<futuresContractDetail> futuresContractDetailPtr;
-
 class infrastructure
 {
 private:
@@ -160,9 +58,6 @@ public:
 
 	//行情
 private:
-	// quoteAdapterID -> list of <exchange, code>
-	//map <string, list<pair<string, string> > >  m_delayedSubscribeInstruments;  
-	//boost::mutex m_delayedSubscribeInstrumentsLock;
 	map < string, //exchange
 		map < string, //instrument
 		enum_productCategory > > m_productCategory;

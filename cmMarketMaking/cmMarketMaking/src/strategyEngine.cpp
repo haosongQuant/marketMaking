@@ -45,6 +45,8 @@ void strategyEngine::init()
 	}
 }
 
+void debug(){ cout << "processing pause" << endl; }
+
 void strategyEngine::commandProcess()
 {
 	//¸ñÊ½£ºstart|stop strategyName(mm_ZC905)
@@ -82,7 +84,19 @@ void strategyEngine::commandProcess()
 			case STRATEGY_cmMM01:
 			{
 				cmMM01* pStrategy = (cmMM01*)m_strategies[commandEle[1]];
-				pStrategy->stopStrategy();
+				pStrategy->pauseMM(boost::bind(debug));
+				break;
+			}
+			}
+		}
+		else if (commandEle[0] == "resume")
+		{
+			switch (m_strategyTypeMap[commandEle[1]])
+			{
+			case STRATEGY_cmMM01:
+			{
+				cmMM01* pStrategy = (cmMM01*)m_strategies[commandEle[1]];
+				pStrategy->resumeMM();
 				break;
 			}
 			}

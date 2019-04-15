@@ -17,7 +17,7 @@ enum enum_cmMM01_strategy_status
 	STRATEGY_STATUS_CLOSING_POSITION,
 	STRATEGY_STATUS_TRADED_HEDGING,
 	STRATEGY_STATUS_TRADED_NET_HEDGING,
-	STRATEGY_STATUS_STOP,
+	STRATEGY_STATUS_PAUSE,
 };
 
 enum enum_cmMM01_strategy_order_type
@@ -52,7 +52,7 @@ public:
 		athenathreadpoolPtr quoteTP, athenathreadpoolPtr tradeTP, infrastructure* infra);
 	~cmMM01();
 	virtual void startStrategy();
-	virtual void stopStrategy();
+	virtual void stopStrategy(){};
 
 private:
 	void resetStrategyStatus();
@@ -87,6 +87,7 @@ private:
 	int m_bidOrderRef;
 	int m_askOrderRef;
 	void startCycle();
+	void refreshCycle();
 	void orderPrice(double* bidprice, double* askprice); //计算挂单价格
 	void processOrder(orderRtnPtr);
 	void processTrade(tradeRtnPtr);
@@ -96,7 +97,7 @@ private:
 	int m_cancelAskOrderRC;
 	athena_lag_timer m_cancelConfirmTimer;
 	bool m_cancelConfirmTimerCancelled;
-	void CancelOrder();// const boost::system::error_code& error);
+	void CancelOrder(bool);// const boost::system::error_code& error);
 	void processCancelRes(cancelRtnPtr);
 
 private:
@@ -119,6 +120,17 @@ private:
 	void sendNetHedgeOrder(double);
 	void processNetHedgeOrderRtn(orderRtnPtr);
 	void processNetHedgeTradeRtn(tradeRtnPtr);
+
+//for interrupt
+private:
+	bool                    m_pauseReq;
+	boost::recursive_mutex  m_pauseReqLock;
+	boost::function<void()> m_oneTimeMMPausedHandler;
+	void callPauseHandler();
+
+public:
+	bool pauseMM(boost::function<void()> pauseHandler);
+	void resumeMM();
 
 private: // for clear cycle
 	int                     m_cycleId;
