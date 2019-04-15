@@ -45,7 +45,10 @@ void strategyEngine::init()
 	}
 }
 
-void debug(){ cout << "processing pause" << endl; }
+//struct test
+//{
+//	void debug(int a){ cout << "processing pause" << endl; };
+//};
 
 void strategyEngine::commandProcess()
 {
@@ -83,8 +86,9 @@ void strategyEngine::commandProcess()
 			{
 			case STRATEGY_cmMM01:
 			{
+				//test a;
 				cmMM01* pStrategy = (cmMM01*)m_strategies[commandEle[1]];
-				pStrategy->pauseMM(boost::bind(debug));
+				//pStrategy->pauseMM(boost::bind(&test::debug, &a, 1));
 				break;
 			}
 			}
