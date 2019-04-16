@@ -77,7 +77,7 @@ void cmMM01::orderPrice(double* bidprice, double* askprice)
 	}
 	}
 	//*bidprice = plastQuote->bidprice[0] + int((quoteSpread - m_miniOrderSpread) / 2) * m_tickSize;
-	*bidprice = plastQuote->askprice[0]; //测试成交
+	//*bidprice = plastQuote->askprice[0]; //测试成交
 	*askprice = *bidprice + m_tickSize * m_miniOrderSpread;
 };
 
