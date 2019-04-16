@@ -18,12 +18,10 @@ void cmMM01::startStrategy(){
 	cout << m_strategyId << " starting..." << endl;
 	if (STRATEGY_STATUS_START == m_strategyStatus)
 		m_infra->subscribeFutures(m_quoteAdapterID, m_exchange, m_productId, bind(&cmMM01::onRtnMD, this, _1));
-	resetStrategyStatus();
+	m_strategyStatus = STRATEGY_STATUS_READY;
 };
 
 void cmMM01::resetStrategyStatus(){ //等待行情触发cycle
-	m_cancelConfirmTimerCancelled = true;
-	m_cancelConfirmTimer.cancel();
 	m_strategyStatus = STRATEGY_STATUS_READY;
 };
 
@@ -100,7 +98,7 @@ void cmMM01::startCycle()
 	m_cancelAskOrderRC = 0;
 	m_cancelConfirmTimerCancelled = false;
 	m_cancelHedgeTimerCancelled = false;
-
+	cout << m_strategyId << ": starting new cycle." << endl;
 	double bidprice = 0.0, askprice = 0.0;
 	orderPrice(&bidprice, &askprice);
 	if (0.0 == bidprice || 0.0 == askprice)
@@ -268,7 +266,9 @@ void cmMM01::processHedgeTradeRtn(tradeRtnPtr ptrade)
 		m_hedgeOrderVol.clear();
 		m_cancelHedgeTimerCancelled = true;
 		m_cancelHedgeTimer.cancel();
-		resetStrategyStatus();
+		m_cancelConfirmTimerCancelled = true;
+		m_cancelConfirmTimer.cancel();
+		startCycle();
 	}
 }
 
@@ -347,7 +347,11 @@ void cmMM01::confirmCancel_hedgeOrder()
 			sendNetHedgeOrder(netHedgeVol);
 		}
 		else
-			resetStrategyStatus();
+		{
+			m_cancelConfirmTimerCancelled = true;
+			m_cancelConfirmTimer.cancel();
+			startCycle();
+		}
 	}
 };
 
@@ -385,7 +389,9 @@ void cmMM01::processNetHedgeTradeRtn(tradeRtnPtr ptrade)
 	LOG(INFO) << m_strategyId << ": net hedge order left: " << m_NetHedgeOrderVol << endl;
 	if (0.0 == m_NetHedgeOrderVol) //轧差对冲全部成交
 	{
-		resetStrategyStatus();
+		m_cancelConfirmTimerCancelled = true;
+		m_cancelConfirmTimer.cancel();
+		startCycle();
 	}
 }
 
