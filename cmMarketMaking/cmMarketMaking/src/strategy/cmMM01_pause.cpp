@@ -4,7 +4,7 @@
 
 bool cmMM01::pauseMM(boost::function<void()> pauseHandler)
 {
-	boost::recursive_mutex::scoped_lock lock(m_pauseReqLock);
+	write_lock lock(m_pauseReqLock);
 	if (m_pauseReq)
 		return false;
 	else
@@ -28,7 +28,7 @@ void cmMM01::resumeMM()
 {
 	{
 		boost::recursive_mutex::scoped_lock lock(m_strategyStatusLock); 
-		boost::recursive_mutex::scoped_lock lock1(m_pauseReqLock);
+		write_lock lock1(m_pauseReqLock);
 		m_strategyStatus = STRATEGY_STATUS_READY;
 		m_pauseReq = false; 
 		cout << m_strategyId << " resumed." << endl;

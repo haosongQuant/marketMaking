@@ -11,6 +11,11 @@ enum enum_strategy_type
 	STRATEGY_ERROR,
 };
 
+struct IpauseStrategy
+{
+	void plainVanilla(){ cout << "strategyEngine: processing pause" << endl; };
+};
+
 class strategyEngine
 {
 private:
@@ -23,6 +28,8 @@ public:
 	strategyEngine(Json::Value  config, infrastructure* infra);
 	void init();
 	void commandProcess();
+
+	IpauseStrategy m_pauseInterface;
 
 private:
 	map<string, strategyBase*>      m_strategies;

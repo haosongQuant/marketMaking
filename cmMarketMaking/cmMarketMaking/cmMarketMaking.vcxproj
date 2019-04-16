@@ -158,6 +158,7 @@ copy  .\lib\*.dll  ..\Debug\</Command>
     <ClCompile Include="src\infrastructure_trade.cpp" />
     <ClCompile Include="src\strategyEngine.cpp" />
     <ClCompile Include="src\strategy\cmMM01.cpp" />
+    <ClCompile Include="src\strategy\cmMM01_pause.cpp" />
     <ClCompile Include="src\tap\quoteAdapter_TAP.cpp" />
     <ClCompile Include="src\tap\tradeAdapter_TAP.cpp" />
     <ClCompile Include="src\threadpool\threadpool.cpp" />

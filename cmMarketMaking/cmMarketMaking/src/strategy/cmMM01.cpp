@@ -77,14 +77,14 @@ void cmMM01::orderPrice(double* bidprice, double* askprice)
 	}
 	}
 	//*bidprice = plastQuote->bidprice[0] + int((quoteSpread - m_miniOrderSpread) / 2) * m_tickSize;
-	//*bidprice = plastQuote->askprice[0]; //测试成交
+	*bidprice = plastQuote->askprice[0]; //测试成交
 	*askprice = *bidprice + m_tickSize * m_miniOrderSpread;
 };
 
 void cmMM01::startCycle()
 {
 	{
-		boost::recursive_mutex::scoped_lock lock(m_pauseReqLock);
+		read_lock lock(m_pauseReqLock);
 		if (m_pauseReq)
 		{
 			m_strategyStatus = STRATEGY_STATUS_PAUSE; //interrupt结束后由行情触发新的交易
@@ -92,13 +92,15 @@ void cmMM01::startCycle()
 			return;
 		}
 	}
+
+	m_cycleId++;
 	m_bidOrderRef = 0;
 	m_askOrderRef = 0;
 	m_cancelBidOrderRC = 0;
 	m_cancelAskOrderRC = 0;
 	m_cancelConfirmTimerCancelled = false;
 	m_cancelHedgeTimerCancelled = false;
-	cout << m_strategyId << ": starting new cycle." << endl;
+	LOG(INFO) << m_strategyId << ": starting new cycle." << endl;
 	double bidprice = 0.0, askprice = 0.0;
 	orderPrice(&bidprice, &askprice);
 	if (0.0 == bidprice || 0.0 == askprice)
@@ -124,8 +126,9 @@ void cmMM01::startCycle()
 		m_orderRef2cycle[m_askOrderRef] = m_cycleId;
 	}
 
+	if (m_bidOrderRef == 0 || m_askOrderRef == 0)
+		cout << "debug" << endl;
 	m_strategyStatus = STRATEGY_STATUS_ORDER_SENT;
-	m_cycleId++;
 	m_cycle2orderRef[m_cycleId].push_back(m_bidOrderRef);
 	m_cycle2orderRef[m_cycleId].push_back(m_askOrderRef);
 };
@@ -142,6 +145,9 @@ void cmMM01::CancelOrder(bool restart)//const boost::system::error_code& error)
 		LOG(INFO) << m_strategyId << ": cancel order stopped, cycleId: " << m_cycleId << endl;
 		return;
 	}
+
+	if (m_bidOrderRef == 0 || m_askOrderRef == 0)
+		cout << "debug" << endl;
 
 	if (m_cancelBidOrderRC == 0 || m_cancelBidOrderRC == ORDER_CANCEL_ERROR_NOT_FOUND ||
 		m_cancelBidOrderRC == ORDER_CANCEL_ERROR_SEND_FAIL)

@@ -76,7 +76,7 @@ int tradeAdapterCTP::init()
 
 void tradeAdapterCTP::OnFrontConnected()
 {
-	LOG(WARNING)  << m_adapterID << ": trade connected!" << endl;
+	LOG(WARNING)  << m_adapterID << ": ctp trade connected!" << endl;
 	if (m_needAuthenticate)
 	{
 		int ret = m_pUserApi->ReqAuthenticate(&m_authenticateField, ++m_requestId);
@@ -485,13 +485,6 @@ int tradeAdapterCTP::OrderInsert(string instrument, string exchange, char priceT
 
 	int ret = m_pUserApi->ReqOrderInsert(pInputOrder, reqId);
 
-	{
-		//LOG(INFO)  << m_adapterID << ": locking m_ref2sentOrder in OrderInsert." << endl;
-		boost::detail::spinlock l1(m_ref2sentOrder_lock);
-		m_ref2sentOrder[nextOrderRef] = CThostFtdcInputOrderFieldPtr(pInputOrder);
-		//LOG(INFO)  << m_adapterID << ": unlocking m_ref2sentOrder in OrderInsert." << endl;
-	}
-
 	if (ret == 0)
 	{
 		LOG(INFO) << m_adapterID << ": req | order insert succ, orderRef: " << nextOrderRef <<
@@ -611,6 +604,8 @@ void tradeAdapterCTP::OnRtnTrade(CThostFtdcTradeField *pTrade)
 
 int tradeAdapterCTP::cancelOrder(int orderRef)
 {
+	if (orderRef == 0)
+		cout << "debug" << endl;
 	auto iter = m_ref2order.begin();
 	{
 		//LOG(INFO)  << m_adapterID << ": locking m_ref2order in cancelOrder." << endl;

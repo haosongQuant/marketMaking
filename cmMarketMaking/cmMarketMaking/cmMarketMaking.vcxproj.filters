@@ -69,6 +69,9 @@
     <ClCompile Include="src\strategyEngine.cpp">
       <Filter>源文件\strategy</Filter>
     </ClCompile>
+    <ClCompile Include="src\strategy\cmMM01_pause.cpp">
+      <Filter>源文件\strategy</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="header\threadpool\threadpool.h">

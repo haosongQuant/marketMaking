@@ -124,7 +124,7 @@ private:
 //for interrupt
 private:
 	bool                    m_pauseReq;
-	boost::recursive_mutex  m_pauseReqLock;
+	boost::shared_mutex     m_pauseReqLock;
 	boost::function<void()> m_oneTimeMMPausedHandler;
 	void callPauseHandler();
 

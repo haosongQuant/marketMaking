@@ -45,11 +45,6 @@ void strategyEngine::init()
 	}
 }
 
-//struct test
-//{
-//	void debug(int a){ cout << "processing pause" << endl; };
-//};
-
 void strategyEngine::commandProcess()
 {
 	//¸ñÊ½£ºstart|stop strategyName(mm_ZC905)
@@ -86,9 +81,8 @@ void strategyEngine::commandProcess()
 			{
 			case STRATEGY_cmMM01:
 			{
-				//test a;
 				cmMM01* pStrategy = (cmMM01*)m_strategies[commandEle[1]];
-				//pStrategy->pauseMM(boost::bind(&test::debug, &a, 1));
+				pStrategy->pauseMM(boost::bind(&IpauseStrategy::plainVanilla, &m_pauseInterface));
 				break;
 			}
 			}
