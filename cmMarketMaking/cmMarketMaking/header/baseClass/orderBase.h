@@ -101,6 +101,7 @@ struct tradeRtn_struct
 	int m_orderRef;
 	string m_exchange;
 	string m_instId;
+	string m_tradeId;
 	//enum_order_type           m_orderTyp;
 	//enum_position_effect_type m_positionEffectTyp;
 	enum_order_dir_type       m_orderDir;

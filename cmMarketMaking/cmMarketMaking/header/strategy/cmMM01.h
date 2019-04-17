@@ -39,6 +39,7 @@ private:
 	double m_tickSize;
 	double m_miniOrderSpread;
 	double m_orderQty;
+	int    m_volumeMultiple;
 
 	infrastructure* m_infra;
 
@@ -48,7 +49,7 @@ private:
 public:
 	cmMM01(string strategyId, string strategyTyp, string productId, string exchange, 
 		string quoteAdapterID, string tradeAdapterID, double tickSize, double miniOrderSpread,
-		double orderQty,
+		double orderQty, int volMulti,
 		athenathreadpoolPtr quoteTP, athenathreadpoolPtr tradeTP, infrastructure* infra);
 	~cmMM01();
 	virtual void startStrategy();
@@ -76,6 +77,8 @@ public: //供外部调用的响应函数 | 在策略线程池中调用相应的处理函数
 	void onHedgeTradeRtn(tradeRtnPtr ptrade){ m_tradeTP->getDispatcher().post(bind(&cmMM01::processHedgeTradeRtn, this, ptrade)); };
 	void onNetHedgeOrderRtn(orderRtnPtr pOrder){ m_tradeTP->getDispatcher().post(bind(&cmMM01::processNetHedgeOrderRtn, this, pOrder)); };
 	void onNetHedgeTradeRtn(tradeRtnPtr ptrade){ m_tradeTP->getDispatcher().post(bind(&cmMM01::processNetHedgeTradeRtn, this, ptrade)); };
+	void onCycleNetHedgeOrderRtn(orderRtnPtr pOrder){ m_tradeTP->getDispatcher().post(bind(&cmMM01::processCycleNetHedgeOrderRtn, this, pOrder)); };
+	void onCycleNetHedgeTradeRtn(tradeRtnPtr ptrade){ m_tradeTP->getDispatcher().post(bind(&cmMM01::processCycleNetHedgeTradeRtn, this, ptrade)); };
 	void onRspCancel(cancelRtnPtr pCancel){ m_tradeTP->getDispatcher().post(bind(&cmMM01::processCancelRes, this, pCancel)); };
 
 private:
@@ -128,7 +131,22 @@ private:
 	boost::function<void()> m_oneTimeMMPausedHandler;
 	void callPauseHandler();
 
+private:
+		map < int, orderRtnPtr> m_orderRef2orderRtn;  //orderRef -> orderRtn
+		boost::shared_mutex     m_orderRtnBuffLock;
+
+		map < int, map<string, tradeRtnPtr> > m_orderRef2tradeRtn;  //orderRef -> tradeRtn
+		boost::shared_mutex     m_tradeRtnBuffLock;
+		void registerTradeRtn(tradeRtnPtr pTrade){
+			if (pTrade)
+			{
+				write_lock lock(m_tradeRtnBuffLock);
+				m_orderRef2tradeRtn[pTrade->m_orderRef][pTrade->m_tradeId] = pTrade;
+			}
+		};
+
 public:
+	void interruptMM(boost::function<void()> pauseHandler);
 	bool pauseMM(boost::function<void()> pauseHandler);
 	void resumeMM();
 
@@ -147,9 +165,15 @@ private: // for clear cycle
 		m_cycle2tradeGrp[cycleId] = pGrp;
 	};
 
-	map < int, orderRtnPtr> m_orderRef2orderRtn;  //orderRef -> orderRtn
-	boost::shared_mutex     m_orderRtnBuffLock;
-
+	int  m_cycleHedgeVol;
 	void daemonEngine(); //守护线程引擎
+	bool isOrderComplete(int orderRef, int& tradedVol);
+	void sendCycleNetHedgeOrder();
+	void sendCycleNetHedgeOrder(int);
+	void processCycleNetHedgeOrderRtn(orderRtnPtr);
+	void processCycleNetHedgeTradeRtn(tradeRtnPtr);
 	athena_lag_timer m_daemonTimer;
+	athena_lag_timer m_pauseLagTimer;
+	double        m_cycleNetHedgeVol;
+	boost::mutex  m_cycleNetHedgeVolLock;
 };

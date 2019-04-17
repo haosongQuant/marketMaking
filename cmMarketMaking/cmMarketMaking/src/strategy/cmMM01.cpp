@@ -3,14 +3,14 @@
 
 cmMM01::cmMM01(string strategyId, string strategyTyp, string productId, string exchange,
 	string quoteAdapterID, string tradeAdapterID, double tickSize, double miniOrderSpread,
-	double orderQty,
+	double orderQty, int volMulti,
 	athenathreadpoolPtr quoteTP, athenathreadpoolPtr tradeTP, infrastructure* infra)
 	:m_strategyId(strategyId), m_strategyTyp(strategyTyp), m_productId(productId), m_exchange(exchange),
 	m_quoteAdapterID(quoteAdapterID), m_tradeAdapterID(tradeAdapterID), m_tickSize(tickSize),
-	m_miniOrderSpread(miniOrderSpread), m_orderQty(orderQty), m_quoteTP(quoteTP), m_tradeTP(tradeTP),
-	m_infra(infra), m_cycleId(0), m_pauseReq(false),
+	m_miniOrderSpread(miniOrderSpread), m_orderQty(orderQty), m_volumeMultiple(volMulti),
+	m_quoteTP(quoteTP), m_tradeTP(tradeTP), m_infra(infra), m_cycleId(0), m_pauseReq(false),
 	m_cancelConfirmTimer(tradeTP->getDispatcher()), m_cancelHedgeTimer(tradeTP->getDispatcher()),
-	m_daemonTimer(tradeTP->getDispatcher())
+	m_daemonTimer(tradeTP->getDispatcher()), m_pauseLagTimer(tradeTP->getDispatcher())
 {
 	m_strategyStatus = STRATEGY_STATUS_START;
 };
@@ -235,6 +235,8 @@ void cmMM01::processTrade(tradeRtnPtr ptrade)
 		m_cancelHedgeTimer.expires_from_now(boost::posix_time::milliseconds(1000));
 		m_cancelHedgeTimer.async_wait(boost::bind(&cmMM01::cancelHedgeOrder, this)); // , boost::asio::placeholders::error));
 	}
+
+	m_tradeTP->getDispatcher().post(boost::bind(&cmMM01::registerTradeRtn, this, ptrade));
 };
 
 //³·µ¥ÏìÓ¦º¯Êý
@@ -285,6 +287,8 @@ void cmMM01::processHedgeTradeRtn(tradeRtnPtr ptrade)
 		m_tradeTP->getDispatcher().post(bind(&cmMM01::registerTrdGrpMap, this, m_cycleId, m_ptradeGrp));
 		startCycle();
 	}
+
+	m_tradeTP->getDispatcher().post(boost::bind(&cmMM01::registerTradeRtn, this, ptrade));
 }
 
 void cmMM01::processHedgeOrderRtn(orderRtnPtr pOrder)
@@ -412,6 +416,7 @@ void cmMM01::processNetHedgeTradeRtn(tradeRtnPtr ptrade)
 		m_tradeTP->getDispatcher().post(bind(&cmMM01::registerTrdGrpMap, this, m_cycleId, m_ptradeGrp));
 		startCycle();
 	}
+	m_tradeTP->getDispatcher().post(boost::bind(&cmMM01::registerTradeRtn, this, ptrade));
 }
 
 void cmMM01::processNetHedgeOrderRtn(orderRtnPtr pOrder)

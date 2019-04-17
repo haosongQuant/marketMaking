@@ -73,7 +73,8 @@
             "trade": "tradeCTP01",
             "tickSize": 0.2,
             "miniOrderSpread": 4.0,
-            "orderQty": 10
+            "orderQty": 10,
+            "volMulti": 10
         },
         {
             "strategyID": "mm_ZC907",
@@ -84,7 +85,8 @@
             "trade": "tradeCTP01",
             "tickSize": 0.2,
             "miniOrderSpread": 4.0,
-            "orderQty": 10
+            "orderQty": 10,
+            "volMulti": 10
         }
     ]
 }

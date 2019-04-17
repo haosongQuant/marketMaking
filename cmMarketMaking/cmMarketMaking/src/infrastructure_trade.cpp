@@ -137,6 +137,7 @@ void infrastructure::onRtnCtpTrade(string adapterID, CThostFtdcTradeField *pTrad
 
 	tradeRtnPtr tradePtr = tradeRtnPtr(new tradeRtn_struct());
 	tradePtr->m_instId = string(pTrade->InstrumentID);
+	tradePtr->m_tradeId = string(pTrade->TradeID);
 	tradePtr->m_exchange = string(pTrade->ExchangeID);
 	tradePtr->m_orderDir = pTrade->Direction == THOST_FTDC_D_Buy ? ORDER_DIR_BUY : ORDER_DIR_SELL;
 	tradePtr->m_orderRef = orderRef;
