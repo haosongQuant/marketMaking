@@ -134,12 +134,22 @@ public:
 
 private: // for clear cycle
 	int                     m_cycleId;
-	map < int, list <int> > m_cycle2orderRef;     //cycle Id -> orderRef
+	tradeGroupBufferPtr     m_ptradeGrp; //用于记录单个交易闭环的所有报单号
 	map < int, int >        m_orderRef2cycle;     //orderRef -> cycle Id
 	boost::shared_mutex     m_orderRef2cycleRWlock; //用于m_orderRef2cycle的读写锁
 
+	list<tradeGroupBufferPtr>      m_tradeGrpBuffer;//用于每个交易闭环清理现场
+	list<tradeGroupBufferPtr>      m_aliveTrdGrp;//用于每个交易闭环清理现场
+	map <int, tradeGroupBufferPtr> m_cycle2tradeGrp;//cycle Id -> trade group pointer
+	boost::mutex            m_cycle2tradeGrpLock;   //用于互斥访问m_cycle2tradeGrp
+	void registerTrdGrpMap(int cycleId, tradeGroupBufferPtr pGrp){ //向m_cycle2tradeGrp中插入记录
+		boost::mutex::scoped_lock lock(m_cycle2tradeGrpLock);
+		m_cycle2tradeGrp[cycleId] = pGrp;
+	};
+
 	map < int, orderRtnPtr> m_orderRef2orderRtn;  //orderRef -> orderRtn
 	boost::shared_mutex     m_orderRtnBuffLock;
-	void checkCycleDone(list<int> & orderRefList);
 
+	void daemonEngine(); //守护线程引擎
+	athena_lag_timer m_daemonTimer;
 };

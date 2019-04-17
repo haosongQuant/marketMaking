@@ -9,7 +9,8 @@ cmMM01::cmMM01(string strategyId, string strategyTyp, string productId, string e
 	m_quoteAdapterID(quoteAdapterID), m_tradeAdapterID(tradeAdapterID), m_tickSize(tickSize),
 	m_miniOrderSpread(miniOrderSpread), m_orderQty(orderQty), m_quoteTP(quoteTP), m_tradeTP(tradeTP),
 	m_infra(infra), m_cycleId(0), m_pauseReq(false),
-	m_cancelConfirmTimer(tradeTP->getDispatcher()), m_cancelHedgeTimer(tradeTP->getDispatcher())
+	m_cancelConfirmTimer(tradeTP->getDispatcher()), m_cancelHedgeTimer(tradeTP->getDispatcher()),
+	m_daemonTimer(tradeTP->getDispatcher())
 {
 	m_strategyStatus = STRATEGY_STATUS_START;
 };
@@ -17,7 +18,10 @@ cmMM01::cmMM01(string strategyId, string strategyTyp, string productId, string e
 void cmMM01::startStrategy(){
 	cout << m_strategyId << " starting..." << endl;
 	if (STRATEGY_STATUS_START == m_strategyStatus)
+	{
 		m_infra->subscribeFutures(m_quoteAdapterID, m_exchange, m_productId, bind(&cmMM01::onRtnMD, this, _1));
+		daemonEngine();
+	}
 	m_strategyStatus = STRATEGY_STATUS_READY;
 };
 
@@ -100,6 +104,8 @@ void cmMM01::startCycle()
 	m_cancelAskOrderRC = 0;
 	m_cancelConfirmTimerCancelled = false;
 	m_cancelHedgeTimerCancelled = false;
+	m_ptradeGrp = tradeGroupBufferPtr(new tradeGroupBuffer());
+	m_ptradeGrp->m_Id = m_cycleId;
 	LOG(INFO) << m_strategyId << ": starting new cycle." << endl;
 	double bidprice = 0.0, askprice = 0.0;
 	orderPrice(&bidprice, &askprice);
@@ -115,6 +121,7 @@ void cmMM01::startCycle()
 	{
 		write_lock lock0(m_orderRef2cycleRWlock);
 		m_orderRef2cycle[m_bidOrderRef] = m_cycleId;
+		m_ptradeGrp->m_orderIdList.push_back(m_bidOrderRef);
 	}
 
 	m_askOrderRef = m_infra->insertOrder(m_tradeAdapterID, m_productId, m_exchange, ORDER_TYPE_LIMIT,
@@ -124,13 +131,12 @@ void cmMM01::startCycle()
 	{
 		write_lock lock0(m_orderRef2cycleRWlock);
 		m_orderRef2cycle[m_askOrderRef] = m_cycleId;
+		m_ptradeGrp->m_orderIdList.push_back(m_askOrderRef);
 	}
 
 	if (m_bidOrderRef == 0 || m_askOrderRef == 0)
 		cout << "debug" << endl;
 	m_strategyStatus = STRATEGY_STATUS_ORDER_SENT;
-	m_cycle2orderRef[m_cycleId].push_back(m_bidOrderRef);
-	m_cycle2orderRef[m_cycleId].push_back(m_askOrderRef);
 };
 
 void cmMM01::refreshCycle()
@@ -182,6 +188,7 @@ void cmMM01::CancelOrder(bool restart)//const boost::system::error_code& error)
 		boost::recursive_mutex::scoped_lock lock(m_strategyStatusLock);
 		if (STRATEGY_STATUS_CLOSING_POSITION == m_strategyStatus)
 		{//重新下单
+			m_tradeTP->getDispatcher().post(bind(&cmMM01::registerTrdGrpMap, this, m_cycleId, m_ptradeGrp));
 			startCycle();
 		}
 	}
@@ -247,7 +254,7 @@ void cmMM01::sendHedgeOrder(tradeRtnPtr ptrade)//同价对冲
 	{
 		write_lock lock0(m_orderRef2cycleRWlock);
 		m_orderRef2cycle[m_bidOrderRef] = m_cycleId;
-		m_cycle2orderRef[m_cycleId].push_back(m_hedgeOrderRef);
+		m_ptradeGrp->m_orderIdList.push_back(m_hedgeOrderRef);
 
 		//记录对冲量和撤销（完成）状态
 		write_lock lock1(m_hedgeOrderVolLock);
@@ -274,6 +281,8 @@ void cmMM01::processHedgeTradeRtn(tradeRtnPtr ptrade)
 		m_cancelHedgeTimer.cancel();
 		m_cancelConfirmTimerCancelled = true;
 		m_cancelConfirmTimer.cancel();
+
+		m_tradeTP->getDispatcher().post(bind(&cmMM01::registerTrdGrpMap, this, m_cycleId, m_ptradeGrp));
 		startCycle();
 	}
 }
@@ -356,6 +365,8 @@ void cmMM01::confirmCancel_hedgeOrder()
 		{
 			m_cancelConfirmTimerCancelled = true;
 			m_cancelConfirmTimer.cancel();
+
+			m_tradeTP->getDispatcher().post(bind(&cmMM01::registerTrdGrpMap, this, m_cycleId, m_ptradeGrp));
 			startCycle();
 		}
 	}
@@ -374,7 +385,7 @@ void cmMM01::sendNetHedgeOrder(double netHedgeVol)
 	{
 		write_lock lock0(m_orderRef2cycleRWlock);
 		m_orderRef2cycle[netHedgeOrderRef] = m_cycleId;
-		m_cycle2orderRef[m_cycleId].push_back(netHedgeOrderRef);
+		m_ptradeGrp->m_orderIdList.push_back(netHedgeOrderRef);
 
 		//记录轧差对冲量
 		boost::mutex::scoped_lock lock(m_NetHedgeOrderVolLock);
@@ -397,6 +408,8 @@ void cmMM01::processNetHedgeTradeRtn(tradeRtnPtr ptrade)
 	{
 		m_cancelConfirmTimerCancelled = true;
 		m_cancelConfirmTimer.cancel();
+
+		m_tradeTP->getDispatcher().post(bind(&cmMM01::registerTrdGrpMap, this, m_cycleId, m_ptradeGrp));
 		startCycle();
 	}
 }
