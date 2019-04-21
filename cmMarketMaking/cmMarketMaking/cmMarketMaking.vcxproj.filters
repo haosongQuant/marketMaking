@@ -86,18 +86,6 @@
     <ClInclude Include="header\baseClass\adapterBase.h">
       <Filter>头文件\adapter</Filter>
     </ClInclude>
-    <ClInclude Include="header\ctp\quoteAdapter_CTP.h">
-      <Filter>头文件\adapter</Filter>
-    </ClInclude>
-    <ClInclude Include="header\tap\quoteAdapter_TAP.h">
-      <Filter>头文件\adapter</Filter>
-    </ClInclude>
-    <ClInclude Include="header\ctp\tradeAdapter_CTP.h">
-      <Filter>头文件\adapter</Filter>
-    </ClInclude>
-    <ClInclude Include="header\tap\tradeAdapter_TAP.h">
-      <Filter>头文件\adapter</Filter>
-    </ClInclude>
     <ClInclude Include="header\infrastructureStruct.h">
       <Filter>头文件\infrastructure</Filter>
     </ClInclude>
@@ -113,10 +101,22 @@
     <ClInclude Include="header\strategy\cmMM01.h">
       <Filter>头文件\strategy</Filter>
     </ClInclude>
-    <ClInclude Include="header\json\configloader.h">
+    <ClInclude Include="..\header\ctp\quoteAdapter_CTP.h">
+      <Filter>头文件\adapter</Filter>
+    </ClInclude>
+    <ClInclude Include="..\header\ctp\tradeAdapter_CTP.h">
+      <Filter>头文件\adapter</Filter>
+    </ClInclude>
+    <ClInclude Include="..\header\tap\quoteAdapter_TAP.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="header\glog\initLog.h">
+    <ClInclude Include="..\header\tap\tradeAdapter_TAP.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\header\json\configloader.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\header\glog\initLog.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

@@ -68,8 +68,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>.\header;$(BOOST_HOME)\include\boost-1_57;$(IncludePath)</IncludePath>
-    <LibraryPath>$(BOOST_HOME)\stage\lib;.\lib\ctp;.\lib;.\lib\tap;$(LibraryPath)</LibraryPath>
+    <IncludePath>../header;./header;$(BOOST_HOME)\include\boost-1_57;$(IncludePath)</IncludePath>
+    <LibraryPath>$(BOOST_HOME)\stage\lib;..\lib\ctp;..\lib;..\lib\tap;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -95,10 +95,10 @@
       <AdditionalDependencies>thostmduserapi.lib;thosttraderapi.lib;TapQuoteAPI.lib;TapTradeAPI.lib;lib_json.lib;libglog.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>copy  .\lib\ctp\*  ..\Debug\
-copy  .\lib\tap\*  ..\Debug\
-copy  .\lib\*.lib  ..\Debug\
-copy  .\lib\*.dll  ..\Debug\</Command>
+      <Command>copy  ..\lib\ctp\*  ..\Debug\
+copy  ..\lib\tap\*  ..\Debug\
+copy  ..\lib\*.lib  ..\Debug\
+copy  ..\lib\*.dll  ..\Debug\</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -164,20 +164,20 @@ copy  .\lib\*.dll  ..\Debug\</Command>
     <ClCompile Include="src\threadpool\threadpool.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\header\ctp\quoteAdapter_CTP.h" />
+    <ClInclude Include="..\header\ctp\tradeAdapter_CTP.h" />
+    <ClInclude Include="..\header\glog\initLog.h" />
+    <ClInclude Include="..\header\json\configloader.h" />
+    <ClInclude Include="..\header\tap\quoteAdapter_TAP.h" />
+    <ClInclude Include="..\header\tap\tradeAdapter_TAP.h" />
     <ClInclude Include="header\baseClass\adapterBase.h" />
     <ClInclude Include="header\baseClass\orderBase.h" />
     <ClInclude Include="header\baseClass\strategyBase.h" />
     <ClInclude Include="header\baseClass\Utils.h" />
-    <ClInclude Include="header\ctp\quoteAdapter_CTP.h" />
-    <ClInclude Include="header\ctp\tradeAdapter_CTP.h" />
-    <ClInclude Include="header\glog\initLog.h" />
     <ClInclude Include="header\infrastructure.h" />
     <ClInclude Include="header\infrastructureStruct.h" />
-    <ClInclude Include="header\json\configloader.h" />
     <ClInclude Include="header\strategyEngine.h" />
     <ClInclude Include="header\strategy\cmMM01.h" />
-    <ClInclude Include="header\tap\quoteAdapter_TAP.h" />
-    <ClInclude Include="header\tap\tradeAdapter_TAP.h" />
     <ClInclude Include="header\threadpool\threadpool.h" />
   </ItemGroup>
   <ItemGroup>
