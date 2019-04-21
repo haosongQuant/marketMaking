@@ -1,0 +1,17 @@
+﻿生成启动时间为 2019/4/21 23:45:10。
+     1>项目“D:\marketMaking\cmMarketMaking\quoteCollector\quoteCollector.vcxproj”在节点 2 上(Build 个目标)。
+     1>ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /Od /Oy- /D GLOG_NO_ABBREVIATED_SEVERITIES /D _CRT_SECURE_NO_WARNINGS /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt ..\src\ctp\quoteAdapter_CTP.cpp main.cpp
+         main.cpp
+         quoteAdapter_CTP.cpp
+     1>d:\marketmaking\cmmarketmaking\src\ctp\quoteadapter_ctp.cpp(91): warning C4018: “<”: 有符号/无符号不匹配
+         正在生成代码...
+       Link:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"D:\marketMaking\cmMarketMaking\Debug\quoteCollector.exe" /INCREMENTAL /NOLOGO thostmduserapi.lib thosttraderapi.lib lib_json.lib libglog.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"D:\marketMaking\cmMarketMaking\Debug\quoteCollector.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"D:\marketMaking\cmMarketMaking\Debug\quoteCollector.lib" /MACHINE:X86 Debug\quoteAdapter_CTP.obj
+         Debug\main.obj
+         quoteCollector.vcxproj -> D:\marketMaking\cmMarketMaking\Debug\quoteCollector.exe
+     1>已完成生成项目“D:\marketMaking\cmMarketMaking\quoteCollector\quoteCollector.vcxproj”(Build 个目标)的操作。
+
+生成成功。
+
+已用时间 00:00:02.71

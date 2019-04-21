@@ -40,7 +40,9 @@ int quoteAdapter_CTP::init()
 int quoteAdapter_CTP::login()
 {
 	int ret = m_pUserApi->ReqUserLogin(&m_loginField, ++m_requestId);
+#ifdef ADAPTER_LOGGING
 	LOG(INFO)  << m_adapterID << ":  req | user login ... " << ((ret == 0) ? "succ" : "fail") << endl;
+#endif
 	return ret;
 };
 
@@ -68,10 +70,19 @@ void quoteAdapter_CTP::OnHeartBeatWarning(int nTimeLapse)
 void quoteAdapter_CTP::OnRspUserLogin(CThostFtdcRspUserLoginField *pRspUserLogin, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
 	if (isErrorRespInfo(pRspInfo))
+#ifdef ADAPTER_LOGGING
 		LOG(INFO)  << m_adapterID << ": quote login error | ErrorID: " << pRspInfo->ErrorID << ", ErrorMsg: " << pRspInfo->ErrorMsg << endl;
+#else
+		cout << m_adapterID << ": quote login error | ErrorID: " << pRspInfo->ErrorID << ", ErrorMsg: " << pRspInfo->ErrorMsg << endl;
+#endif
 	else
 	{
+#ifdef ADAPTER_LOGGING
 		LOG(INFO)  << m_adapterID << ": quote login succ!" << endl;
+#else
+		cout << m_adapterID << ": quote login succ!" << endl;
+#endif
+		
 		auto iter = m_instrumentList.begin();
 		while (iter != m_instrumentList.end())
 		{
@@ -122,7 +133,13 @@ int quoteAdapter_CTP::SubscribeMarketData(char * pInstrumentList)
 			m_instrumentList.push_back(instTemp);
 	}
 	int ret = m_pUserApi->SubscribeMarketData(pInstId, len);
+
+#ifdef ADAPTER_LOGGING
 	LOG(INFO)  << m_adapterID << ":  req | subscribe quote ... " << ((ret == 0) ? "succ" : "fail") << endl;
+#else
+	cout << m_adapterID << ":  req | subscribe quote ... " << ((ret == 0) ? "succ" : "fail") << endl;
+#endif
+	
 	return ret;
 };
 
@@ -172,7 +189,10 @@ void quoteAdapter_CTP::OnRtnDepthMarketData(CThostFtdcDepthMarketDataField *pDep
 	//	<< " 买一价:" << pDepthMarketData->BidPrice1
 	//	<< " 买一量:" << pDepthMarketData->BidVolume1
 	//	<< " 持仓量:" << pDepthMarketData->OpenInterest << endl;
-	LOG(INFO)  << m_adapterID << ":  行情 | 合约:" << pDepthMarketData->InstrumentID << ", 最新价: " << pDepthMarketData->LastPrice << endl;
+
+#ifdef	ADAPTER_LOGGING
+	cout<< m_adapterID << ":  行情 | 合约:" << pDepthMarketData->InstrumentID << ", 最新价: " << pDepthMarketData->LastPrice << endl;
+#endif
 
 	if (m_onRtnMarketData != NULL)
 		m_onRtnMarketData(m_adapterID, pDepthMarketData);

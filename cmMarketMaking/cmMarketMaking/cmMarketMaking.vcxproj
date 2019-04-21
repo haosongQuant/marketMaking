@@ -87,7 +87,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;_CRT_SECURE_NO_WARNINGS;GLOG_NO_ABBREVIATED_SEVERITIES;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;_CRT_SECURE_NO_WARNINGS;GLOG_NO_ABBREVIATED_SEVERITIES;ADAPTER_LOGGING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -149,10 +149,10 @@ copy  ..\lib\*.dll  ..\Debug\</Command>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\ctp\quoteAdapter_CTP.cpp" />
+    <ClCompile Include="..\src\ctp\tradeAdapter_CTP.cpp" />
     <ClCompile Include="src\baseClass\Utils.cpp" />
     <ClCompile Include="src\cmMarketMaking.cpp" />
-    <ClCompile Include="src\ctp\quoteAdapter_CTP.cpp" />
-    <ClCompile Include="src\ctp\tradeAdapter_CTP.cpp" />
     <ClCompile Include="src\infrastructure.cpp" />
     <ClCompile Include="src\infrastructure_quote.cpp" />
     <ClCompile Include="src\infrastructure_trade.cpp" />
