@@ -72,6 +72,9 @@
     <ClCompile Include="..\src\ctp\tradeAdapter_CTP.cpp">
       <Filter>源文件\adapter</Filter>
     </ClCompile>
+    <ClCompile Include="src\strategy\cmSpec01.cpp">
+      <Filter>源文件\strategy</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="header\threadpool\threadpool.h">
@@ -118,6 +121,9 @@
     </ClInclude>
     <ClInclude Include="..\header\tap\tradeAdapter_TAP.h">
       <Filter>头文件\adapter</Filter>
+    </ClInclude>
+    <ClInclude Include="header\strategy\cmSpec01.h">
+      <Filter>头文件\strategy</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

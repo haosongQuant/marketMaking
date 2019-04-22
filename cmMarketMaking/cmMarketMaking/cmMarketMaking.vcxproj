@@ -159,6 +159,7 @@ copy  ..\lib\*.dll  ..\Debug\</Command>
     <ClCompile Include="src\strategyEngine.cpp" />
     <ClCompile Include="src\strategy\cmMM01.cpp" />
     <ClCompile Include="src\strategy\cmMM01_pause.cpp" />
+    <ClCompile Include="src\strategy\cmSpec01.cpp" />
     <ClCompile Include="src\tap\quoteAdapter_TAP.cpp" />
     <ClCompile Include="src\tap\tradeAdapter_TAP.cpp" />
     <ClCompile Include="src\threadpool\threadpool.cpp" />
@@ -178,6 +179,7 @@ copy  ..\lib\*.dll  ..\Debug\</Command>
     <ClInclude Include="header\infrastructureStruct.h" />
     <ClInclude Include="header\strategyEngine.h" />
     <ClInclude Include="header\strategy\cmMM01.h" />
+    <ClInclude Include="header\strategy\cmSpec01.h" />
     <ClInclude Include="header\threadpool\threadpool.h" />
   </ItemGroup>
   <ItemGroup>

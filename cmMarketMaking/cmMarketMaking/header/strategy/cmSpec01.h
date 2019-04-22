@@ -60,15 +60,12 @@ public: //供外部调用的响应函数 | 在策略线程池中调用相应的处理函数
 	void onRtnMD(futuresMDPtr);
 	void onOrderRtn(orderRtnPtr pOrder){ m_tradeTP->getDispatcher().post(bind(&cmSepc01::processOrder, this, pOrder)); };
 	void onTradeRtn(tradeRtnPtr ptrade){ m_tradeTP->getDispatcher().post(bind(&cmSepc01::processTrade, this, ptrade)); };
-	void onHedgeOrderRtn(orderRtnPtr pOrder){ m_tradeTP->getDispatcher().post(bind(&cmSepc01::processHedgeOrderRtn, this, pOrder)); };
-	void onHedgeTradeRtn(tradeRtnPtr ptrade){ m_tradeTP->getDispatcher().post(bind(&cmSepc01::processHedgeTradeRtn, this, ptrade)); };
-	void onNetHedgeOrderRtn(orderRtnPtr pOrder){ m_tradeTP->getDispatcher().post(bind(&cmSepc01::processNetHedgeOrderRtn, this, pOrder)); };
-	void onNetHedgeTradeRtn(tradeRtnPtr ptrade){ m_tradeTP->getDispatcher().post(bind(&cmSepc01::processNetHedgeTradeRtn, this, ptrade)); };
-	void onCycleNetHedgeOrderRtn(orderRtnPtr pOrder){ m_tradeTP->getDispatcher().post(bind(&cmSepc01::processCycleNetHedgeOrderRtn, this, pOrder)); };
-	void onCycleNetHedgeTradeRtn(tradeRtnPtr ptrade){ m_tradeTP->getDispatcher().post(bind(&cmSepc01::processCycleNetHedgeTradeRtn, this, ptrade)); };
 	void onRspCancel(cancelRtnPtr pCancel){ m_tradeTP->getDispatcher().post(bind(&cmSepc01::processCancelRes, this, pCancel)); };
 
 private:
+
+	boost::mutex m_lastQuoteLock;
+	futuresMDPtr m_lastQuotePtr;
 	double m_upline;
 	double m_downline;
 	double m_lastprice;
@@ -87,50 +84,12 @@ private:
 	void orderPrice(double* bidprice, double* askprice); //计算挂单价格
 	void processOrder(orderRtnPtr);
 	void processTrade(tradeRtnPtr);
+	void daemonEngine(); //守护线程引擎
 
 private:
 	int m_cancelBidOrderRC;
 	int m_cancelAskOrderRC;
-	void CancelOrder(bool);// const boost::system::error_code& error);
 	void processCancelRes(cancelRtnPtr);
-
-private:
-
-	void sendHedgeOrder(tradeRtnPtr); //同价格对冲
-	void processHedgeOrderRtn(orderRtnPtr);
-	void processHedgeTradeRtn(tradeRtnPtr);
-
-	boost::shared_mutex m_hedgeOrderVolLock;
-	map< int, double > m_hedgeOrderVol;
-	map< int, int >    m_hedgeOrderCancelRC;
-	void cancelHedgeOrder();// const boost::system::error_code& error);
-	void confirmCancel_hedgeOrder();
-	
-private:
-	double        m_NetHedgeOrderVol;
-	boost::mutex  m_NetHedgeOrderVolLock;
-	void sendNetHedgeOrder(double);
-	void processNetHedgeOrderRtn(orderRtnPtr);
-	void processNetHedgeTradeRtn(tradeRtnPtr);
-	
-private:
-		map < int, orderRtnPtr> m_orderRef2orderRtn;  //orderRef -> orderRtn
-		boost::shared_mutex     m_orderRtnBuffLock;
-
-		map < int, map<string, tradeRtnPtr> > m_orderRef2tradeRtn;  //orderRef -> tradeRtn
-		boost::shared_mutex     m_tradeRtnBuffLock;
-		void registerTradeRtn(tradeRtnPtr pTrade){
-			if (pTrade)
-			{
-				write_lock lock(m_tradeRtnBuffLock);
-				m_orderRef2tradeRtn[pTrade->m_orderRef][pTrade->m_tradeId] = pTrade;
-			}
-		};
-
-public:
-	void interruptMM(boost::function<void()> pauseHandler);
-	bool pauseMM(boost::function<void()> pauseHandler);
-	void resumeMM();
 
 private: // for clear cycle
 	tradeGroupBufferPtr     m_ptradeGrp; //用于记录单个交易闭环的所有报单号
@@ -147,7 +106,6 @@ private: // for clear cycle
 	};
 
 	int  m_cycleHedgeVol;
-	void daemonEngine(); //守护线程引擎
 	bool isOrderComplete(int orderRef, int& tradedVol);
 	void sendCycleNetHedgeOrder();
 	void sendCycleNetHedgeOrder(int);
