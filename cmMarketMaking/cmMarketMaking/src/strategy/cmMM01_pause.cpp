@@ -155,7 +155,7 @@ void cmMM01::daemonEngine(){
 			totalTradedVol += cycleTradedVol;
 			LOG(INFO) << m_strategyId << ",cycleProfit," << item->m_Id
 				<< "," << cycleProfit << endl;
-			LOG(INFO) << "-----------CycleStatisticsEnd-----------" << endl;
+			LOG(INFO) << m_strategyId << "-----------CycleStatisticsEnd-----------" << endl;
 		}
 
 	} //end: 循环处理每一个闭环

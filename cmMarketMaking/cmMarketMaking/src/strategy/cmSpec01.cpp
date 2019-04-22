@@ -1,19 +1,23 @@
-#include "strategy/cmMM01.h"
+#include <math.h>
+#include <numeric>
+#include "strategy/cmSpec01.h"
 #include "glog\logging.h"
 
-cmMM01::cmMM01(string strategyId, string strategyTyp, string productId, string exchange,
-	string quoteAdapterID, string tradeAdapterID, double tickSize, double miniOrderSpread,
+cmSepc01::cmSepc01(string strategyId, string strategyTyp, string productId, string exchange,
+	string quoteAdapterID, string tradeAdapterID, double tickSize,
 	double orderQty, int volMulti,
 	athenathreadpoolPtr quoteTP, athenathreadpoolPtr tradeTP, infrastructure* infra,
 	Json::Value config)
 	:m_strategyId(strategyId), m_strategyTyp(strategyTyp), m_productId(productId), m_exchange(exchange),
 	m_quoteAdapterID(quoteAdapterID), m_tradeAdapterID(tradeAdapterID), m_tickSize(tickSize),
-	m_miniOrderSpread(miniOrderSpread), m_orderQty(orderQty), m_volumeMultiple(volMulti),
-	m_quoteTP(quoteTP), m_tradeTP(tradeTP), m_infra(infra), m_cycleId(0), m_pauseReq(false),
-	m_breakReq(false), m_strategyConfig(config),
-	m_cancelConfirmTimer(tradeTP->getDispatcher()), m_cancelHedgeTimer(tradeTP->getDispatcher()),
-	m_daemonTimer(tradeTP->getDispatcher()), m_pauseLagTimer(tradeTP->getDispatcher())
+	m_orderQty(orderQty), m_volumeMultiple(volMulti),
+	m_quoteTP(quoteTP), m_tradeTP(tradeTP), m_infra(infra), m_strategyConfig(config),
+	m_daemonTimer(tradeTP->getDispatcher())
 {
+	m_lastprice   = -1.0;
+	m_lastprice_1 = -1.0;
+	m_upline = 50.0;
+	m_downline = -50.0;
 	int openNum = m_strategyConfig["openTime"].size();
 	for (int i = 0; i < openNum; ++i)
 	{
@@ -26,52 +30,85 @@ cmMM01::cmMM01(string strategyId, string strategyTyp, string productId, string e
 	daemonEngine();
 };
 
-void cmMM01::startStrategy(){
+void cmSepc01::daemonEngine(){
+
+	if (!isInOpenTime())
+		if (STRATEGY_STATUS_STOP != m_strategyStatus)
+			m_strategyStatus = STRATEGY_STATUS_STOP;
+	else if (STRATEGY_STATUS_START != m_strategyStatus)
+		startStrategy();
+
+	m_daemonTimer.expires_from_now(boost::posix_time::millisec(1000 * 60)); //每分钟运行一次
+	m_daemonTimer.async_wait(boost::bind(&cmSepc01::daemonEngine, this));
+};
+
+void cmSepc01::startStrategy(){
 	cout << m_strategyId << " starting..." << endl;
 	if (STRATEGY_STATUS_INIT == m_strategyStatus)
 	{
-		m_infra->subscribeFutures(m_quoteAdapterID, m_exchange, m_productId, bind(&cmMM01::onRtnMD, this, _1));
+		m_infra->subscribeFutures(m_quoteAdapterID, m_exchange, m_productId, bind(&cmSepc01::onRtnMD, this, _1));
 	}
-	m_strategyStatus = STRATEGY_STATUS_READY;
+	m_strategyStatus = STRATEGY_STATUS_START;
 };
 
-void cmMM01::resetStrategyStatus(){ //等待行情触发cycle
-	m_strategyStatus = STRATEGY_STATUS_READY;
-};
-
-//行情处理
-//    如果策略处于 READY      状态，下单
-//    如果策略处于 ORDER_SENT 状态，撤单并重新下单
-void cmMM01::quoteEngine()
+void cmSepc01::onRtnMD(futuresMDPtr pFuturesMD)//行情响应函数: 更新行情，调用quoteEngine产生信号
 {
-	boost::recursive_mutex::scoped_lock lock(m_strategyStatusLock);
-	switch (m_strategyStatus)
-	{
-	case STRATEGY_STATUS_READY:
-	{
-		startCycle();
-		break;
-	}
-	case STRATEGY_STATUS_ORDER_SENT:
-	{
-		m_strategyStatus = STRATEGY_STATUS_CLOSING_POSITION;
-		m_tradeTP->getDispatcher().post(boost::bind(&cmMM01::refreshCycle, this)); //,boost::asio::placeholders::error));
-		break;
-	}
-	case STRATEGY_STATUS_PAUSE:
-	{
-		cout << m_strategyId << ": market making paused!" << endl;
-		break;
-	}
-	case STRATEGY_STATUS_BREAK:
-	{
-		cout << m_strategyId << " breaking ..." << endl;
-		break;
-	}
-	}
+	m_lastprice_1 = m_lastprice;
+	m_lastprice = pFuturesMD->LastPrice;
+	m_quoteTP->getDispatcher().post(bind(&cmSepc01::quoteEngine, this));
 };
 
-void cmMM01::orderPrice(double* bidprice, double* askprice)
+void cmSepc01::quoteEngine()
+{
+	if (m_lastprice_1 < 0.0)
+		return;
+
+	double yield = log(m_lastprice / m_lastprice_1);
+	m_yieldBuff_short.push_back(yield);
+	m_yieldBuff_long.push_back(yield);
+	double priceChg = abs(m_lastprice - m_lastprice_1);
+	m_avg_true_range.push_back(priceChg);
+
+	if (!m_yieldBuff_long.full())
+		return;
+
+	double ma1 = accumulate(m_yieldBuff_short.begin(), m_yieldBuff_short.end(), 0.0)
+		            / m_yieldBuff_short.capacity();
+	double ma2 = accumulate(m_yieldBuff_long.begin(), m_yieldBuff_long.end(), 0.0)
+		            / m_yieldBuff_long.capacity();
+	double avgTrueRange = accumulate(m_avg_true_range.begin(), m_avg_true_range.end(), 0.0) 
+		                     / m_avg_true_range.capacity();
+	double apcosm;
+	if (avgTrueRange != 0.0)
+		apcosm = (ma1 - ma2) / avgTrueRange;
+	else
+		apcosm = 50;
+
+	m_Apcosm_Buff.push_back(apcosm);
+	if (!m_Apcosm_Buff.full())
+		return;
+
+	vector<double> apcosm_Buff;
+	auto iter = m_Apcosm_Buff.begin();
+	while (iter != m_Apcosm_Buff.end())
+	{
+		apcosm_Buff.push_back(*iter);
+		iter++;
+	}
+	sort(apcosm_Buff.begin(), apcosm_Buff.end());
+	double qu1 = apcosm_Buff[round(apcosm_Buff_size*0.25)];
+	double qu2 = apcosm_Buff[round(apcosm_Buff_size*0.50)];
+	double qu3 = apcosm_Buff[round(apcosm_Buff_size*0.75)];
+
+	double new_abs;
+	if ((qu3 - qu1) != 0)
+		new_abs = (apcosm - qu2) / (qu3 - qu1) * 100;
+	else 
+		new_abs = 50;
+
+};
+
+void cmSepc01::orderPrice(double* bidprice, double* askprice)
 {
 	futuresMDPtr plastQuote;
 	{
@@ -100,7 +137,7 @@ void cmMM01::orderPrice(double* bidprice, double* askprice)
 	*askprice = *bidprice + m_tickSize * m_miniOrderSpread;
 };
 
-void cmMM01::startCycle()
+void cmSepc01::startCycle()
 {
 	{
 		read_lock lock(m_breakReqLock);
@@ -139,7 +176,7 @@ void cmMM01::startCycle()
 	}
 	m_bidOrderRef = m_infra->insertOrder(m_tradeAdapterID, m_productId, m_exchange, ORDER_TYPE_LIMIT,
 		ORDER_DIR_BUY, POSITION_EFFECT_OPEN, FLAG_SPECULATION, bidprice, m_orderQty,
-		bind(&cmMM01::onOrderRtn, this, _1), bind(&cmMM01::onTradeRtn, this, _1));
+		bind(&cmSepc01::onOrderRtn, this, _1), bind(&cmSepc01::onTradeRtn, this, _1));
 	if (m_bidOrderRef > 0)
 	{
 		write_lock lock0(m_orderRef2cycleRWlock);
@@ -149,7 +186,7 @@ void cmMM01::startCycle()
 
 	m_askOrderRef = m_infra->insertOrder(m_tradeAdapterID, m_productId, m_exchange, ORDER_TYPE_LIMIT,
 		ORDER_DIR_SELL, POSITION_EFFECT_OPEN, FLAG_SPECULATION, askprice, m_orderQty,
-		bind(&cmMM01::onOrderRtn, this, _1), bind(&cmMM01::onTradeRtn, this, _1));
+		bind(&cmSepc01::onOrderRtn, this, _1), bind(&cmSepc01::onTradeRtn, this, _1));
 	if (m_askOrderRef > 0)
 	{
 		write_lock lock0(m_orderRef2cycleRWlock);
@@ -162,12 +199,12 @@ void cmMM01::startCycle()
 	m_strategyStatus = STRATEGY_STATUS_ORDER_SENT;
 };
 
-void cmMM01::refreshCycle()
+void cmSepc01::refreshCycle()
 {
 	CancelOrder(true);
 };
 
-void cmMM01::CancelOrder(bool restart)//const boost::system::error_code& error)
+void cmSepc01::CancelOrder(bool restart)//const boost::system::error_code& error)
 {
 	if (m_cancelConfirmTimerCancelled)
 	{
@@ -181,11 +218,11 @@ void cmMM01::CancelOrder(bool restart)//const boost::system::error_code& error)
 	if (m_cancelBidOrderRC == 0 || m_cancelBidOrderRC == ORDER_CANCEL_ERROR_NOT_FOUND ||
 		m_cancelBidOrderRC == ORDER_CANCEL_ERROR_SEND_FAIL)
 		m_cancelBidOrderRC = m_infra->cancelOrder(m_tradeAdapterID, m_bidOrderRef,
-		bind(&cmMM01::onRspCancel, this, _1));
+		bind(&cmSepc01::onRspCancel, this, _1));
 	if (m_cancelAskOrderRC == 0 || m_cancelAskOrderRC == ORDER_CANCEL_ERROR_NOT_FOUND ||
 		m_cancelAskOrderRC == ORDER_CANCEL_ERROR_SEND_FAIL)
 		m_cancelAskOrderRC = m_infra->cancelOrder(m_tradeAdapterID, m_askOrderRef,
-		bind(&cmMM01::onRspCancel, this, _1));
+		bind(&cmSepc01::onRspCancel, this, _1));
 
 	if (m_cancelBidOrderRC == ORDER_CANCEL_ERROR_NOT_FOUND || m_cancelAskOrderRC == ORDER_CANCEL_ERROR_NOT_FOUND)
 	{
@@ -195,7 +232,7 @@ void cmMM01::CancelOrder(bool restart)//const boost::system::error_code& error)
 			LOG(WARNING) << m_strategyId << ": order not found in adapter, querying order, orderRef: " << m_askOrderRef << endl;
 		m_infra->queryOrder(m_tradeAdapterID);
 		m_cancelConfirmTimer.expires_from_now(boost::posix_time::milliseconds(1000*10));
-		m_cancelConfirmTimer.async_wait(bind(&cmMM01::CancelOrder, this, restart));// , boost::asio::placeholders::error));
+		m_cancelConfirmTimer.async_wait(bind(&cmSepc01::CancelOrder, this, restart));// , boost::asio::placeholders::error));
 	}
 	else if (m_cancelBidOrderRC == ORDER_CANCEL_ERROR_SEND_FAIL || m_cancelAskOrderRC == ORDER_CANCEL_ERROR_SEND_FAIL)
 	{
@@ -204,20 +241,20 @@ void cmMM01::CancelOrder(bool restart)//const boost::system::error_code& error)
 		if (m_cancelAskOrderRC == ORDER_CANCEL_ERROR_SEND_FAIL)
 			LOG(WARNING) << m_strategyId << ": send cancel failed, orderRef: " << m_askOrderRef << endl;
 		m_cancelConfirmTimer.expires_from_now(boost::posix_time::milliseconds(1000*5));
-		m_cancelConfirmTimer.async_wait(bind(&cmMM01::CancelOrder, this, restart)); // , boost::asio::placeholders::error));
+		m_cancelConfirmTimer.async_wait(bind(&cmSepc01::CancelOrder, this, restart)); // , boost::asio::placeholders::error));
 	}
 	else if (restart)
 	{
 		boost::recursive_mutex::scoped_lock lock(m_strategyStatusLock);
 		if (STRATEGY_STATUS_CLOSING_POSITION == m_strategyStatus)
 		{//重新下单
-			m_tradeTP->getDispatcher().post(bind(&cmMM01::registerTrdGrpMap, this, m_cycleId, m_ptradeGrp));
+			m_tradeTP->getDispatcher().post(bind(&cmSepc01::registerTrdGrpMap, this, m_cycleId, m_ptradeGrp));
 			startCycle();
 		}
 	}
 };
 
-void cmMM01::processOrder(orderRtnPtr pOrder)
+void cmSepc01::processOrder(orderRtnPtr pOrder)
 {
 	write_lock lock(m_orderRtnBuffLock);
 	m_orderRef2orderRtn[pOrder->m_orderRef] = pOrder;
@@ -228,11 +265,11 @@ void cmMM01::processOrder(orderRtnPtr pOrder)
 //    2、如果尚未撤单，下撤单指令
 //    3、下对冲单
 //    4、等待1s钟，调用对冲指令处理函数 cancelHedgeOrder()
-void cmMM01::processTrade(tradeRtnPtr ptrade)
+void cmSepc01::processTrade(tradeRtnPtr ptrade)
 {
-	m_tradeTP->getDispatcher().post(boost::bind(&cmMM01::registerTradeRtn, this, ptrade));
+	m_tradeTP->getDispatcher().post(boost::bind(&cmSepc01::registerTradeRtn, this, ptrade));
 
-	enum_cmMM01_strategy_status status;
+	enum_cmSepc01_strategy_status status;
 	{
 		boost::recursive_mutex::scoped_lock lock(m_strategyStatusLock);
 
@@ -246,7 +283,7 @@ void cmMM01::processTrade(tradeRtnPtr ptrade)
 		{//撤单
 			m_cancelBidOrderRC = 0;
 			m_cancelAskOrderRC = 0;
-			m_tradeTP->getDispatcher().post(boost::bind(&cmMM01::CancelOrder, this, false)); // , boost::asio::placeholders::error));
+			m_tradeTP->getDispatcher().post(boost::bind(&cmSepc01::CancelOrder, this, false)); // , boost::asio::placeholders::error));
 		}
 	}
 
@@ -258,23 +295,23 @@ void cmMM01::processTrade(tradeRtnPtr ptrade)
 	{
 		LOG(INFO) << m_strategyId << ": waiting 1s to cancel hedge order!" << endl;
 		m_cancelHedgeTimer.expires_from_now(boost::posix_time::milliseconds(1000));
-		m_cancelHedgeTimer.async_wait(boost::bind(&cmMM01::cancelHedgeOrder, this)); // , boost::asio::placeholders::error));
+		m_cancelHedgeTimer.async_wait(boost::bind(&cmSepc01::cancelHedgeOrder, this)); // , boost::asio::placeholders::error));
 	}
 
 };
 
 //撤单响应函数
-void cmMM01::processCancelRes(cancelRtnPtr pCancel)
+void cmSepc01::processCancelRes(cancelRtnPtr pCancel)
 {
 }
 
-void cmMM01::sendHedgeOrder(tradeRtnPtr ptrade)//同价对冲
+void cmSepc01::sendHedgeOrder(tradeRtnPtr ptrade)//同价对冲
 {
 	enum_order_dir_type dir = (ptrade->m_orderDir == ORDER_DIR_BUY) ? ORDER_DIR_SELL : ORDER_DIR_BUY;
 
 	int m_hedgeOrderRef = m_infra->insertOrder(m_tradeAdapterID, m_productId, m_exchange, ORDER_TYPE_LIMIT,
 		dir, POSITION_EFFECT_OPEN, FLAG_SPECULATION, ptrade->m_price, ptrade->m_volume,
-		bind(&cmMM01::onHedgeOrderRtn, this, _1), bind(&cmMM01::onHedgeTradeRtn, this, _1));
+		bind(&cmSepc01::onHedgeOrderRtn, this, _1), bind(&cmSepc01::onHedgeTradeRtn, this, _1));
 
 	if (m_hedgeOrderRef > 0)
 	{
@@ -291,9 +328,9 @@ void cmMM01::sendHedgeOrder(tradeRtnPtr ptrade)//同价对冲
 };
 
 //对冲成交处理函数
-void cmMM01::processHedgeTradeRtn(tradeRtnPtr ptrade)
+void cmSepc01::processHedgeTradeRtn(tradeRtnPtr ptrade)
 {
-	m_tradeTP->getDispatcher().post(boost::bind(&cmMM01::registerTradeRtn, this, ptrade));
+	m_tradeTP->getDispatcher().post(boost::bind(&cmSepc01::registerTradeRtn, this, ptrade));
 
 	write_lock lock(m_hedgeOrderVolLock);
 	m_hedgeOrderVol[ptrade->m_orderRef] -= ((ptrade->m_orderDir == ORDER_DIR_BUY)
@@ -310,20 +347,20 @@ void cmMM01::processHedgeTradeRtn(tradeRtnPtr ptrade)
 		m_cancelConfirmTimerCancelled = true;
 		m_cancelConfirmTimer.cancel();
 
-		m_tradeTP->getDispatcher().post(bind(&cmMM01::registerTrdGrpMap, this, m_cycleId, m_ptradeGrp));
+		m_tradeTP->getDispatcher().post(bind(&cmSepc01::registerTrdGrpMap, this, m_cycleId, m_ptradeGrp));
 		startCycle();
 	}
 
 }
 
-void cmMM01::processHedgeOrderRtn(orderRtnPtr pOrder)
+void cmSepc01::processHedgeOrderRtn(orderRtnPtr pOrder)
 {
 	write_lock lock(m_orderRtnBuffLock);
 	m_orderRef2orderRtn[pOrder->m_orderRef] = pOrder;
 }
 
 //处理对冲指令：如果对冲指令未成交，撤单，并异步调用轧差市价对冲函数 confirmCancel_hedgeOrder()
-void cmMM01::cancelHedgeOrder()//const boost::system::error_code& error){
+void cmSepc01::cancelHedgeOrder()//const boost::system::error_code& error){
 {
 	if (m_cancelHedgeTimerCancelled)
 	{
@@ -341,7 +378,7 @@ void cmMM01::cancelHedgeOrder()//const boost::system::error_code& error){
 			if (m_hedgeOrderCancelRC[iter->first] == 0)
 			{
 				int cancelOrderRC = m_infra->cancelOrder(m_tradeAdapterID, iter->first,
-					bind(&cmMM01::onRspCancel, this, _1));
+					bind(&cmSepc01::onRspCancel, this, _1));
 				m_hedgeOrderCancelRC[iter->first] = cancelOrderRC;
 				if (cancelOrderRC < 0)
 					isHedgeOrderConfirmed = false;
@@ -350,21 +387,21 @@ void cmMM01::cancelHedgeOrder()//const boost::system::error_code& error){
 			{
 				m_infra->queryOrder(m_tradeAdapterID);
 				m_cancelHedgeTimer.expires_from_now(boost::posix_time::milliseconds(1000*10));
-				m_cancelHedgeTimer.async_wait(boost::bind(&cmMM01::cancelHedgeOrder, this));// ,boost::asio::placeholders::error));
+				m_cancelHedgeTimer.async_wait(boost::bind(&cmSepc01::cancelHedgeOrder, this));// ,boost::asio::placeholders::error));
 				return;
 			}
 			else if (m_hedgeOrderCancelRC[iter->first] == ORDER_CANCEL_ERROR_SEND_FAIL)
 			{
 				m_hedgeOrderCancelRC[iter->first] = 0;
 				m_cancelHedgeTimer.expires_from_now(boost::posix_time::milliseconds(1000*5));
-				m_cancelHedgeTimer.async_wait(boost::bind(&cmMM01::cancelHedgeOrder, this)); // , boost::asio::placeholders::error));
+				m_cancelHedgeTimer.async_wait(boost::bind(&cmSepc01::cancelHedgeOrder, this)); // , boost::asio::placeholders::error));
 				return;
 			}
 			iter++;
 		}
 		if (!isHedgeOrderConfirmed)
 		{
-			m_tradeTP->getDispatcher().post(boost::bind(&cmMM01::cancelHedgeOrder, this)); // ,boost::asio::placeholders::error));
+			m_tradeTP->getDispatcher().post(boost::bind(&cmSepc01::cancelHedgeOrder, this)); // ,boost::asio::placeholders::error));
 		}
 		else
 			confirmCancel_hedgeOrder();
@@ -373,7 +410,7 @@ void cmMM01::cancelHedgeOrder()//const boost::system::error_code& error){
 
 
 //轧差市价对冲
-void cmMM01::confirmCancel_hedgeOrder()
+void cmSepc01::confirmCancel_hedgeOrder()
 {
 	//boost::mutex::scoped_lock lock(m_hedgeOrderVolLock); //在 cancelHedgeOrder() 中互斥
 	if (m_hedgeOrderVol.size() > 0)
@@ -395,13 +432,13 @@ void cmMM01::confirmCancel_hedgeOrder()
 			m_cancelConfirmTimerCancelled = true;
 			m_cancelConfirmTimer.cancel();
 
-			m_tradeTP->getDispatcher().post(bind(&cmMM01::registerTrdGrpMap, this, m_cycleId, m_ptradeGrp));
+			m_tradeTP->getDispatcher().post(bind(&cmSepc01::registerTrdGrpMap, this, m_cycleId, m_ptradeGrp));
 			startCycle();
 		}
 	}
 };
 
-void cmMM01::sendNetHedgeOrder(double netHedgeVol)
+void cmSepc01::sendNetHedgeOrder(double netHedgeVol)
 {
 	//轧差市价对冲
 	enum_order_dir_type dir = netHedgeVol > 0.0 ? ORDER_DIR_BUY : ORDER_DIR_SELL;
@@ -409,7 +446,7 @@ void cmMM01::sendNetHedgeOrder(double netHedgeVol)
 		m_lastQuotePtr->UpperLimitPrice : m_lastQuotePtr->LowerLimitPrice;
 	int netHedgeOrderRef = m_infra->insertOrder(m_tradeAdapterID, m_productId, m_exchange,
 		ORDER_TYPE_LIMIT, dir, POSITION_EFFECT_OPEN, FLAG_SPECULATION, price, fabs(netHedgeVol),
-		bind(&cmMM01::onNetHedgeOrderRtn, this, _1), bind(&cmMM01::onNetHedgeTradeRtn, this, _1));
+		bind(&cmSepc01::onNetHedgeOrderRtn, this, _1), bind(&cmSepc01::onNetHedgeTradeRtn, this, _1));
 	if (netHedgeOrderRef > 0)
 	{
 		write_lock lock0(m_orderRef2cycleRWlock);
@@ -426,9 +463,9 @@ void cmMM01::sendNetHedgeOrder(double netHedgeVol)
 };
 
 //轧差市价成交处理函数
-void cmMM01::processNetHedgeTradeRtn(tradeRtnPtr ptrade)
+void cmSepc01::processNetHedgeTradeRtn(tradeRtnPtr ptrade)
 {
-	m_tradeTP->getDispatcher().post(boost::bind(&cmMM01::registerTradeRtn, this, ptrade));
+	m_tradeTP->getDispatcher().post(boost::bind(&cmSepc01::registerTradeRtn, this, ptrade));
 
 	boost::mutex::scoped_lock lock(m_NetHedgeOrderVolLock);
 	m_NetHedgeOrderVol -= ((ptrade->m_orderDir == ORDER_DIR_BUY)
@@ -440,13 +477,26 @@ void cmMM01::processNetHedgeTradeRtn(tradeRtnPtr ptrade)
 		m_cancelConfirmTimerCancelled = true;
 		m_cancelConfirmTimer.cancel();
 
-		m_tradeTP->getDispatcher().post(bind(&cmMM01::registerTrdGrpMap, this, m_cycleId, m_ptradeGrp));
+		m_tradeTP->getDispatcher().post(bind(&cmSepc01::registerTrdGrpMap, this, m_cycleId, m_ptradeGrp));
 		startCycle();
 	}
 }
 
-void cmMM01::processNetHedgeOrderRtn(orderRtnPtr pOrder)
+void cmSepc01::processNetHedgeOrderRtn(orderRtnPtr pOrder)
 {
 	write_lock lock(m_orderRtnBuffLock);
 	m_orderRef2orderRtn[pOrder->m_orderRef] = pOrder;
 }
+
+bool cmSepc01::isInOpenTime()
+{
+	time_t t;
+	tm* local;
+	t = time(NULL);
+	local = localtime(&t);
+	int timeSec = (local->tm_hour * 100 + local->tm_min) * 100 + local->tm_sec;
+	for (auto item : m_openTimeList)
+		if (item.first <= timeSec && timeSec <= item.second)
+			return true;
+	return false;
+};
