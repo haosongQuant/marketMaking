@@ -81,6 +81,13 @@
             "orderQty": 10, "volMulti": 5,
             "openTime": [ { "start": 901, "end": 1014 }, { "start": 1031, "end": 1129 },
                           { "start": 1329, "end": 1459 }, { "start": 2101, "end": 2329 } ]
+        },
+        {
+            "strategyID": "spec_ZC911", "strategyTyp": "cmSpec01", "productId": "ZC911", "exchange": "CZCE",
+            "quote": "quoteCTP01", "trade": "tradeCTP01", "tickSize": 2.0, "orderQty": 1, "volMulti": 5, 
+            "masterStrategy": "mm_ZC911",
+            "openTime": [ { "start": 901, "end": 1014 }, { "start": 1031, "end": 1129 },
+                          { "start": 1329, "end": 1459 }, { "start": 2101, "end": 2329 } ]
         }
     ]
 }

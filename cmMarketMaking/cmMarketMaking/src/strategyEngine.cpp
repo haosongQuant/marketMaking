@@ -12,6 +12,8 @@ void strategyEngine::registerStrategyType(string strategyID, string strategyType
 {
 	if ("cmMM01" == strategyType)
 		m_strategyTypeMap[strategyID] = STRATEGY_cmMM01;
+	else if ("cmSpec01" == strategyType)
+		m_strategyTypeMap[strategyID] = STRATEGY_cmSpec01;
 	else
 		m_strategyTypeMap[strategyID] = STRATEGY_ERROR;
 };
@@ -29,7 +31,7 @@ void strategyEngine::init()
 		{
 		case STRATEGY_cmMM01:
 		{
-			cmMM01* pCmMM01 = new cmMM01(strategyId, strategyType,
+			cmMM01 *pCmMM01 = new cmMM01(strategyId, strategyType,
 				strategyConfig["productId"].asString(),
 				strategyConfig["exchange"].asString(),
 				strategyConfig["quote"].asString(),
@@ -41,6 +43,21 @@ void strategyEngine::init()
 				m_quoteTP, m_tradeTP, m_infra, strategyConfig);
 			m_strategies[strategyId] = pCmMM01;
 			break;
+		}
+		case STRATEGY_cmSpec01:
+		{
+			cmSepc01 *pCmSpec01 = new cmSepc01(strategyId, strategyType,
+				strategyConfig["productId"].asString(),
+				strategyConfig["exchange"].asString(),
+				strategyConfig["quote"].asString(),
+				strategyConfig["trade"].asString(),
+				strategyConfig["tickSize"].asDouble(),
+				strategyConfig["orderQty"].asDouble(),
+				strategyConfig["volMulti"].asInt(),
+				m_quoteTP, m_tradeTP, m_infra, strategyConfig);
+			string masterStrategy = strategyConfig["masterStrategy"].asString();
+			pCmSpec01->registerMasterStrategy(m_strategies[masterStrategy], m_strategyTypeMap[masterStrategy]);
+			m_strategies[strategyId] = pCmSpec01;
 		}
 		}
 	}

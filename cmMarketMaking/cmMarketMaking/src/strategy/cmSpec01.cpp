@@ -10,7 +10,7 @@ cmSepc01::cmSepc01(string strategyId, string strategyTyp, string productId, stri
 	Json::Value config)
 	:m_strategyId(strategyId), m_strategyTyp(strategyTyp), m_productId(productId), m_exchange(exchange),
 	m_quoteAdapterID(quoteAdapterID), m_tradeAdapterID(tradeAdapterID), m_tickSize(tickSize),
-	m_orderQty(orderQty), m_volumeMultiple(volMulti),
+	m_orderQty(orderQty), m_volumeMultiple(volMulti), m_masterStrategy(nullptr),
 	m_quoteTP(quoteTP), m_tradeTP(tradeTP), m_infra(infra), m_strategyConfig(config),
 	m_daemonTimer(tradeTP->getDispatcher())
 {
@@ -26,16 +26,18 @@ cmSepc01::cmSepc01(string strategyId, string strategyTyp, string productId, stri
 		int endTime = openInterval["end"].asInt() * 100 + 59;
 		m_openTimeList.push_back(make_pair(startTime, endTime));
 	}
-	m_strategyStatus = STRATEGY_STATUS_INIT;
+	m_strategyStatus = CMSPEC01_STATUS_INIT;
 	daemonEngine();
 };
 
 void cmSepc01::daemonEngine(){
 
 	if (!isInOpenTime())
-		if (STRATEGY_STATUS_STOP != m_strategyStatus)
-			m_strategyStatus = STRATEGY_STATUS_STOP;
-	else if (STRATEGY_STATUS_START != m_strategyStatus)
+	{
+		if (CMSPEC01_STATUS_STOP != m_strategyStatus)
+			m_strategyStatus = CMSPEC01_STATUS_STOP;
+	}
+	else if (CMSPEC01_STATUS_START != m_strategyStatus)
 		startStrategy();
 
 	m_daemonTimer.expires_from_now(boost::posix_time::millisec(1000 * 60)); //每分钟运行一次
@@ -44,11 +46,11 @@ void cmSepc01::daemonEngine(){
 
 void cmSepc01::startStrategy(){
 	cout << m_strategyId << " starting..." << endl;
-	if (STRATEGY_STATUS_INIT == m_strategyStatus)
+	if (CMSPEC01_STATUS_INIT == m_strategyStatus)
 	{
 		m_infra->subscribeFutures(m_quoteAdapterID, m_exchange, m_productId, bind(&cmSepc01::onRtnMD, this, _1));
 	}
-	m_strategyStatus = STRATEGY_STATUS_START;
+	m_strategyStatus = CMSPEC01_STATUS_START;
 };
 
 void cmSepc01::onRtnMD(futuresMDPtr pFuturesMD)//行情响应函数: 更新行情，调用quoteEngine产生信号
@@ -109,6 +111,11 @@ void cmSepc01::quoteEngine()
 		new_abs = (apcosm - qu2) / (qu3 - qu1) * 100;
 	else 
 		new_abs = 50;
+
+	if (new_abs > m_upline)
+		LOG(INFO) << m_strategyId << ": buy signal!" << endl;
+	else if (new_abs < m_downline)
+		LOG(INFO) << m_strategyId << ": sell signal!" << endl;
 
 };
 

@@ -4,12 +4,7 @@
 #include "threadpool\threadpool.h"
 #include "json\json.h"
 #include "strategy\cmMM01.h"
-
-enum enum_strategy_type
-{
-	STRATEGY_cmMM01,
-	STRATEGY_ERROR,
-};
+#include "strategy\cmSpec01.h"
 
 struct IpauseStrategy
 {

@@ -14,9 +14,9 @@ using namespace std;
 
 enum enum_cmSepc01_strategy_status
 {//策略状态，决定是否发送新的委托
-	STRATEGY_STATUS_INIT,
-	STRATEGY_STATUS_START,
-	STRATEGY_STATUS_STOP,
+	CMSPEC01_STATUS_INIT,
+	CMSPEC01_STATUS_START,
+	CMSPEC01_STATUS_STOP,
 };
 
 typedef boost::circular_buffer<double> cirBuff;
@@ -39,6 +39,14 @@ private:
 	athenathreadpoolPtr m_quoteTP;
 	athenathreadpoolPtr m_tradeTP;
 
+private:
+	strategyBase      *m_masterStrategy;
+	enum_strategy_type m_masterStrategyTyp;
+public:
+	void registerMasterStrategy(strategyBase *masterStrategy, enum_strategy_type masterStrategyTyp){
+		m_masterStrategy = masterStrategy; m_masterStrategyTyp = masterStrategyTyp;};
+
+private:
 	list< pair <int, int> > m_openTimeList;
 	bool isInOpenTime();
 
