@@ -218,7 +218,7 @@ void cmMM01::processCycleNetHedgeTradeRtn(tradeRtnPtr ptrade)
 		boost::mutex::scoped_lock lock(m_cycleNetHedgeVolLock);
 		m_cycleNetHedgeVol -= ptrade->m_orderDir == ORDER_DIR_BUY ? ptrade->m_volume :
 			(ptrade->m_volume * -1);
-		if (m_cycleHedgeVol == 0)
+		if (m_cycleNetHedgeVol == 0)
 			resumeMM();
 	}
 };
