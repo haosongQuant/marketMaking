@@ -87,6 +87,30 @@
             "miniOrderSpread": 4.0,
             "orderQty": 10,
             "volMulti": 10
+        },
+        {
+            "strategyID": "mm_TA911",
+            "strategyTyp": "cmMM01",
+            "productId": "TA911",
+            "exchange": "CZCE",
+            "quote": "quoteCTP01",
+            "trade": "tradeCTP01",
+            "tickSize": 2.0,
+            "miniOrderSpread": 4.0,
+            "orderQty": 10,
+            "volMulti": 10
+        },
+        {
+            "strategyID": "mm_TA907",
+            "strategyTyp": "cmMM01",
+            "productId": "TA907",
+            "exchange": "CZCE",
+            "quote": "quoteCTP01",
+            "trade": "tradeCTP01",
+            "tickSize": 2.0,
+            "miniOrderSpread": 4.0,
+            "orderQty": 10,
+            "volMulti": 10
         }
     ]
 }
