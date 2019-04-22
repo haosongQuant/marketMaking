@@ -1,5 +1,5 @@
 #pragma once
-
+#include <list>
 #include <iostream>
 #include "infrastructure.h"
 #include "threadpool\threadpool.h"
@@ -11,13 +11,14 @@ using namespace std;
 
 enum enum_cmMM01_strategy_status
 {//策略状态，决定是否发送新的委托
-	STRATEGY_STATUS_START,
+	STRATEGY_STATUS_INIT,
 	STRATEGY_STATUS_READY,
 	STRATEGY_STATUS_ORDER_SENT,
 	STRATEGY_STATUS_CLOSING_POSITION,
 	STRATEGY_STATUS_TRADED_HEDGING,
 	STRATEGY_STATUS_TRADED_NET_HEDGING,
 	STRATEGY_STATUS_PAUSE,
+	STRATEGY_STATUS_BREAK
 };
 
 enum enum_cmMM01_strategy_order_type
@@ -42,15 +43,19 @@ private:
 	int    m_volumeMultiple;
 
 	infrastructure* m_infra;
-
+	Json::Value m_strategyConfig;
 	athenathreadpoolPtr m_quoteTP;
 	athenathreadpoolPtr m_tradeTP;
+
+	list< pair <int, int> > m_openTimeList;
+	bool isInOpenTime();
 
 public:
 	cmMM01(string strategyId, string strategyTyp, string productId, string exchange, 
 		string quoteAdapterID, string tradeAdapterID, double tickSize, double miniOrderSpread,
 		double orderQty, int volMulti,
-		athenathreadpoolPtr quoteTP, athenathreadpoolPtr tradeTP, infrastructure* infra);
+		athenathreadpoolPtr quoteTP, athenathreadpoolPtr tradeTP, infrastructure* infra,
+		Json::Value config);
 	~cmMM01();
 	virtual void startStrategy();
 	virtual void stopStrategy(){};
@@ -126,6 +131,8 @@ private:
 
 //for interrupt
 private:
+	bool                    m_breakReq;
+	boost::shared_mutex     m_breakReqLock;
 	bool                    m_pauseReq;
 	boost::shared_mutex     m_pauseReqLock;
 	boost::function<void()> m_oneTimeMMPausedHandler;

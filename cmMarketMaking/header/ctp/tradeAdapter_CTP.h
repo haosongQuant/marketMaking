@@ -73,7 +73,10 @@ public:
 private:
 	bool m_qryingOrder; //主动查询报单标识
 	boost::mutex     m_qryOrderLock;
-	void openOrderQrySwitch(){ m_qryingOrder = false; };
+	athena_lag_timer    m_qryOrder_Timer;
+	bool m_cancelQryTimer;
+	void openOrderQrySwitch(){ if (m_cancelQryTimer) m_cancelQryTimer = false; 
+		                       else m_qryingOrder = false;};
 	void closeOrderQrySwitch(){ m_qryingOrder = true; };
 public:
 	void queryOrder();
@@ -81,7 +84,6 @@ public:
 private:
 	athenathreadpoolPtr m_threadpool;
 	athena_lag_timer    m_lag_Timer;
-	//athena_lag_timer    m_qryOrder_Timer;
 public:
 	boost::function<void(string adapterID)> m_OnUserLogin;
 	boost::function<void(string adapterID)> m_OnUserLogout;

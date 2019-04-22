@@ -8,7 +8,7 @@ using namespace std;
 
 tradeAdapterCTP::tradeAdapterCTP(string adapterID, char * tradeFront, char * broker, char * user, char * pwd,
 	athenathreadpoolPtr tp)// :m_onLogin(NULL)
-	:m_threadpool(tp), m_lag_Timer(tp->getDispatcher())//, m_qryOrder_Timer(tp->getDispatcher())
+	:m_threadpool(tp), m_lag_Timer(tp->getDispatcher()), m_qryOrder_Timer(tp->getDispatcher())
 {
 	m_adapterID = adapterID;
 
@@ -25,12 +25,13 @@ tradeAdapterCTP::tradeAdapterCTP(string adapterID, char * tradeFront, char * bro
 
 	m_needAuthenticate = false;
 	m_qryingOrder = false;
+	m_cancelQryTimer = false;
 };
 
 
 tradeAdapterCTP::tradeAdapterCTP(string adapterID, char* tradeFront, char* broker, char* user, char* pwd,
 	char * userproductID, char * authenticateCode, athenathreadpoolPtr tp)
-	:m_threadpool(tp), m_lag_Timer(tp->getDispatcher())//, m_qryOrder_Timer(tp->getDispatcher())
+	:m_threadpool(tp), m_lag_Timer(tp->getDispatcher()), m_qryOrder_Timer(tp->getDispatcher())
 {
 	m_adapterID = adapterID;
 
@@ -53,6 +54,7 @@ tradeAdapterCTP::tradeAdapterCTP(string adapterID, char* tradeFront, char* broke
 	strncpy(m_authenticateField.AuthCode, authenticateCode, sizeof(m_authenticateField.AuthCode));
 
 	m_qryingOrder = false;
+	m_cancelQryTimer = false;
 };
 
 void tradeAdapterCTP::destroyAdapter()
@@ -531,6 +533,8 @@ void tradeAdapterCTP::queryOrder()
 		m_pUserApi->ReqQryOrder(&qryOrder, ++m_requestId);
 		LOG(WARNING) << m_adapterID << ": Req | query order start ..." << endl;
 		closeOrderQrySwitch();
+		m_qryOrder_Timer.expires_from_now(boost::posix_time::millisec(1000 * 60 * 3)); //三分钟后打开查询
+		m_qryOrder_Timer.async_wait(boost::bind(&tradeAdapterCTP::openOrderQrySwitch, this));
 	}
 	else
 		LOG(WARNING) << m_adapterID << ": query order is in process, no more query lunched." << endl;
@@ -548,12 +552,13 @@ void tradeAdapterCTP::OnRspQryOrder(CThostFtdcOrderField *pOrder, CThostFtdcRspI
 		}
 		if (m_OnOrderRtn)
 			m_OnOrderRtn(m_adapterID, pOrder);
-		if (bIsLast) //返回报单完成
-		{
-			boost::mutex::scoped_lock lock(m_qryOrderLock);
-			openOrderQrySwitch();
-			//m_qryOrder_Timer.cancel();
-		}
+	}
+	if (bIsLast) //返回报单完成
+	{
+		boost::mutex::scoped_lock lock(m_qryOrderLock);
+		openOrderQrySwitch();
+		m_cancelQryTimer = true;
+		m_qryOrder_Timer.cancel();
 	}
 };
 

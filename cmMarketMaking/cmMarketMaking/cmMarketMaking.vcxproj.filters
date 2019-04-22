@@ -107,17 +107,17 @@
     <ClInclude Include="..\header\ctp\tradeAdapter_CTP.h">
       <Filter>头文件\adapter</Filter>
     </ClInclude>
-    <ClInclude Include="..\header\tap\quoteAdapter_TAP.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\header\tap\tradeAdapter_TAP.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="..\header\json\configloader.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="..\header\glog\initLog.h">
       <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\header\tap\quoteAdapter_TAP.h">
+      <Filter>头文件\adapter</Filter>
+    </ClInclude>
+    <ClInclude Include="..\header\tap\tradeAdapter_TAP.h">
+      <Filter>头文件\adapter</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

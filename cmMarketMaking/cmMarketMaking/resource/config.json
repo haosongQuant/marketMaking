@@ -74,7 +74,13 @@
             "tickSize": 0.2,
             "miniOrderSpread": 4.0,
             "orderQty": 10,
-            "volMulti": 10
+            "volMulti": 10,
+            "openTime": [
+                { "start": 901, "end": 1014 },
+                { "start": 1031, "end": 1129 },
+                { "start": 1329, "end": 1459 },
+                { "start": 2101, "end": 2329 }
+            ]
         },
         {
             "strategyID": "mm_ZC907",
@@ -86,7 +92,13 @@
             "tickSize": 0.2,
             "miniOrderSpread": 4.0,
             "orderQty": 10,
-            "volMulti": 10
+            "volMulti": 10,
+            "openTime": [
+                { "start": 901, "end": 1014 },
+                { "start": 1031, "end": 1129 },
+                { "start": 1329, "end": 1459 },
+                { "start": 2101, "end": 2329 }
+            ]
         },
         {
             "strategyID": "mm_TA911",
@@ -98,7 +110,13 @@
             "tickSize": 2.0,
             "miniOrderSpread": 4.0,
             "orderQty": 10,
-            "volMulti": 10
+            "volMulti": 10,
+            "openTime": [
+                { "start": 901, "end": 1014 },
+                { "start": 1031, "end": 1129 },
+                { "start": 1329, "end": 1459 },
+                { "start": 2101, "end": 2329 }
+            ]
         },
         {
             "strategyID": "mm_TA907",
@@ -110,7 +128,13 @@
             "tickSize": 2.0,
             "miniOrderSpread": 4.0,
             "orderQty": 10,
-            "volMulti": 10
+            "volMulti": 10,
+            "openTime": [
+                { "start": 901, "end": 1014 },
+                { "start": 1031, "end": 1129 },
+                { "start": 1329, "end": 1459 },
+                { "start": 2101, "end": 2329 }
+            ]
         }
     ]
 }

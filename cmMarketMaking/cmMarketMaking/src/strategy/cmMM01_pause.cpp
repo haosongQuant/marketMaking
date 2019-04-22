@@ -1,6 +1,19 @@
 #include "strategy/cmMM01.h"
 #include "glog\logging.h"
 
+bool cmMM01::isInOpenTime()
+{
+	time_t t;
+	tm* local;
+	t = time(NULL);
+	local = localtime(&t);
+	int timeSec = (local->tm_hour * 100 + local->tm_min) * 100 + local->tm_sec;
+	for (auto item : m_openTimeList)
+		if (item.first <= timeSec && timeSec <= item.second)
+			return true;
+	return false;
+};
+
 bool cmMM01::isOrderComplete(int orderRef, int& tradedVol)
 {
 	bool isTrdComplete = true;
@@ -57,6 +70,33 @@ bool cmMM01::isOrderComplete(int orderRef, int& tradedVol)
 };
 
 void cmMM01::daemonEngine(){
+
+	if (!isInOpenTime())
+	{
+		if (STRATEGY_STATUS_INIT != m_strategyStatus)
+		{
+			write_lock lock(m_breakReqLock);
+			m_breakReq = true;
+		}
+		m_daemonTimer.expires_from_now(boost::posix_time::millisec(1000 * 60));
+		m_daemonTimer.async_wait(boost::bind(&cmMM01::daemonEngine, this));
+		return;
+	}
+	{
+		boost::recursive_mutex::scoped_lock lock(m_strategyStatusLock);
+		switch (m_strategyStatus)
+		{
+		case STRATEGY_STATUS_INIT:
+		case STRATEGY_STATUS_BREAK:
+		{
+			write_lock lock(m_breakReqLock);
+			m_breakReq = false;
+			startStrategy();
+			break;
+		}
+		}
+	}
+
 	m_tradeGrpBuffer.clear();
 
 	for each(auto item in m_aliveTrdGrp)
@@ -185,12 +225,14 @@ void cmMM01::processCycleNetHedgeTradeRtn(tradeRtnPtr ptrade)
 
 void cmMM01::interruptMM(boost::function<void()> pauseHandler)
 {
-	if (!pauseMM(pauseHandler))
+	if (!pauseMM(pauseHandler) && m_strategyStatus != STRATEGY_STATUS_BREAK)
 	{
 		m_pauseLagTimer.expires_from_now(boost::posix_time::millisec(1000));
 		m_pauseLagTimer.async_wait(boost::bind(&cmMM01::interruptMM, this, pauseHandler));
 	}
 };
+
+
 
 bool cmMM01::pauseMM(boost::function<void()> pauseHandler)
 {

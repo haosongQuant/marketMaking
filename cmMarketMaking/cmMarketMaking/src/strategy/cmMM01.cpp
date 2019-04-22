@@ -4,23 +4,33 @@
 cmMM01::cmMM01(string strategyId, string strategyTyp, string productId, string exchange,
 	string quoteAdapterID, string tradeAdapterID, double tickSize, double miniOrderSpread,
 	double orderQty, int volMulti,
-	athenathreadpoolPtr quoteTP, athenathreadpoolPtr tradeTP, infrastructure* infra)
+	athenathreadpoolPtr quoteTP, athenathreadpoolPtr tradeTP, infrastructure* infra,
+	Json::Value config)
 	:m_strategyId(strategyId), m_strategyTyp(strategyTyp), m_productId(productId), m_exchange(exchange),
 	m_quoteAdapterID(quoteAdapterID), m_tradeAdapterID(tradeAdapterID), m_tickSize(tickSize),
 	m_miniOrderSpread(miniOrderSpread), m_orderQty(orderQty), m_volumeMultiple(volMulti),
 	m_quoteTP(quoteTP), m_tradeTP(tradeTP), m_infra(infra), m_cycleId(0), m_pauseReq(false),
+	m_breakReq(false), m_strategyConfig(config),
 	m_cancelConfirmTimer(tradeTP->getDispatcher()), m_cancelHedgeTimer(tradeTP->getDispatcher()),
 	m_daemonTimer(tradeTP->getDispatcher()), m_pauseLagTimer(tradeTP->getDispatcher())
 {
-	m_strategyStatus = STRATEGY_STATUS_START;
+	int openNum = m_strategyConfig["openTime"].size();
+	for (int i = 0; i < openNum; ++i)
+	{
+		Json::Value openInterval = m_strategyConfig["openTime"][i];
+		int startTime = openInterval["start"].asInt() * 100 +1;
+		int endTime = openInterval["end"].asInt() * 100 + 59;
+		m_openTimeList.push_back(make_pair(startTime, endTime));
+	}
+	m_strategyStatus = STRATEGY_STATUS_INIT;
+	daemonEngine();
 };
 
 void cmMM01::startStrategy(){
 	cout << m_strategyId << " starting..." << endl;
-	if (STRATEGY_STATUS_START == m_strategyStatus)
+	if (STRATEGY_STATUS_INIT == m_strategyStatus)
 	{
 		m_infra->subscribeFutures(m_quoteAdapterID, m_exchange, m_productId, bind(&cmMM01::onRtnMD, this, _1));
-		daemonEngine();
 	}
 	m_strategyStatus = STRATEGY_STATUS_READY;
 };
@@ -50,7 +60,12 @@ void cmMM01::quoteEngine()
 	}
 	case STRATEGY_STATUS_PAUSE:
 	{
-		cout << m_strategyId << ": paused!" << endl;
+		cout << m_strategyId << ": market making paused!" << endl;
+		break;
+	}
+	case STRATEGY_STATUS_BREAK:
+	{
+		cout << m_strategyId << " breaking ..." << endl;
 		break;
 	}
 	}
@@ -87,6 +102,14 @@ void cmMM01::orderPrice(double* bidprice, double* askprice)
 
 void cmMM01::startCycle()
 {
+	{
+		read_lock lock(m_breakReqLock);
+		if (m_breakReq)
+		{
+			m_strategyStatus = STRATEGY_STATUS_BREAK; //interrupt结束后由行情触发新的交易
+			return;
+		}
+	}
 	{
 		read_lock lock(m_pauseReqLock);
 		if (m_pauseReq)
