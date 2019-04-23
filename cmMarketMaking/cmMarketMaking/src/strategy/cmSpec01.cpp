@@ -37,7 +37,7 @@ void cmSepc01::daemonEngine(){
 
 	if (!isInOpenTime() || !m_infra->isAdapterReady(m_tradeAdapterID))
 	{
-		if (CMSPEC01_STATUS_STOP != m_strategyStatus)
+		if (CMSPEC01_STATUS_INIT != m_strategyStatus && CMSPEC01_STATUS_STOP != m_strategyStatus)
 			m_strategyStatus = CMSPEC01_STATUS_STOP;
 	}
 	else if (CMSPEC01_STATUS_START != m_strategyStatus)
@@ -77,37 +77,42 @@ void cmSepc01::quoteEngine()
 		return;
 
 	double yield = log(m_lastprice / m_lastprice_1);
-	m_yieldBuff_short.push_back(yield);
-	m_yieldBuff_long.push_back(yield);
 	double priceChg = abs(m_lastprice - m_lastprice_1);
-	m_avg_true_range.push_back(priceChg);
-
-	if (!m_yieldBuff_long.full())
-		return;
-
-	double ma1 = accumulate(m_yieldBuff_short.begin(), m_yieldBuff_short.end(), 0.0)
-		            / m_yieldBuff_short.capacity();
-	double ma2 = accumulate(m_yieldBuff_long.begin(), m_yieldBuff_long.end(), 0.0)
-		            / m_yieldBuff_long.capacity();
-	double avgTrueRange = accumulate(m_avg_true_range.begin(), m_avg_true_range.end(), 0.0) 
-		                     / m_avg_true_range.capacity();
-	double apcosm;
-	if (avgTrueRange != 0.0)
-		apcosm = (ma1 - ma2) / avgTrueRange;
-	else
-		apcosm = 50;
-
-	m_Apcosm_Buff.push_back(apcosm);
-	if (!m_Apcosm_Buff.full())
-		return;
-
+	double ma1, ma2, avgTrueRange, apcosm;
 	vector<double> apcosm_Buff;
-	auto iter = m_Apcosm_Buff.begin();
-	while (iter != m_Apcosm_Buff.end())
+
 	{
-		apcosm_Buff.push_back(*iter);
-		iter++;
+		boost::mutex::scoped_lock lock(m_buffLock);
+		m_yieldBuff_short.push_back(yield);
+		m_yieldBuff_long.push_back(yield);
+		m_avg_true_range.push_back(priceChg);
+
+		if (!m_yieldBuff_long.full())
+			return;
+
+		ma1 = accumulate(m_yieldBuff_short.begin(), m_yieldBuff_short.end(), 0.0)
+			/ m_yieldBuff_short.capacity();
+		ma2 = accumulate(m_yieldBuff_long.begin(), m_yieldBuff_long.end(), 0.0)
+			/ m_yieldBuff_long.capacity();
+		avgTrueRange = accumulate(m_avg_true_range.begin(), m_avg_true_range.end(), 0.0)
+			/ m_avg_true_range.capacity();
+		if (avgTrueRange != 0.0)
+			apcosm = (ma1 - ma2) / avgTrueRange;
+		else
+			apcosm = 50;
+
+		m_Apcosm_Buff.push_back(apcosm);
+		if (!m_Apcosm_Buff.full())
+			return;
+
+		auto iter = m_Apcosm_Buff.begin();
+		while (iter != m_Apcosm_Buff.end())
+		{
+			apcosm_Buff.push_back(*iter);
+			iter++;
+		}
 	}
+
 	sort(apcosm_Buff.begin(), apcosm_Buff.end());
 	double qu1 = apcosm_Buff[round(apcosm_Buff_size*0.25)];
 	double qu2 = apcosm_Buff[round(apcosm_Buff_size*0.50)];
@@ -117,7 +122,9 @@ void cmSepc01::quoteEngine()
 	if ((qu3 - qu1) != 0)
 		new_abs = (apcosm - qu2) / (qu3 - qu1) * 100;
 	else 
-		new_abs = 50;
+		new_abs = 0.0;
+
+	LOG(INFO) << m_strategyId << ", new_abs: " << new_abs << endl;
 
 	if (new_abs > m_upline)
 		m_signal = CMSPEC01_SIGNAL_LONG;

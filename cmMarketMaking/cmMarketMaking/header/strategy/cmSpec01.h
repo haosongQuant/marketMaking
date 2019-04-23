@@ -79,6 +79,7 @@ private:
 	double m_downline;
 	double m_lastprice;
 	double m_lastprice_1;
+	boost::mutex m_buffLock;
 	cirBuff m_yieldBuff_short{ 10 };
 	cirBuff m_yieldBuff_long{ 10 * 20 };
 	cirBuff m_avg_true_range{ 10 * 20 };
