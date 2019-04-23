@@ -7,6 +7,7 @@
 #include "baseClass/orderBase.h"
 #include "baseClass/Utils.h"
 #include <boost\circular_buffer.hpp>
+#include "strategy\cmMM01.h"
 
 using namespace std;
 
@@ -17,6 +18,13 @@ enum enum_cmSepc01_strategy_status
 	CMSPEC01_STATUS_INIT,
 	CMSPEC01_STATUS_START,
 	CMSPEC01_STATUS_STOP,
+};
+
+enum enum_cmSepc01_Signal_Typ
+{
+	CMSPEC01_SIGNAL_LONG,
+	CMSPEC01_SIGNAL_SHORT,
+	CMSPEC01_SIGNAL_NONE,
 };
 
 typedef boost::circular_buffer<double> cirBuff;
@@ -38,21 +46,7 @@ private:
 	Json::Value m_strategyConfig;
 	athenathreadpoolPtr m_quoteTP;
 	athenathreadpoolPtr m_tradeTP;
-
-private:
-	strategyBase      *m_masterStrategy;
-	enum_strategy_type m_masterStrategyTyp;
-public:
-	void registerMasterStrategy(strategyBase *masterStrategy, enum_strategy_type masterStrategyTyp){
-		m_masterStrategy = masterStrategy; m_masterStrategyTyp = masterStrategyTyp;};
-
-private:
-	list< pair <int, int> > m_openTimeList;
-	bool isInOpenTime();
-
-private:
-	enum_cmSepc01_strategy_status m_strategyStatus;
-
+	
 public:
 	cmSepc01(string strategyId, string strategyTyp, string productId, string exchange,
 		string quoteAdapterID, string tradeAdapterID, double tickSize, 
@@ -63,6 +57,13 @@ public:
 	virtual void startStrategy();
 	virtual void stopStrategy(){};
 
+public:
+	void registerMasterStrategy(strategyBase *masterStrategy, enum_strategy_type masterStrategyTyp){
+		m_masterStrategy = masterStrategy; m_masterStrategyTyp = masterStrategyTyp;};
+
+private:
+	list< pair <int, int> > m_openTimeList;
+	bool isInOpenTime();
 
 public: //供外部调用的响应函数 | 在策略线程池中调用相应的处理函数
 	void onRtnMD(futuresMDPtr);
@@ -85,41 +86,27 @@ private:
 	void quoteEngine();
 
 private:
-	int m_bidOrderRef;
-	int m_askOrderRef;
-	void startCycle();
-	void refreshCycle();
-	void orderPrice(double* bidprice, double* askprice); //计算挂单价格
-	void processOrder(orderRtnPtr);
-	void processTrade(tradeRtnPtr);
-	void daemonEngine(); //守护线程引擎
+	strategyBase      *m_masterStrategy;
+	enum_strategy_type m_masterStrategyTyp;
+	bool               m_resumeMaster;
+private:
+	enum_cmSepc01_strategy_status m_strategyStatus;
+	enum_cmSepc01_Signal_Typ      m_signal;
+	boost::mutex m_netOpenInterestLock;
+	int          m_netOpenInterest;
+
+public:
+	void sendOrder();
 
 private:
-	int m_cancelBidOrderRC;
-	int m_cancelAskOrderRC;
-	void processCancelRes(cancelRtnPtr);
+	int m_orderRef;
+	int m_askOrderRef;
+	void processOrder(orderRtnPtr);
+	void processTrade(tradeRtnPtr);
+	void processCancelRes(cancelRtnPtr pCancel);
 
-private: // for clear cycle
-	tradeGroupBufferPtr     m_ptradeGrp; //用于记录单个交易闭环的所有报单号
-	map < int, int >        m_orderRef2cycle;     //orderRef -> cycle Id
-	boost::shared_mutex     m_orderRef2cycleRWlock; //用于m_orderRef2cycle的读写锁
-
-	list<tradeGroupBufferPtr>      m_tradeGrpBuffer;//用于每个交易闭环清理现场
-	list<tradeGroupBufferPtr>      m_aliveTrdGrp;//用于每个交易闭环清理现场
-	map <int, tradeGroupBufferPtr> m_cycle2tradeGrp;//cycle Id -> trade group pointer
-	boost::mutex            m_cycle2tradeGrpLock;   //用于互斥访问m_cycle2tradeGrp
-	void registerTrdGrpMap(int cycleId, tradeGroupBufferPtr pGrp){ //向m_cycle2tradeGrp中插入记录
-		boost::mutex::scoped_lock lock(m_cycle2tradeGrpLock);
-		m_cycle2tradeGrp[cycleId] = pGrp;
-	};
-
-	int  m_cycleHedgeVol;
-	bool isOrderComplete(int orderRef, int& tradedVol);
-	void sendCycleNetHedgeOrder();
-	void sendCycleNetHedgeOrder(int);
-	void processCycleNetHedgeOrderRtn(orderRtnPtr);
-	void processCycleNetHedgeTradeRtn(tradeRtnPtr);
+private:
 	athena_lag_timer m_daemonTimer;
-	double        m_cycleNetHedgeVol;
-	boost::mutex  m_cycleNetHedgeVolLock;
+	void daemonEngine(); //守护线程引擎
+
 };

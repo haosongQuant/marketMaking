@@ -100,7 +100,7 @@ void strategyEngine::commandProcess()
 			case STRATEGY_cmMM01:
 			{
 				cmMM01* pStrategy = (cmMM01*)m_strategies[commandEle[1]];
-				pStrategy->pauseMM(boost::bind(&IpauseStrategy::plainVanilla, &m_pauseInterface));
+				pStrategy->pause(boost::bind(&IpauseStrategy::plainVanilla, &m_pauseInterface));
 				break;
 			}
 			}
@@ -112,7 +112,7 @@ void strategyEngine::commandProcess()
 			case STRATEGY_cmMM01:
 			{
 				cmMM01* pStrategy = (cmMM01*)m_strategies[commandEle[1]];
-				pStrategy->resumeMM();
+				pStrategy->resume();
 				break;
 			}
 			}

@@ -49,12 +49,13 @@ private: // adapter
 	void registerAdapterType(string, string);
 
 	boost::unordered_map<string, adapterBase*> m_adapters;
-	
+	map<string, bool> m_isAdapterReady;
 public:
 	void onAdapterLogin(string adapterID);
 	void onAdapterLogout(string adapterID);
 	void onFrontDisconnected(string adapterID, string adapterType);
 	void deleteAdapter(string adapterID, string adapterType, bool reCreate);
+	bool isAdapterReady(string adapterID);
 
 	//ÐÐÇé
 private:

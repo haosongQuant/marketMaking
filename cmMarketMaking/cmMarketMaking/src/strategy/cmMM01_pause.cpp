@@ -71,7 +71,7 @@ bool cmMM01::isOrderComplete(int orderRef, int& tradedVol)
 
 void cmMM01::daemonEngine(){
 
-	if (!isInOpenTime())
+	if (!isInOpenTime() || !m_infra->isAdapterReady(m_tradeAdapterID))
 	{
 		if (STRATEGY_STATUS_INIT != m_strategyStatus)
 		{
@@ -163,7 +163,7 @@ void cmMM01::daemonEngine(){
 	if (totalTradedVol != 0)
 	{
 		m_cycleHedgeVol = totalTradedVol;
-		interruptMM(boost::bind(&cmMM01::sendCycleNetHedgeOrder, this));
+		interrupt(boost::bind(&cmMM01::sendCycleNetHedgeOrder, this));
 	}
 
 	m_daemonTimer.expires_from_now(boost::posix_time::millisec(1000*60)); //每分钟运行一次
@@ -219,22 +219,30 @@ void cmMM01::processCycleNetHedgeTradeRtn(tradeRtnPtr ptrade)
 		m_cycleNetHedgeVol -= ptrade->m_orderDir == ORDER_DIR_BUY ? ptrade->m_volume :
 			(ptrade->m_volume * -1);
 		if (m_cycleNetHedgeVol == 0)
-			resumeMM();
+			resume();
 	}
 };
 
-void cmMM01::interruptMM(boost::function<void()> pauseHandler)
+void cmMM01::interrupt(boost::function<void()> pauseHandler)
 {
-	if (!pauseMM(pauseHandler) && m_strategyStatus != STRATEGY_STATUS_BREAK)
+	if (!pause(pauseHandler) && m_strategyStatus != STRATEGY_STATUS_BREAK)
 	{
 		m_pauseLagTimer.expires_from_now(boost::posix_time::millisec(1000));
-		m_pauseLagTimer.async_wait(boost::bind(&cmMM01::interruptMM, this, pauseHandler));
+		m_pauseLagTimer.async_wait(boost::bind(&cmMM01::interrupt, this, pauseHandler));
 	}
 };
 
 
+enum_strategy_interrupt_result cmMM01::tryInterrupt(boost::function<void()> pauseHandler){
+	if (m_strategyStatus == STRATEGY_STATUS_BREAK)
+		return STRATEGY_INTERRUPT_BREAKING;
+	else if (pause(pauseHandler))
+		return STRATEGY_INTERRUPT_WAIT_CALLBACK;
+	else
+		return STRATEGY_INTERRUPT_FAIL;
+};
 
-bool cmMM01::pauseMM(boost::function<void()> pauseHandler)
+bool cmMM01::pause(boost::function<void()> pauseHandler)
 {
 	write_lock lock(m_pauseReqLock);
 	if (m_pauseReq)
@@ -256,7 +264,7 @@ void cmMM01::callPauseHandler()
 	}
 };
 
-void cmMM01::resumeMM()
+void cmMM01::resume()
 {
 	{
 		boost::recursive_mutex::scoped_lock lock(m_strategyStatusLock); 

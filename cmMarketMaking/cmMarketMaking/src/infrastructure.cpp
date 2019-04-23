@@ -53,6 +53,7 @@ void infrastructure::initAdapters()
 		registerAdapterType(adapterID, adapterType);
 
 		cout << "initing " << adapterID << " ..." << endl;
+		m_isAdapterReady[adapterID] = false;
 
 		switch (m_adapterTypeMap[adapterID])
 		{
@@ -76,8 +77,8 @@ void infrastructure::initAdapters()
 				(char *)(adapterConfig["user"].asString().c_str()),
 				(char *)(adapterConfig["pwd"].asString().c_str()),
 				m_tradeTP);
-			//pTradeAdapter->m_OnUserLogin = bind(&infrastructure::onAdapterLogin, this, _1);
-			//pTradeAdapter->m_OnUserLogout = bind(&infrastructure::onAdapterLogout, this, _1);
+			pTradeAdapter->m_OnUserLogin = bind(&infrastructure::onAdapterLogin, this, _1);
+			pTradeAdapter->m_OnUserLogout = bind(&infrastructure::onAdapterLogout, this, _1);
 			//pTradeAdapter->m_OnFrontDisconnected = bind(&infrastructure::onFrontDisconnected, this, _1, _2);
 			pTradeAdapter->m_OnInstrumentsRtn = bind(&infrastructure::onRtnCtpInstruments, this, _1, _2);
 			pTradeAdapter->m_OnOrderRtn = bind(&infrastructure::onRtnCtpOrder, this, _1, _2);
@@ -96,9 +97,9 @@ void infrastructure::initAdapters()
 				(char *)(adapterConfig["user"].asString().c_str()),
 				(char *)(adapterConfig["pwd"].asString().c_str()));
 			pQuoteAdapter->m_onRtnMarketData = bind(&infrastructure::onRtnCtpQuote, this, _1, _2);
-			//pQuoteAdapter->m_OnUserLogin = bind(&infrastructure::onAdapterLogin, this, _1);
+			pQuoteAdapter->m_OnUserLogin = bind(&infrastructure::onAdapterLogin, this, _1);
 			//pQuoteAdapter->m_OnFrontDisconnected = bind(&infrastructure::onFrontDisconnected, this, _1, _2);
-			//pQuoteAdapter->m_OnUserLogout = bind(&infrastructure::onAdapterLogout, this, _1);
+			pQuoteAdapter->m_OnUserLogout = bind(&infrastructure::onAdapterLogout, this, _1);
 			pQuoteAdapter->init();
 			//m_quoteAdapters[adapterID] = pQuoteAdapter;
 			m_adapters[adapterID] = pQuoteAdapter;
@@ -137,6 +138,20 @@ void infrastructure::initAdapters()
 		}
 	}
 }
+
+void infrastructure::onAdapterLogin(string adapterID)
+{
+	m_isAdapterReady[adapterID] = true;
+};
+void infrastructure::onAdapterLogout(string adapterID)
+{
+	m_isAdapterReady[adapterID] = false;
+};
+
+bool infrastructure::isAdapterReady(string adapterID)
+{
+	return m_isAdapterReady[adapterID];
+};
 
 void infrastructure::genOrderParmMap()
 {

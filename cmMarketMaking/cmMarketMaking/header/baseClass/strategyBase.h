@@ -3,6 +3,13 @@
 #include <boost/shared_ptr.hpp>
 using namespace std;
 
+enum enum_strategy_interrupt_result
+{
+	STRATEGY_INTERRUPT_BREAKING,
+	STRATEGY_INTERRUPT_WAIT_CALLBACK,
+	STRATEGY_INTERRUPT_FAIL,
+};
+
 class strategyBase
 {
 public:
@@ -12,6 +19,11 @@ public:
 	strategyBase(string strategyID) :m_strateID(strategyID){};
 	virtual void startStrategy() = 0;
 	virtual void stopStrategy() = 0;
+
+	virtual enum_strategy_interrupt_result tryInterrupt(boost::function<void()> pauseHandler){ return STRATEGY_INTERRUPT_FAIL; };
+	virtual void interrupt(boost::function<void()> pauseHandler){};
+	virtual bool pause(boost::function<void()> pauseHandler){ return true; };
+	virtual void resume(){};
 };
 
 
@@ -29,5 +41,3 @@ enum enum_strategy_type
 	STRATEGY_cmSpec01,
 	STRATEGY_ERROR,
 };
-class cmMM01;
-class cmSepc01;

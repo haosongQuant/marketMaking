@@ -26,13 +26,16 @@ cmSepc01::cmSepc01(string strategyId, string strategyTyp, string productId, stri
 		int endTime = openInterval["end"].asInt() * 100 + 59;
 		m_openTimeList.push_back(make_pair(startTime, endTime));
 	}
+	m_resumeMaster = false;
 	m_strategyStatus = CMSPEC01_STATUS_INIT;
+	m_signal == CMSPEC01_SIGNAL_NONE;
+	m_netOpenInterest = 0;
 	daemonEngine();
 };
 
 void cmSepc01::daemonEngine(){
 
-	if (!isInOpenTime())
+	if (!isInOpenTime() || !m_infra->isAdapterReady(m_tradeAdapterID))
 	{
 		if (CMSPEC01_STATUS_STOP != m_strategyStatus)
 			m_strategyStatus = CMSPEC01_STATUS_STOP;
@@ -66,6 +69,10 @@ void cmSepc01::onRtnMD(futuresMDPtr pFuturesMD)//行情响应函数: 更新行情，调用quo
 
 void cmSepc01::quoteEngine()
 {
+
+	if (m_strategyStatus != CMSPEC01_STATUS_START)
+		return;
+
 	if (m_lastprice_1 < 0.0)
 		return;
 
@@ -113,10 +120,77 @@ void cmSepc01::quoteEngine()
 		new_abs = 50;
 
 	if (new_abs > m_upline)
-		LOG(INFO) << m_strategyId << ": buy signal!" << endl;
-	else if (new_abs < m_downline)
-		LOG(INFO) << m_strategyId << ": sell signal!" << endl;
+		m_signal = CMSPEC01_SIGNAL_LONG;
+	else if(new_abs < m_downline)
+		m_signal = CMSPEC01_SIGNAL_SHORT;
+	else
+		m_signal = CMSPEC01_SIGNAL_NONE;
 
+	if ((new_abs > m_upline && m_netOpenInterest <= 0) 
+		|| (new_abs < m_downline && m_netOpenInterest >= 0))
+	{
+		m_resumeMaster = false;
+		switch (m_masterStrategyTyp)
+		{
+		case STRATEGY_cmMM01:
+		{
+			cmMM01 *pStrategy = (cmMM01 *)m_masterStrategy;
+			enum_strategy_interrupt_result interRuptRc = 
+				pStrategy->tryInterrupt(boost::bind(&cmSepc01::sendOrder, this));
+			switch (interRuptRc)
+			{
+			case STRATEGY_INTERRUPT_BREAKING:
+			{
+				sendOrder();
+				break;
+			}
+			case STRATEGY_INTERRUPT_WAIT_CALLBACK:
+			{
+				m_resumeMaster = true;
+				break;
+			}
+			}
+		}
+		}
+	}
+};
+
+void cmSepc01::sendOrder(){
+
+	if (m_signal == CMSPEC01_SIGNAL_NONE)
+		return;
+	enum_order_dir_type dir;
+	if (m_signal == CMSPEC01_SIGNAL_LONG)
+		dir = ORDER_DIR_BUY;
+	else if (m_signal == CMSPEC01_SIGNAL_SHORT)
+		dir = ORDER_DIR_SELL;
+
+	double price;
+	{
+		boost::mutex::scoped_lock lock(m_lastQuoteLock);
+		price = (dir == ORDER_DIR_BUY) ?
+			m_lastQuotePtr->UpperLimitPrice : m_lastQuotePtr->LowerLimitPrice;
+	}
+
+	unsigned int vol;
+	if (dir == ORDER_DIR_BUY)
+		vol = m_orderQty - m_netOpenInterest;
+	else
+		vol = m_orderQty + m_netOpenInterest;
+		
+	if (vol > 0)
+	{
+		m_orderRef = m_infra->insertOrder(m_tradeAdapterID, m_productId, m_exchange,
+			ORDER_TYPE_LIMIT, dir, POSITION_EFFECT_OPEN, FLAG_SPECULATION, price, vol,
+			bind(&cmSepc01::onOrderRtn, this, _1),
+			bind(&cmSepc01::onTradeRtn, this, _1));
+		if (m_orderRef > 0)
+		{
+			LOG(INFO) << m_strategyId << ": send order succ. code: " << m_productId
+				<< ", dir: " << ((dir == ORDER_DIR_BUY) ? "buy, vol: " : "sell, vol: ")
+				<< vol << endl;
+		}
+	}
 };
 
 void cmSepc01::processOrder(orderRtnPtr pOrder)
@@ -124,7 +198,23 @@ void cmSepc01::processOrder(orderRtnPtr pOrder)
 };
 
 void cmSepc01::processTrade(tradeRtnPtr ptrade)
-{
+{ 
+	{
+		boost::mutex::scoped_lock lock(m_netOpenInterestLock);
+		m_netOpenInterest += (ptrade->m_orderDir == ORDER_DIR_BUY ? ptrade->m_volume : (ptrade->m_volume * -1)); 
+	}
+
+	if (m_resumeMaster)
+	{
+		switch (m_masterStrategyTyp)
+		{
+		case STRATEGY_cmMM01:
+		{
+			cmMM01 *pStrategy = (cmMM01 *)m_masterStrategy;
+			pStrategy->resume();
+		}
+		}
+	}
 };
 
 //撤单响应函数

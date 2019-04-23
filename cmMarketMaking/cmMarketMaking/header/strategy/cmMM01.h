@@ -153,9 +153,11 @@ private:
 		};
 
 public:
-	void interruptMM(boost::function<void()> pauseHandler);
-	bool pauseMM(boost::function<void()> pauseHandler);
-	void resumeMM();
+
+	virtual enum_strategy_interrupt_result tryInterrupt(boost::function<void()> pauseHandler);
+	virtual void interrupt(boost::function<void()> pauseHandler);
+	virtual bool pause(boost::function<void()> pauseHandler);
+	virtual void resume();
 
 private: // for clear cycle
 	int                     m_cycleId;
