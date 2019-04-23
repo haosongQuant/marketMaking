@@ -23,7 +23,7 @@ cmSepc01::cmSepc01(string strategyId, string strategyTyp, string productId, stri
 	{
 		Json::Value openInterval = m_strategyConfig["openTime"][i];
 		int startTime = openInterval["start"].asInt() * 100 +1;
-		int endTime = openInterval["end"].asInt() * 100 + 59;
+		int endTime = openInterval["end"].asInt() * 100 + 00;
 		m_openTimeList.push_back(make_pair(startTime, endTime));
 	}
 	m_resumeMaster = false;
