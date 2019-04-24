@@ -79,7 +79,7 @@ void infrastructure::initAdapters()
 				m_tradeTP);
 			pTradeAdapter->m_OnUserLogin = bind(&infrastructure::onAdapterLogin, this, _1);
 			pTradeAdapter->m_OnUserLogout = bind(&infrastructure::onAdapterLogout, this, _1);
-			//pTradeAdapter->m_OnFrontDisconnected = bind(&infrastructure::onFrontDisconnected, this, _1, _2);
+			pTradeAdapter->m_OnFrontDisconnected = bind(&infrastructure::onFrontDisconnected, this, _1);
 			pTradeAdapter->m_OnInstrumentsRtn = bind(&infrastructure::onRtnCtpInstruments, this, _1, _2);
 			pTradeAdapter->m_OnOrderRtn = bind(&infrastructure::onRtnCtpOrder, this, _1, _2);
 			pTradeAdapter->m_OnTradeRtn = bind(&infrastructure::onRtnCtpTrade, this, _1, _2);
@@ -144,6 +144,11 @@ void infrastructure::onAdapterLogin(string adapterID)
 	m_isAdapterReady[adapterID] = true;
 };
 void infrastructure::onAdapterLogout(string adapterID)
+{
+	m_isAdapterReady[adapterID] = false;
+};
+
+void infrastructure::onFrontDisconnected(string adapterID)
 {
 	m_isAdapterReady[adapterID] = false;
 };

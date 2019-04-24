@@ -53,7 +53,7 @@ private: // adapter
 public:
 	void onAdapterLogin(string adapterID);
 	void onAdapterLogout(string adapterID);
-	void onFrontDisconnected(string adapterID, string adapterType);
+	void onFrontDisconnected(string adapterID);
 	void deleteAdapter(string adapterID, string adapterType, bool reCreate);
 	bool isAdapterReady(string adapterID);
 

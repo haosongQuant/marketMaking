@@ -87,7 +87,7 @@ private:
 public:
 	boost::function<void(string adapterID)> m_OnUserLogin;
 	boost::function<void(string adapterID)> m_OnUserLogout;
-	boost::function<void(string adapterID, string adapterType)> m_OnFrontDisconnected;
+	boost::function<void(string adapterID)> m_OnFrontDisconnected;
 	boost::function<void(string, CThostFtdcOrderField*)> m_OnOrderRtn;
 	boost::function<void(string, CThostFtdcTradeField*)> m_OnTradeRtn;
 	boost::function<void(string, CThostFtdcInstrumentField*)> m_OnInstrumentsRtn;

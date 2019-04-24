@@ -108,7 +108,7 @@ void tradeAdapterCTP::OnFrontDisconnected(int nReason)
 	LOG(INFO)  << m_adapterID << ": trade adapterCTP disconnected!" << endl;
 	if (m_status != ADAPTER_STATUS_DISCONNECT && m_OnFrontDisconnected)
 	{
-		m_OnFrontDisconnected(m_adapterID, "trade");
+		m_OnFrontDisconnected(m_adapterID);
 	}
 	m_status = ADAPTER_STATUS_DISCONNECT;
 };
