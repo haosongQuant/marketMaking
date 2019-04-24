@@ -134,6 +134,8 @@ void cmMM01::startCycle()
 	orderPrice(&bidprice, &askprice);
 	if (0.0 == bidprice || 0.0 == askprice)
 	{
+		boost::recursive_mutex::scoped_lock lock(m_strategyStatusLock);
+		m_strategyStatus = STRATEGY_STATUS_READY;
 		LOG(INFO) << m_strategyId << ": warning | spread is too wide, no order sent." << endl;
 		return;
 	}
