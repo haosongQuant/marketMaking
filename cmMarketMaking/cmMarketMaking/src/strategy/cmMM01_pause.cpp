@@ -251,6 +251,7 @@ bool cmMM01::pause(boost::function<void()> pauseHandler)
 	{
 		m_pauseReq = true;
 		m_oneTimeMMPausedHandler = pauseHandler;
+		LOG(INFO) << m_strategyId << " pause signal received." << endl;
 		return true;
 	}
 };
@@ -271,6 +272,6 @@ void cmMM01::resume()
 		write_lock lock1(m_pauseReqLock);
 		m_strategyStatus = STRATEGY_STATUS_READY;
 		m_pauseReq = false; 
-		cout << m_strategyId << " resumed." << endl;
+		LOG(INFO) << m_strategyId << " resumed." << endl;
 	}
 };

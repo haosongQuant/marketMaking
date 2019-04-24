@@ -3,6 +3,7 @@
 #include "infrastructure.h"
 #include "threadpool\threadpool.h"
 #include "json\json.h"
+#include "glog\logging.h"
 #include "strategy\cmMM01.h"
 #include "strategy\cmSpec01.h"
 

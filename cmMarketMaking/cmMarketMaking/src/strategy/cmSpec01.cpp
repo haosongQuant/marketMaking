@@ -136,28 +136,35 @@ void cmSepc01::quoteEngine()
 	if ((new_abs > m_upline && m_netOpenInterest <= 0) 
 		|| (new_abs < m_downline && m_netOpenInterest >= 0))
 	{
-		m_resumeMaster = false;
-		switch (m_masterStrategyTyp)
 		{
-		case STRATEGY_cmMM01:
-		{
-			cmMM01 *pStrategy = (cmMM01 *)m_masterStrategy;
-			enum_strategy_interrupt_result interRuptRc = 
-				pStrategy->tryInterrupt(boost::bind(&cmSepc01::sendOrder, this));
-			switch (interRuptRc)
+			boost::mutex::scoped_lock lock(m_strategyStatusLock);
+			if (CMSPEC01_STATUS_START != m_strategyStatus)
+				return;
+			switch (m_masterStrategyTyp)
 			{
-			case STRATEGY_INTERRUPT_BREAKING:
+			case STRATEGY_cmMM01:
 			{
-				sendOrder();
-				break;
+				cmMM01 *pStrategy = (cmMM01 *)m_masterStrategy;
+				enum_strategy_interrupt_result interRuptRc = 
+					pStrategy->tryInterrupt(boost::bind(&cmSepc01::sendOrder, this));
+				switch (interRuptRc)
+				{
+				case STRATEGY_INTERRUPT_BREAKING:
+				{
+					m_resumeMaster = false;
+					m_strategyStatus = CMSPEC01_STATUS_ORDER_SENT;
+					sendOrder();
+					break;
+				}
+				case STRATEGY_INTERRUPT_WAIT_CALLBACK:
+				{
+					m_resumeMaster = true;
+					m_strategyStatus = CMSPEC01_STATUS_ORDER_SENT;
+					break;
+				}
+				}
 			}
-			case STRATEGY_INTERRUPT_WAIT_CALLBACK:
-			{
-				m_resumeMaster = true;
-				break;
 			}
-			}
-		}
 		}
 	}
 };
@@ -221,6 +228,10 @@ void cmSepc01::processTrade(tradeRtnPtr ptrade)
 			pStrategy->resume();
 		}
 		}
+	}
+	{
+		boost::mutex::scoped_lock lock1(m_strategyStatusLock);
+		m_strategyStatus = CMSPEC01_STATUS_START;
 	}
 };
 

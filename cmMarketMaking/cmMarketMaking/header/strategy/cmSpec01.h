@@ -17,6 +17,7 @@ enum enum_cmSepc01_strategy_status
 {//策略状态，决定是否发送新的委托
 	CMSPEC01_STATUS_INIT,
 	CMSPEC01_STATUS_START,
+	CMSPEC01_STATUS_ORDER_SENT,
 	CMSPEC01_STATUS_STOP,
 };
 
@@ -91,6 +92,7 @@ private:
 	enum_strategy_type m_masterStrategyTyp;
 	bool               m_resumeMaster;
 private:
+	boost::mutex  m_strategyStatusLock;
 	enum_cmSepc01_strategy_status m_strategyStatus;
 	enum_cmSepc01_Signal_Typ      m_signal;
 	boost::mutex m_netOpenInterestLock;

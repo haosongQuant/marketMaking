@@ -81,45 +81,53 @@ void strategyEngine::commandProcess()
 	{
 		vector<string> commandEle;
 		athenaUtils::Split(command, " ", commandEle);
-		if (commandEle[0] == "start")
+		auto iter = m_strategyTypeMap.find(commandEle[1]);
+		if (iter == m_strategyTypeMap.end())
 		{
-			switch (m_strategyTypeMap[commandEle[1]])
-			{
-			case STRATEGY_cmMM01:
-			{
-				cmMM01* pStrategy = (cmMM01*)m_strategies[commandEle[1]];
-				pStrategy->startStrategy();
-				break;
-			}
-			}
-		}
-		else if (commandEle[0] == "stop")
-		{
-			switch (m_strategyTypeMap[commandEle[1]])
-			{
-			case STRATEGY_cmMM01:
-			{
-				cmMM01* pStrategy = (cmMM01*)m_strategies[commandEle[1]];
-				pStrategy->pause(boost::bind(&IpauseStrategy::plainVanilla, &m_pauseInterface));
-				break;
-			}
-			}
-		}
-		else if (commandEle[0] == "resume")
-		{
-			switch (m_strategyTypeMap[commandEle[1]])
-			{
-			case STRATEGY_cmMM01:
-			{
-				cmMM01* pStrategy = (cmMM01*)m_strategies[commandEle[1]];
-				pStrategy->resume();
-				break;
-			}
-			}
+			LOG(WARNING) << "strategyEngine: strategy " << commandEle[1] << " not configured!" << endl;
 		}
 		else
 		{
-			cout << "strategyEngine: unrecognized command | " << commandEle[0] << endl;
+			if (commandEle[0] == "start")
+			{
+				switch (m_strategyTypeMap[commandEle[1]])
+				{
+				case STRATEGY_cmMM01:
+				{
+					cmMM01* pStrategy = (cmMM01*)m_strategies[commandEle[1]];
+					pStrategy->startStrategy();
+					break;
+				}
+				}
+			}
+			else if (commandEle[0] == "stop")
+			{
+				switch (m_strategyTypeMap[commandEle[1]])
+				{
+				case STRATEGY_cmMM01:
+				{
+					cmMM01* pStrategy = (cmMM01*)m_strategies[commandEle[1]];
+					pStrategy->pause(boost::bind(&IpauseStrategy::plainVanilla, &m_pauseInterface));
+					break;
+				}
+				}
+			}
+			else if (commandEle[0] == "resume")
+			{
+				switch (m_strategyTypeMap[commandEle[1]])
+				{
+				case STRATEGY_cmMM01:
+				{
+					cmMM01* pStrategy = (cmMM01*)m_strategies[commandEle[1]];
+					pStrategy->resume();
+					break;
+				}
+				}
+			}
+			else
+			{
+				cout << "strategyEngine: unrecognized command | " << commandEle[0] << endl;
+			}
 		}
 	}
 	commandProcess();
