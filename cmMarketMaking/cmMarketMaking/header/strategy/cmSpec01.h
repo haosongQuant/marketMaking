@@ -85,6 +85,8 @@ private:
 	cirBuff m_yieldBuff_long{ 10 * 20 };
 	cirBuff m_avg_true_range{ 10 * 20 };
 	cirBuff m_Apcosm_Buff{ apcosm_Buff_size };
+	boost::mutex m_newAbsLock;
+	cirBuff m_newAbs_Buff{ 3 };
 	void quoteEngine();
 
 private:

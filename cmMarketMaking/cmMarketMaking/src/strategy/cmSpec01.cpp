@@ -122,19 +122,34 @@ void cmSepc01::quoteEngine()
 	if ((qu3 - qu1) != 0)
 		new_abs = (apcosm - qu2) / (qu3 - qu1) * 100;
 	else 
-		new_abs = 0.0;
+		new_abs = 50.0;
 
-	LOG(INFO) << m_strategyId << ", new_abs: " << new_abs << endl;
+	double ema_alpha = 0.5;
+	double new_abs_ema = 0.0;
+	{
+		boost::mutex::scoped_lock lock1(m_newAbsLock);
+		m_newAbs_Buff.push_front(new_abs);
+		if (!m_newAbs_Buff.full())
+			return;
+		auto iter = m_newAbs_Buff.begin();
+		while (iter != m_newAbs_Buff.end())
+		{
+			new_abs_ema += new_abs_ema * ema_alpha + *iter;
+			iter++;
+		}
+	}
 
-	if (new_abs > m_upline)
+	LOG(INFO) << m_strategyId << ", new_abs_ema: " << new_abs_ema << endl;
+
+	if (new_abs_ema > m_upline)
 		m_signal = CMSPEC01_SIGNAL_LONG;
-	else if(new_abs < m_downline)
+	else if (new_abs_ema < m_downline)
 		m_signal = CMSPEC01_SIGNAL_SHORT;
 	else
 		m_signal = CMSPEC01_SIGNAL_NONE;
 
-	if ((new_abs > m_upline && m_netOpenInterest <= 0) 
-		|| (new_abs < m_downline && m_netOpenInterest >= 0))
+	if ((new_abs_ema > m_upline && m_netOpenInterest <= 0)
+		|| (new_abs_ema < m_downline && m_netOpenInterest > 0))
 	{
 		{
 			boost::mutex::scoped_lock lock(m_strategyStatusLock);
@@ -188,14 +203,16 @@ void cmSepc01::sendOrder(){
 
 	unsigned int vol;
 	if (dir == ORDER_DIR_BUY)
-		vol = m_orderQty - m_netOpenInterest;
+		vol = m_orderQty;// -m_netOpenInterest;
 	else
-		vol = m_orderQty + m_netOpenInterest;
+		vol = m_orderQty;// +m_netOpenInterest;
 		
 	if (vol > 0)
 	{
 		m_orderRef = m_infra->insertOrder(m_tradeAdapterID, m_productId, m_exchange,
-			ORDER_TYPE_LIMIT, dir, POSITION_EFFECT_OPEN, FLAG_SPECULATION, price, vol,
+			ORDER_TYPE_LIMIT, dir, 
+			(dir == ORDER_DIR_BUY ? POSITION_EFFECT_OPEN : POSITION_EFFECT_CLOSE),
+			FLAG_SPECULATION, price, vol,
 			bind(&cmSepc01::onOrderRtn, this, _1),
 			bind(&cmSepc01::onTradeRtn, this, _1));
 		if (m_orderRef > 0)
