@@ -132,9 +132,11 @@ void cmSepc01::quoteEngine()
 		if (!m_newAbs_Buff.full())
 			return;
 		auto iter = m_newAbs_Buff.begin();
+		new_abs_ema = *iter;
+		iter++;
 		while (iter != m_newAbs_Buff.end())
 		{
-			new_abs_ema += new_abs_ema * ema_alpha + *iter;
+			new_abs_ema = new_abs_ema * (1-ema_alpha) + (*iter) * ema_alpha;
 			iter++;
 		}
 	}
