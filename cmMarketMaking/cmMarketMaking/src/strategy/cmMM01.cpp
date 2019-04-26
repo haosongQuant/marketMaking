@@ -178,7 +178,27 @@ void cmMM01::CancelOrder(bool restart)//const boost::system::error_code& error)
 	}
 
 	if (m_bidOrderRef == 0 || m_askOrderRef == 0)
-		cout << "debug" << endl;
+		LOG(WARNING) << m_strategyId<<": order ref illegal." << endl;
+
+	//先检查报单回报，减少单边撤单，取代ORDER_CANCEL_ERROR_NOT_FOUND对应逻辑
+	map < int, orderRtnPtr>::iterator bidOrderIter;
+	map < int, orderRtnPtr>::iterator askOrderIter;
+	{
+		read_lock lock(m_orderRtnBuffLock);
+		bidOrderIter = m_orderRef2orderRtn.find(m_bidOrderRef);
+		askOrderIter = m_orderRef2orderRtn.find(m_askOrderRef);
+		if (bidOrderIter == m_orderRef2orderRtn.end() ||
+			askOrderIter == m_orderRef2orderRtn.end()){
+			if (bidOrderIter == m_orderRef2orderRtn.end())
+				LOG(WARNING) << m_strategyId << ": order not found, querying order, orderRef: " << m_bidOrderRef << endl;
+			if (askOrderIter == m_orderRef2orderRtn.end())
+				LOG(WARNING) << m_strategyId << ": order not found, querying order, orderRef: " << m_askOrderRef << endl;
+			m_infra->queryOrder(m_tradeAdapterID);
+			m_cancelConfirmTimer.expires_from_now(boost::posix_time::milliseconds(1000 * 10));
+			m_cancelConfirmTimer.async_wait(bind(&cmMM01::CancelOrder, this, restart));// , boost::asio::placeholders::error));
+			return;
+		}
+	}
 
 	if (m_cancelBidOrderRC == 0 || m_cancelBidOrderRC == ORDER_CANCEL_ERROR_NOT_FOUND ||
 		m_cancelBidOrderRC == ORDER_CANCEL_ERROR_SEND_FAIL)
