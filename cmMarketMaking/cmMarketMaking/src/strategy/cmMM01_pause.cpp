@@ -52,19 +52,19 @@ bool cmMM01::isOrderComplete(int orderRef, int& tradedVol)
 	}
 	}//end:处理每个状态
 
-	int tradeRtnedVol = 0; //统计本order返回的成交量
-	{
-		auto iter02 = m_orderRef2tradeRtn.find(orderRef);
-		if (iter02 != m_orderRef2tradeRtn.end())
-		{
-			for each(auto item2 in iter02->second)
-				tradeRtnedVol += item2.second->m_volume;
-		}
-	}
-	//如果有成交发生，而orderRtn中的成交量与tradeRtn中的量不一致，
-	// 表示尚有tradeRtn没收到，认为交易未完成
-	if (orderTradedVol != 0 && tradeRtnedVol != orderTradedVol)
-		isTrdComplete = false;
+	//int tradeRtnedVol = 0; //统计本order返回的成交量
+	//{
+	//	auto iter02 = m_orderRef2tradeRtn.find(orderRef);
+	//	if (iter02 != m_orderRef2tradeRtn.end())
+	//	{
+	//		for each(auto item2 in iter02->second)
+	//			tradeRtnedVol += item2.second->m_volume;
+	//	}
+	//}
+	////如果有成交发生，而orderRtn中的成交量与tradeRtn中的量不一致，
+	//// 表示尚有tradeRtn没收到，认为交易未完成
+	//if (orderTradedVol != 0 && tradeRtnedVol != orderTradedVol)
+	//	isTrdComplete = false;
 	tradedVol += orderTradedVol;
 	return isTrdComplete;
 };
