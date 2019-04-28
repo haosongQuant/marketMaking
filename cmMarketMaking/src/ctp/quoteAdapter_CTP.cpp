@@ -191,9 +191,9 @@ void quoteAdapter_CTP::OnRtnDepthMarketData(CThostFtdcDepthMarketDataField *pDep
 	//	<< " 持仓量:" << pDepthMarketData->OpenInterest << endl;
 
 #ifdef	ADAPTER_LOGGING
-	LOG(INFO)<< m_adapterID << ":  行情 | 合约:" << pDepthMarketData->InstrumentID << ", 最新价: " << pDepthMarketData->LastPrice << endl;
+	LOG(INFO) << "," << m_adapterID << ",行情,tradingDate:"<< pDepthMarketData ->TradingDay<<",instrument:" << pDepthMarketData->InstrumentID << ",lastPrice:" << pDepthMarketData->LastPrice << endl;
 #else
-	cout << m_adapterID << ":  行情 | 合约:" << pDepthMarketData->InstrumentID << ", 最新价: " << pDepthMarketData->LastPrice << endl;
+	cout << m_adapterID << ",行情,tradingDate:"<< pDepthMarketData ->TradingDay<<",instrument:" << pDepthMarketData->InstrumentID << ",lastPrice:" << pDepthMarketData->LastPrice << endl;
 #endif
 
 	if (m_onRtnMarketData != NULL)

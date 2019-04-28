@@ -5,3 +5,5 @@ cmMarketMaking/cmMarketMaking.v12.suo
 cmMarketMaking/cmMarketMaking/cmMarketMaking.vcxproj
 cmMarketMaking/cmMarketMaking/cmMarketMaking.vcxproj.filters
 cmMarketMaking/quoteCollector/*.con
+cmMarketMaking/quoteCollector/Debug/
+cmMarketMaking/logParser/Debug/
