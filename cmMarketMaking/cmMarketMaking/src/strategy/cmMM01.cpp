@@ -45,6 +45,7 @@ void cmMM01::resetStrategyStatus(){ //等待行情触发cycle
 void cmMM01::quoteEngine()
 {
 	boost::recursive_mutex::scoped_lock lock(m_strategyStatusLock);
+	LOG(INFO) << m_strategyId << " | status: " << m_strategyStatus << endl;
 	switch (m_strategyStatus)
 	{
 	case STRATEGY_STATUS_READY:
@@ -288,6 +289,15 @@ void cmMM01::processTrade(tradeRtnPtr ptrade)
 //撤单响应函数
 void cmMM01::processCancelRes(cancelRtnPtr pCancel)
 {
+	if (pCancel->m_cancelOrderRc == CANCEL_RC_TRADED_OR_CANCELED)
+	{
+		write_lock lock(m_orderRtnBuffLock);
+		auto iter = m_orderRef2orderRtn.find(pCancel->m_originOrderRef);
+		if (iter == m_orderRef2orderRtn.end())
+			m_orderRef2orderRtn[pCancel->m_originOrderRef] = orderRtnPtr(new  orderRtn_struct());
+		m_orderRef2orderRtn[pCancel->m_originOrderRef]->m_orderRef = pCancel->m_originOrderRef;
+		m_orderRef2orderRtn[pCancel->m_originOrderRef]->m_orderStatus = ORDER_STATUS_TerminatedFromCancel;
+	}
 }
 
 void cmMM01::sendHedgeOrder(tradeRtnPtr ptrade)//同价对冲

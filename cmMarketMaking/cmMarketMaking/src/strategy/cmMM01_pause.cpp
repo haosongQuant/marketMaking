@@ -29,11 +29,9 @@ bool cmMM01::isOrderComplete(int orderRef, int& tradedVol)
 
 	switch (iter01->second->m_orderStatus)
 	{
-		//遇到下面几个状态，撤单
+		//遇到下面几个中间状态，撤单
 	case ORDER_STATUS_PartTradedQueueing:///部分成交还在队列中,
-	case ORDER_STATUS_PartTradedNotQueueing:///部分成交不在队列中,
 	case ORDER_STATUS_NoTradeQueueing:///未成交还在队列中,
-	case ORDER_STATUS_NoTradeNotQueueing:///未成交不在队列中,
 	case ORDER_STATUS_NotTouched:///尚未触发,
 	case ORDER_STATUS_Touched:///已触发,
 	{
@@ -43,11 +41,17 @@ bool cmMM01::isOrderComplete(int orderRef, int& tradedVol)
 		isTrdComplete = false;
 		break;
 	}
-	//遇到下面几个状态，计算对冲量
+	//遇到下面几个最终状态，计算对冲量
 	case ORDER_STATUS_Canceled: ///撤单,
 	case ORDER_STATUS_AllTraded:///全部成交,
-	{
+	case ORDER_STATUS_PartTradedNotQueueing:///部分成交不在队列中,
+	case ORDER_STATUS_NoTradeNotQueueing:///未成交不在队列中,
+	{//isTrdComplete == true
 		orderTradedVol += iter01->second->m_volumeTraded;
+		break;
+	}
+	case ORDER_STATUS_TerminatedFromCancel:///撤单时，返回报单已成交或撤销,
+	{//isTrdComplete == true
 		break;
 	}
 	}//end:处理每个状态

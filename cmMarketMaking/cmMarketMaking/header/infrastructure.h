@@ -40,6 +40,10 @@ public:
 	void onRtnCtpInstruments(string adapterID, CThostFtdcInstrumentField* inst);
 	void onRtnCtpOrder(string adapterID, CThostFtdcOrderField *pOrder);
 	void onRtnCtpTrade(string adapterID, CThostFtdcTradeField *pTrade);
+	void onRtnCTPOrderActionErr(string adapterID, CThostFtdcOrderActionField *pOrderAction,
+		CThostFtdcRspInfoField *pRspInfo);
+	void onRespCtpCancel(string adapterID, CThostFtdcInputOrderActionField *pInputOrderAction,
+		CThostFtdcRspInfoField *pRspInfo); // not used right now
 	void onRtnTapOrder(string adapterID, TapAPIOrderInfoNotice *pOrder);
 	void onRtnTapTrade(string adapterID, TapAPIFillInfo *pTrade);
 
@@ -86,8 +90,6 @@ public:
 		double price, unsigned int volume,
 		boost::function<void(orderRtnPtr)> orderRtnhandler, boost::function<void(tradeRtnPtr)> tradeRtnhandler);
 	int cancelOrder(string adapterID, int orderRef, boost::function<void(cancelRtnPtr)> cancelRtnhandler);
-	void onRespCtpCancel(string adapterID, CThostFtdcInputOrderActionField *pInputOrderAction, 
-		CThostFtdcRspInfoField *pRspInfo);
 
 private:
 	map<enum_adapterType, map<enum_order_type, char> > m_orderTypeMap;

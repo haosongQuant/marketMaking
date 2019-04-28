@@ -69,6 +69,15 @@ enum enum_order_status
 	ORDER_STATUS_NotTouched,
 	///已触发,
 	ORDER_STATUS_Touched,
+	///已触发,
+	ORDER_STATUS_TerminatedFromCancel,
+};
+
+enum enum_cancel_order_rc
+{
+	///全部成交或撤销
+	CANCEL_RC_TRADED_OR_CANCELED,
+	CANCEL_RC_UNDEFINED,
 };
 
 struct orderRtn_struct
@@ -88,7 +97,7 @@ struct orderRtn_struct
 	///数量
 	int	   m_VolumeTotalOriginal;
 	///今成交数量
-	int    m_volumeTraded;
+	int    m_volumeTraded=0;
 	///剩余数量
 	int    m_volumeTotal;
 	///郑商所成交数量 ??什么鬼
@@ -115,5 +124,6 @@ struct cancelRtn_struct
 	int m_cancelOrderRef;
 	int m_originOrderRef;
 	bool m_isCancelSucc;
+	enum_cancel_order_rc m_cancelOrderRc = CANCEL_RC_UNDEFINED;
 };
 typedef boost::shared_ptr<cancelRtn_struct> cancelRtnPtr;

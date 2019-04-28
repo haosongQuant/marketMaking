@@ -90,8 +90,40 @@ void infrastructure::onRespCtpCancel(string adapterID, CThostFtdcInputOrderActio
 			m_tradeTP->getDispatcher().post(bind((m_cancelRtnHandlers[adapterID][cancelPtr->m_cancelOrderRef]),
 				cancelPtr));
 	}
-
 };
+
+
+void infrastructure::onRtnCTPOrderActionErr(string adapterID, CThostFtdcOrderActionField *pOrderAction,
+	CThostFtdcRspInfoField *pRspInfo)
+{
+	cancelRtnPtr cancelPtr = cancelRtnPtr(new cancelRtn_struct());
+	cancelPtr->m_cancelOrderRef = pOrderAction->OrderActionRef;
+	cancelPtr->m_originOrderRef = atoi(pOrderAction->OrderRef);
+	cancelPtr->m_isCancelSucc = pRspInfo->ErrorID == 0 ? true : false;
+	switch (pRspInfo->ErrorID)
+	{
+	case 26:
+	{
+		cancelPtr->m_cancelOrderRc = CANCEL_RC_TRADED_OR_CANCELED;
+		break;
+	}
+	default:
+	{
+		cancelPtr->m_cancelOrderRc = CANCEL_RC_UNDEFINED;
+		break;
+	}
+	}
+
+	auto iter1 = m_cancelRtnHandlers.find(adapterID);
+	if (iter1 != m_cancelRtnHandlers.end())
+	{
+		auto iter2 = iter1->second.find(cancelPtr->m_cancelOrderRef);
+		if (iter2 != iter1->second.end())
+			m_tradeTP->getDispatcher().post(bind((m_cancelRtnHandlers[adapterID][cancelPtr->m_cancelOrderRef]),
+			cancelPtr));
+	}
+};
+
 void infrastructure::queryOrder(string adapterID)
 {
 	switch (m_adapterTypeMap[adapterID])
@@ -152,6 +184,7 @@ void infrastructure::onRtnCtpTrade(string adapterID, CThostFtdcTradeField *pTrad
 			m_tradeTP->getDispatcher().post(bind((m_tradeRtnHandlers[adapterID][orderRef]), tradePtr));
 	}
 };
+
 void infrastructure::onRtnTapOrder(string adapterID, TapAPIOrderInfoNotice *pOrder)
 {
 	orderRtnPtr orderPtr = orderRtnPtr(new orderRtn_struct());

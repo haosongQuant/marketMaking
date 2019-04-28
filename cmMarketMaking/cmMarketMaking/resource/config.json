@@ -2,12 +2,12 @@
     "adapters": [
         {
             "adapterID": "tradeCTP01", "adapterType": "tradeCtp",
-            "frontIP": "tcp://180.168.146.187:10001", "broker": "9999", "user": "140108", "pwd": "1qazxc",
+            "frontIP": "tcp://180.168.146.187:10030", "broker": "9999", "user": "140108", "pwd": "1qazxc",
             "Authenticate": false, "productID": "nan", "authCode": "nan"
         },
         {
             "adapterID": "quoteCTP01", "adapterType": "quoteCtp",
-            "frontIP": "tcp://180.168.146.187:10011", "broker": "9999", "user": "140108", "pwd": "1qazxc"
+            "frontIP": "tcp://180.168.146.187:10031", "broker": "9999", "user": "140108", "pwd": "1qazxc"
         }
     ],
 
@@ -65,7 +65,7 @@
             "strategyID": "mm_ZC907", "strategyTyp": "cmMM01", "productId": "ZC907", "exchange": "CZCE",
             "quote": "quoteCTP01", "trade": "tradeCTP01", "tickSize": 0.2, "miniOrderSpread": 4.0,
             "orderQty": 10, "volMulti": 10,
-            "openTime": [ { "start": 901, "end": 1014 }, { "start": 1031, "end": 112 },
+            "openTime": [ { "start": 901, "end": 1014 }, { "start": 1031, "end": 1128 },
                           { "start": 1329, "end": 1459 }, { "start": 2101, "end": 2329 }]
         },
         {

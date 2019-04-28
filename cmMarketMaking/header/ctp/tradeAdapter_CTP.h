@@ -92,8 +92,8 @@ public:
 	boost::function<void(string, CThostFtdcTradeField*)> m_OnTradeRtn;
 	boost::function<void(string, CThostFtdcInstrumentField*)> m_OnInstrumentsRtn;
 	boost::function<void(CThostFtdcInvestorPositionField*)> m_OnInvestorPositionRtn;
-	boost::function < void(string adapterID, CThostFtdcInputOrderActionField *pInputOrderAction,
-		CThostFtdcRspInfoField *pRspInfo) > m_onRspCancel;
+	boost::function<void(string adapterID, CThostFtdcOrderActionField *pOrderAction, 
+						CThostFtdcRspInfoField *pRspInfo) > m_onErrRtnOrderAction;
 
 private:
 	bool isErrorRespInfo(CThostFtdcRspInfoField *pRspInfo);

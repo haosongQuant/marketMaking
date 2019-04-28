@@ -139,8 +139,8 @@ private:
 	void callPauseHandler();
 
 private:
-		map < int, orderRtnPtr> m_orderRef2orderRtn;  //orderRef -> orderRtn
 		boost::shared_mutex     m_orderRtnBuffLock;
+		map < int, orderRtnPtr> m_orderRef2orderRtn;  //orderRef -> orderRtn
 
 		map < int, map<string, tradeRtnPtr> > m_orderRef2tradeRtn;  //orderRef -> tradeRtn
 		boost::shared_mutex     m_tradeRtnBuffLock;

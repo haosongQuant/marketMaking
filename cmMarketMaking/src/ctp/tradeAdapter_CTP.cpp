@@ -357,8 +357,12 @@ void tradeAdapterCTP::OnRspSettlementInfoConfirm(CThostFtdcSettlementInfoConfirm
 		if (bIsLast)
 		{
 			LOG(INFO) << m_adapterID << ": resp | confirm Settlement info succ." << endl;
-			m_lag_Timer.expires_from_now(boost::posix_time::milliseconds(3000));
-			m_lag_Timer.async_wait(boost::bind(&tradeAdapterCTP::queryAllInstrument, this));
+			LOG(WARNING) << "---------- " << m_adapterID << " init done ----------" << endl;
+			if (m_OnUserLogin != NULL)
+				m_OnUserLogin(m_adapterID);
+
+			//m_lag_Timer.expires_from_now(boost::posix_time::milliseconds(3000));
+			//m_lag_Timer.async_wait(boost::bind(&tradeAdapterCTP::queryAllInstrument, this));
 		}
 	}
 	else
@@ -666,6 +670,8 @@ void tradeAdapterCTP::OnRspOrderAction(CThostFtdcInputOrderActionField *pInputOr
 
 void tradeAdapterCTP::OnErrRtnOrderAction(CThostFtdcOrderActionField *pOrderAction, CThostFtdcRspInfoField *pRspInfo)
 {
+	if (m_onErrRtnOrderAction)
+		m_onErrRtnOrderAction(m_adapterID, pOrderAction, pRspInfo);
 	if (isErrorRespInfo(pRspInfo))
 		LOG(INFO)  << m_adapterID << ":resp | send order action fail, OrderRef:" << pOrderAction->OrderRef << ", ErrorID: " << pRspInfo->ErrorID << ", ErrorMsg: " << pRspInfo->ErrorMsg << endl;
 };
