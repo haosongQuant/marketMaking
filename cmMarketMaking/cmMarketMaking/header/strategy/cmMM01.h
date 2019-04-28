@@ -6,8 +6,12 @@
 #include "baseClass/strategyBase.h"
 #include "baseClass/orderBase.h"
 #include "baseClass/Utils.h"
+#include "baseClass/UTC.h"
+#include <boost/date_time.hpp>
 
 using namespace std;
+using namespace boost::posix_time;
+using namespace athenaUTC;
 
 enum enum_cmMM01_strategy_status
 {//策略状态，决定是否发送新的委托
@@ -99,6 +103,7 @@ private:
 	void orderPrice(double* bidprice, double* askprice); //计算挂单价格
 	void processOrder(orderRtnPtr);
 	void processTrade(tradeRtnPtr);
+	void logTrade(tradeRtnPtr);
 
 private:
 	int m_cancelBidOrderRC;
@@ -162,7 +167,7 @@ public:
 private: // for clear cycle
 	int                     m_cycleId;
 	tradeGroupBufferPtr     m_ptradeGrp; //用于记录单个交易闭环的所有报单号
-	map < int, int >        m_orderRef2cycle;     //orderRef -> cycle Id
+	map < int, tradeGroupBufferPtr >  m_orderRef2cycle;     //orderRef -> cycle Id
 	boost::shared_mutex     m_orderRef2cycleRWlock; //用于m_orderRef2cycle的读写锁
 
 	list<tradeGroupBufferPtr>      m_tradeGrpBuffer;//用于每个交易闭环清理现场

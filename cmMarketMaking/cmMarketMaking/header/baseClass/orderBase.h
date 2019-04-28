@@ -102,6 +102,7 @@ struct orderRtn_struct
 	int    m_volumeTotal;
 	///郑商所成交数量 ??什么鬼
 	int	m_ZCETotalTradedVolume;
+
 };
 typedef boost::shared_ptr<orderRtn_struct> orderRtnPtr;
 
@@ -116,6 +117,7 @@ struct tradeRtn_struct
 	enum_order_dir_type       m_orderDir;
 	double m_price;
 	double m_volume;
+	string m_tradeDate;
 };
 typedef boost::shared_ptr<tradeRtn_struct> tradeRtnPtr;
 

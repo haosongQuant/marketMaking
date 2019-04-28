@@ -611,8 +611,10 @@ void tradeAdapterCTP::OnRtnTrade(CThostFtdcTradeField *pTrade)
 {
 	if (m_OnTradeRtn)
 		m_OnTradeRtn(m_adapterID, pTrade);
-	LOG(INFO) << m_adapterID<< " Rsp | trade Rtn: orderRef: " << pTrade->OrderRef //<< pOrder->BrokerOrderSeq
+	LOG(INFO) << m_adapterID << ",trade rtn"
+		<< ", tradeDate:"<< pTrade->TradeDate
 		<< ", tradeTime:" << pTrade->TradeTime
+		<< ", orderRef:" << pTrade->OrderRef
 		<< ", InstrumentID:" << pTrade->InstrumentID
 		<< ", Direction:" << pTrade->Direction
 		<< ", Price:" << pTrade->Price

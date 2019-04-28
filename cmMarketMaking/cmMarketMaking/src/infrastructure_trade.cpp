@@ -193,6 +193,7 @@ void infrastructure::onRtnCtpTrade(string adapterID, CThostFtdcTradeField *pTrad
 	tradePtr->m_orderRef = orderRef;
 	tradePtr->m_price = pTrade->Price;
 	tradePtr->m_volume = pTrade->Volume;
+	tradePtr->m_tradeDate = string(pTrade->TradeDate);
 
 	auto iter = m_tradeRtnHandlers.find(adapterID);
 	if (iter != m_tradeRtnHandlers.end())

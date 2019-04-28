@@ -146,7 +146,7 @@ void cmMM01::startCycle()
 	if (m_bidOrderRef > 0)
 	{
 		write_lock lock0(m_orderRef2cycleRWlock);
-		m_orderRef2cycle[m_bidOrderRef] = m_cycleId;
+		m_orderRef2cycle[m_bidOrderRef] = m_ptradeGrp;
 		m_ptradeGrp->m_orderIdList.push_back(m_bidOrderRef);
 	}
 
@@ -156,7 +156,7 @@ void cmMM01::startCycle()
 	if (m_askOrderRef > 0)
 	{
 		write_lock lock0(m_orderRef2cycleRWlock);
-		m_orderRef2cycle[m_askOrderRef] = m_cycleId;
+		m_orderRef2cycle[m_askOrderRef] = m_ptradeGrp;
 		m_ptradeGrp->m_orderIdList.push_back(m_askOrderRef);
 	}
 
@@ -247,9 +247,60 @@ void cmMM01::CancelOrder(bool restart)//const boost::system::error_code& error)
 };
 
 void cmMM01::processOrder(orderRtnPtr pOrder)
+{ 
+	{
+		write_lock lock(m_orderRtnBuffLock);
+		m_orderRef2orderRtn[pOrder->m_orderRef] = pOrder;
+	}
+	tradeGroupBufferPtr ptradeGrp = nullptr; //用于获取该order所在的闭环
+	{
+		read_lock lock1(m_orderRef2cycleRWlock);
+		auto iter = m_orderRef2cycle.find(pOrder->m_orderRef);
+		if (iter != m_orderRef2cycle.end())
+			ptradeGrp = iter->second;
+	}
+	if (ptradeGrp)
+	{
+		//记录有效挂单时间
+		if (ptradeGrp->m_start_milliSec == 0)
+		{
+			switch (pOrder->m_orderStatus)
+			{
+			case ORDER_STATUS_PartTradedQueueing:///部分成交还在队列中,
+			case ORDER_STATUS_NoTradeQueueing:///未成交还在队列中,
+			case ORDER_STATUS_Touched:///已触发,
+			{
+				ptradeGrp->m_start_milliSec = UTC::GetMilliSecs();
+				break; 
+			}
+			}
+		}
+		else if (ptradeGrp->m_end_milliSec == 0)
+		{
+			switch (pOrder->m_orderStatus)
+			{
+			case ORDER_STATUS_Canceled: ///撤单,
+			case ORDER_STATUS_AllTraded:///全部成交,
+			case ORDER_STATUS_PartTradedNotQueueing:///部分成交不在队列中,
+			case ORDER_STATUS_NoTradeNotQueueing:///未成交不在队列中,
+			{
+				ptradeGrp->m_end_milliSec = UTC::GetMilliSecs();
+				break;
+			}
+			}
+		}
+	}
+};
+
+void cmMM01::logTrade(tradeRtnPtr ptrade)
 {
-	write_lock lock(m_orderRtnBuffLock);
-	m_orderRef2orderRtn[pOrder->m_orderRef] = pOrder;
+	LOG(INFO) << "," << m_strategyId << ",trade_rtn"
+		<< ", orderRef:" << ptrade->m_orderRef
+		<< ", tradeDate:" << ptrade->m_tradeDate
+		<< ", InstrumentID:" << ptrade->m_instId
+		<< ", Direction:" << ptrade->m_orderDir
+		<< ", Price:" << ptrade->m_price
+		<< ", volume:" << ptrade->m_volume << endl;
 };
 
 //处理报单的成交回报
@@ -260,13 +311,13 @@ void cmMM01::processOrder(orderRtnPtr pOrder)
 void cmMM01::processTrade(tradeRtnPtr ptrade)
 {
 	m_tradeTP->getDispatcher().post(boost::bind(&cmMM01::registerTradeRtn, this, ptrade));
-
+	logTrade(ptrade);
 	enum_cmMM01_strategy_status status;
 	{
 		boost::recursive_mutex::scoped_lock lock(m_strategyStatusLock);
 
 		read_lock lock1(m_orderRef2cycleRWlock);
-		if (m_cycleId != m_orderRef2cycle[ptrade->m_orderRef]) //如果所在的cycle已经结束, 不做处理
+		if (m_cycleId != m_orderRef2cycle[ptrade->m_orderRef]->m_Id) //如果所在的cycle已经结束, 不做处理
 			return;
 
 		status = m_strategyStatus;
@@ -317,7 +368,7 @@ void cmMM01::sendHedgeOrder(tradeRtnPtr ptrade)//同价对冲
 	if (m_hedgeOrderRef > 0)
 	{
 		write_lock lock0(m_orderRef2cycleRWlock);
-		m_orderRef2cycle[m_bidOrderRef] = m_cycleId;
+		m_orderRef2cycle[m_bidOrderRef] = m_ptradeGrp;
 		m_ptradeGrp->m_orderIdList.push_back(m_hedgeOrderRef);
 
 		//记录对冲量和撤销（完成）状态
@@ -332,6 +383,7 @@ void cmMM01::sendHedgeOrder(tradeRtnPtr ptrade)//同价对冲
 void cmMM01::processHedgeTradeRtn(tradeRtnPtr ptrade)
 {
 	m_tradeTP->getDispatcher().post(boost::bind(&cmMM01::registerTradeRtn, this, ptrade));
+	logTrade(ptrade);
 
 	write_lock lock(m_hedgeOrderVolLock);
 	m_hedgeOrderVol[ptrade->m_orderRef] -= ((ptrade->m_orderDir == ORDER_DIR_BUY)
@@ -451,7 +503,7 @@ void cmMM01::sendNetHedgeOrder(double netHedgeVol)
 	if (netHedgeOrderRef > 0)
 	{
 		write_lock lock0(m_orderRef2cycleRWlock);
-		m_orderRef2cycle[netHedgeOrderRef] = m_cycleId;
+		m_orderRef2cycle[netHedgeOrderRef] = m_ptradeGrp;
 		m_ptradeGrp->m_orderIdList.push_back(netHedgeOrderRef);
 
 		//记录轧差对冲量
@@ -467,6 +519,7 @@ void cmMM01::sendNetHedgeOrder(double netHedgeVol)
 void cmMM01::processNetHedgeTradeRtn(tradeRtnPtr ptrade)
 {
 	m_tradeTP->getDispatcher().post(boost::bind(&cmMM01::registerTradeRtn, this, ptrade));
+	logTrade(ptrade);
 
 	boost::mutex::scoped_lock lock(m_NetHedgeOrderVolLock);
 	m_NetHedgeOrderVol -= ((ptrade->m_orderDir == ORDER_DIR_BUY)

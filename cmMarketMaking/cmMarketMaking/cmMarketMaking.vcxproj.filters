@@ -39,9 +39,6 @@
     <ClCompile Include="src\threadpool\threadpool.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\baseClass\Utils.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="src\tap\quoteAdapter_TAP.cpp">
       <Filter>源文件\adapter</Filter>
     </ClCompile>
@@ -75,15 +72,18 @@
     <ClCompile Include="src\strategy\cmSpec01.cpp">
       <Filter>源文件\strategy</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\baseClass\UTC.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\baseClass\Utils.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="header\threadpool\threadpool.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="header\baseClass\orderBase.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="header\baseClass\Utils.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="header\baseClass\adapterBase.h">
@@ -124,6 +124,12 @@
     </ClInclude>
     <ClInclude Include="header\strategy\cmSpec01.h">
       <Filter>头文件\strategy</Filter>
+    </ClInclude>
+    <ClInclude Include="..\header\baseClass\UTC.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\header\baseClass\Utils.h">
+      <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
