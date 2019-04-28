@@ -29,7 +29,7 @@ private:
 	map<int, CThostFtdcInputOrderFieldPtr> m_ref2sentOrder;
 	boost::detail::spinlock     m_ref2sentOrder_lock;
 	map<int, CThostFtdcOrderFieldPtr> m_ref2order;
-	boost::mutex                      m_ref2order_lock;
+	boost::shared_mutex               m_ref2order_lock;
 
 	CThostFtdcTraderApi*        m_pUserApi;
 	CThostFtdcReqUserLoginField m_loginField;
@@ -80,6 +80,7 @@ private:
 	void closeOrderQrySwitch(){ m_qryingOrder = true; };
 public:
 	void queryOrder();
+	void queryOrder(int orderRef);
 
 private:
 	athenathreadpoolPtr m_threadpool;
@@ -88,7 +89,7 @@ public:
 	boost::function<void(string adapterID)> m_OnUserLogin;
 	boost::function<void(string adapterID)> m_OnUserLogout;
 	boost::function<void(string adapterID)> m_OnFrontDisconnected;
-	boost::function<void(string, CThostFtdcOrderField*)> m_OnOrderRtn;
+	boost::function<void(string, CThostFtdcOrderFieldPtr)> m_OnOrderRtn;
 	boost::function<void(string, CThostFtdcTradeField*)> m_OnTradeRtn;
 	boost::function<void(string, CThostFtdcInstrumentField*)> m_OnInstrumentsRtn;
 	boost::function<void(CThostFtdcInvestorPositionField*)> m_OnInvestorPositionRtn;

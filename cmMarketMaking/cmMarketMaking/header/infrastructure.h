@@ -35,10 +35,11 @@ public:
 
 public:
 	void queryOrder(string adapterID);
+	void queryOrder(string adapterID, int orderRef);
 
 public:
 	void onRtnCtpInstruments(string adapterID, CThostFtdcInstrumentField* inst);
-	void onRtnCtpOrder(string adapterID, CThostFtdcOrderField *pOrder);
+	void onRtnCtpOrder(string adapterID, CThostFtdcOrderFieldPtr pOrder);
 	void onRtnCtpTrade(string adapterID, CThostFtdcTradeField *pTrade);
 	void onRtnCTPOrderActionErr(string adapterID, CThostFtdcOrderActionField *pOrderAction,
 		CThostFtdcRspInfoField *pRspInfo);

@@ -124,6 +124,24 @@ void infrastructure::onRtnCTPOrderActionErr(string adapterID, CThostFtdcOrderAct
 	}
 };
 
+void infrastructure::queryOrder(string adapterID, int orderRef)
+{
+	switch (m_adapterTypeMap[adapterID])
+	{
+	case ADAPTER_CTP_TRADE:
+	{
+		tradeAdapterCTP * pTradeAdapter = (tradeAdapterCTP *)m_adapters[adapterID];
+		pTradeAdapter->queryOrder(orderRef);
+		break;
+	}
+	case ADAPTER_TAP_TRADE:
+	{
+		break;
+	}
+	}
+	return;
+};
+
 void infrastructure::queryOrder(string adapterID)
 {
 	switch (m_adapterTypeMap[adapterID])
@@ -141,7 +159,7 @@ void infrastructure::queryOrder(string adapterID)
 	}
 	return;
 };
-void infrastructure::onRtnCtpOrder(string adapterID, CThostFtdcOrderField *pOrder)
+void infrastructure::onRtnCtpOrder(string adapterID, CThostFtdcOrderFieldPtr pOrder)
 {
 	orderRtnPtr orderPtr = orderRtnPtr(new orderRtn_struct());
 	int orderRef = atoi(pOrder->OrderRef);

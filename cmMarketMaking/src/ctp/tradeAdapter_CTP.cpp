@@ -525,6 +525,20 @@ void tradeAdapterCTP::OnErrRtnOrderInsert(CThostFtdcInputOrderField *pInputOrder
 		LOG(INFO)  << "resp | order insert fail, ErrorID: " << pRspInfo->ErrorID << ", ErrorMsg: " << pRspInfo->ErrorMsg << endl;
 };
 
+void tradeAdapterCTP::queryOrder(int orderRef)
+{
+	{
+		read_lock lock(m_ref2order_lock);
+		auto iter = m_ref2order.find(orderRef);
+		if (iter != m_ref2order.end())
+		{
+			if (m_OnOrderRtn)
+				m_OnOrderRtn(m_adapterID, iter->second);
+			return;
+		}
+	}
+	queryOrder();
+};
 void tradeAdapterCTP::queryOrder()
 {
 	boost::mutex::scoped_lock lock(m_qryOrderLock);
@@ -551,11 +565,11 @@ void tradeAdapterCTP::OnRspQryOrder(CThostFtdcOrderField *pOrder, CThostFtdcRspI
 		CThostFtdcOrderFieldPtr orderPtr = CThostFtdcOrderFieldPtr(new CThostFtdcOrderField(*pOrder));
 		int orderRef = atoi(pOrder->OrderRef);
 		{
-			boost::mutex::scoped_lock l(m_ref2order_lock);
+			write_lock l(m_ref2order_lock);
 			m_ref2order[orderRef] = orderPtr;
 		}
 		if (m_OnOrderRtn)
-			m_OnOrderRtn(m_adapterID, pOrder);
+			m_OnOrderRtn(m_adapterID, orderPtr);
 	}
 	if (bIsLast) //返回报单完成
 	{
@@ -572,12 +586,12 @@ void tradeAdapterCTP::OnRtnOrder(CThostFtdcOrderField *pOrder)
 	int orderRef = atoi(pOrder->OrderRef);
 	{
 		//LOG(INFO)  << m_adapterID << ": locking m_ref2order in OnRtnOrder." << endl;
-		boost::mutex::scoped_lock l(m_ref2order_lock);
+		write_lock l(m_ref2order_lock);
 		m_ref2order[orderRef] = orderPtr;
 		//LOG(INFO)  << m_adapterID << ": unlocking m_ref2order in OnRtnOrder." << endl;
 	}
 	if (m_OnOrderRtn)
-		m_OnOrderRtn(m_adapterID, pOrder);
+		m_OnOrderRtn(m_adapterID, orderPtr);
 	
 	LOG(INFO) << m_adapterID << " Rsp | order Rtn: orderRef: " << pOrder->OrderRef //<< pOrder->BrokerOrderSeq
 	<< ", InstrumentID:" << pOrder->InstrumentID
@@ -618,14 +632,14 @@ int tradeAdapterCTP::cancelOrder(int orderRef)
 	auto iter = m_ref2order.begin();
 	{
 		//LOG(INFO)  << m_adapterID << ": locking m_ref2order in cancelOrder." << endl;
-		boost::mutex::scoped_lock l0(m_ref2order_lock);
+		read_lock l0(m_ref2order_lock);
 		iter = m_ref2order.find(orderRef);
 		//LOG(INFO)  << m_adapterID << ": unlocking m_ref2order in cancelOrder." << endl;
-	}
-	if (iter == m_ref2order.end())
-	{
-		LOG(WARNING) << m_adapterID << ": cancel Order fail | order return not received, orderRef: " << orderRef << endl;
-		return ORDER_CANCEL_ERROR_NOT_FOUND;
+		if (iter == m_ref2order.end())
+		{
+			LOG(WARNING) << m_adapterID << ": cancel Order fail | order return not received, orderRef: " << orderRef << endl;
+			return ORDER_CANCEL_ERROR_NOT_FOUND;
+		}
 	}
 	CThostFtdcInputOrderActionField actionField;
 	memset(&actionField, 0, sizeof(actionField));

@@ -191,10 +191,16 @@ void cmMM01::CancelOrder(bool restart)//const boost::system::error_code& error)
 		if (bidOrderIter == m_orderRef2orderRtn.end() ||
 			askOrderIter == m_orderRef2orderRtn.end()){
 			if (bidOrderIter == m_orderRef2orderRtn.end())
+			{
+				m_infra->queryOrder(m_tradeAdapterID, m_bidOrderRef);
 				LOG(WARNING) << m_strategyId << ": order not found, querying order, orderRef: " << m_bidOrderRef << endl;
+			}
 			if (askOrderIter == m_orderRef2orderRtn.end())
+			{
+				m_infra->queryOrder(m_tradeAdapterID, m_askOrderRef);
 				LOG(WARNING) << m_strategyId << ": order not found, querying order, orderRef: " << m_askOrderRef << endl;
-			m_infra->queryOrder(m_tradeAdapterID);
+			}
+			
 			m_cancelConfirmTimer.expires_from_now(boost::posix_time::milliseconds(1000 * 10));
 			m_cancelConfirmTimer.async_wait(bind(&cmMM01::CancelOrder, this, restart));// , boost::asio::placeholders::error));
 			return;
@@ -380,7 +386,7 @@ void cmMM01::cancelHedgeOrder()//const boost::system::error_code& error){
 			}
 			else if(m_hedgeOrderCancelRC[iter->first] == ORDER_CANCEL_ERROR_NOT_FOUND)
 			{
-				m_infra->queryOrder(m_tradeAdapterID);
+				m_infra->queryOrder(m_tradeAdapterID, iter->first);
 				m_cancelHedgeTimer.expires_from_now(boost::posix_time::milliseconds(1000*10));
 				m_cancelHedgeTimer.async_wait(boost::bind(&cmMM01::cancelHedgeOrder, this));// ,boost::asio::placeholders::error));
 				return;
