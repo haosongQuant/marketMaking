@@ -547,7 +547,7 @@ void tradeAdapterCTP::queryOrder()
 void tradeAdapterCTP::OnRspQryOrder(CThostFtdcOrderField *pOrder, CThostFtdcRspInfoField *pRspInfo, 
 	int nRequestID, bool bIsLast)
 {
-	if (!isErrorRespInfo(pRspInfo)){
+	if (pOrder){
 		CThostFtdcOrderFieldPtr orderPtr = CThostFtdcOrderFieldPtr(new CThostFtdcOrderField(*pOrder));
 		int orderRef = atoi(pOrder->OrderRef);
 		{
