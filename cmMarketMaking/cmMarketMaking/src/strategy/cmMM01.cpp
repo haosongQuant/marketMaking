@@ -262,7 +262,7 @@ void cmMM01::processOrder(orderRtnPtr pOrder)
 	if (ptradeGrp)
 	{
 		//记录有效挂单时间
-		if (ptradeGrp->m_start_milliSec == 0)
+		if (ptradeGrp->m_start_milliSec == 0.0)
 		{
 			switch (pOrder->m_orderStatus)
 			{
@@ -275,7 +275,7 @@ void cmMM01::processOrder(orderRtnPtr pOrder)
 			}
 			}
 		}
-		else if (ptradeGrp->m_end_milliSec == 0)
+		else if (ptradeGrp->m_end_milliSec == 0.0)
 		{
 			switch (pOrder->m_orderStatus)
 			{

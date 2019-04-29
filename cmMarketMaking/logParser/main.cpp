@@ -14,6 +14,7 @@ using namespace athenaUTC;
 
 vector<string> files;
 map<string, map<string, double> > lastPriceDic; //tradingDate -> instrument -> lastprice
+map<string, map<string, double> > validTimeDic; //tradingDate -> instrument -> lastprice
 
 void getLogPath(string path)
 {
@@ -66,6 +67,20 @@ void processQuote(string lineStr)
 	return;
 }
 
+void processValidTime(string lineStr)
+{
+	string tradingDt;
+	string strategyId;
+	double validTime;
+	vector<string> lineElements;
+	athenaUtils::Split(lineStr, ",", lineElements);
+	strategyId = lineElements[1];
+	tradingDt = lineElements[3];
+	validTime = atof((const char*)(lineElements[5].c_str()));
+	validTimeDic[tradingDt][strategyId] += validTime;
+	return;
+}
+
 void scanFiles()
 {
 	for (auto filename : files)
@@ -83,6 +98,14 @@ void scanFiles()
 				processQuote(lineStr);
 				continue;
 			}
+
+			idx = lineStr.find("validTime");
+			if (idx != string::npos)//ÐÐÇé
+			{
+				processValidTime(lineStr);
+				continue;
+			}
+			
 		}
 
 	}

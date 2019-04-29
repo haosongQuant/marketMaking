@@ -102,11 +102,11 @@ private:
 	void genOrderParmMap();
 
 	map<string, //adapterID
-		map<int, boost::function<void(orderRtnPtr)> > > m_orderRtnHandlers;
+		hash_map<int, boost::function<void(orderRtnPtr)> > > m_orderRtnHandlers;
 	map<string, //adapterID
-		map< int, boost::function<void(tradeRtnPtr)> > > m_tradeRtnHandlers;
+		hash_map< int, boost::function<void(tradeRtnPtr)> > > m_tradeRtnHandlers;
 	map < string, //adapterID
-		map<int, boost::function<void(cancelRtnPtr)> > > m_cancelRtnHandlers;
+		hash_map<int, boost::function<void(cancelRtnPtr)> > > m_cancelRtnHandlers;
 
 private:
 	void initAdapters();

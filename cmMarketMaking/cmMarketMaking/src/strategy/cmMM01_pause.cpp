@@ -132,6 +132,7 @@ void cmMM01::daemonEngine(){
 		{
 			LOG(INFO) << m_strategyId<< ": -----------CycleStatisticsStart-----------" << endl;
 			int  cycleTradedVol = 0;
+			string tradingDate = "";
 			//double cycleProfit = 0.0;
 			for each(auto orderRef in item->m_orderIdList)
 			{
@@ -139,30 +140,32 @@ void cmMM01::daemonEngine(){
 				orderRtnPtr pOrder = m_orderRef2orderRtn[orderRef];
 				cycleTradedVol += pOrder->m_direction == ORDER_DIR_BUY ?
 					pOrder->m_volumeTraded : (pOrder->m_volumeTraded * -1);
+				if (tradingDate == "")
+					tradingDate = pOrder->m_tradingDay;
 				//auto iter03 = m_orderRef2tradeRtn.find(orderRef);
 				//if (iter03 != m_orderRef2tradeRtn.end())
 				//{
 				//	for each(auto item2 in iter03->second)
 				//	{
-						//double orderProfit = pOrder->m_direction == ORDER_DIR_SELL ?
-						//	(item2.second->m_price * item2.second->m_volume * m_volumeMultiple) : 
-						//	(item2.second->m_price * item2.second->m_volume * m_volumeMultiple*-1);
-						//LOG(INFO) << m_strategyId << ",tradeInfo," << item2.second->m_orderRef
-						//	<< "," << item2.second->m_tradeId << "," << item2.second->m_instId
-						//	<< "," << item2.second->m_orderDir << "," << item2.second->m_price
-						//	<< "," << item2.second->m_volume << "," << orderProfit << endl;
-						//cycleProfit += orderProfit;
-					/*}
-				}*/
+				//		double orderProfit = pOrder->m_direction == ORDER_DIR_SELL ?
+				//			(item2.second->m_price * item2.second->m_volume * m_volumeMultiple) : 
+				//			(item2.second->m_price * item2.second->m_volume * m_volumeMultiple*-1);
+				//		LOG(INFO) << m_strategyId << ",tradeInfo," << item2.second->m_orderRef
+				//			<< "," << item2.second->m_tradeId << "," << item2.second->m_instId
+				//			<< "," << item2.second->m_orderDir << "," << item2.second->m_price
+				//			<< "," << item2.second->m_volume << "," << orderProfit << endl;
+				//		cycleProfit += orderProfit;
+				//	}
+				//}
 
 			}//end: 循环处理每一个order
 			totalTradedVol += cycleTradedVol;
 			//LOG(INFO) << m_strategyId << ",cycleProfit," << item->m_Id
 			//	<< "," << cycleProfit << endl;
 			if (item->m_start_milliSec != 0.0 && item->m_end_milliSec != 0.0)
-				LOG(INFO) << m_strategyId << ",validTime," << item->m_Id<<"," << item->m_end_milliSec - item->m_start_milliSec << endl;
+				LOG(INFO)<< "," << m_strategyId << ",validTime," << tradingDate << "," << item->m_Id << "," << item->m_end_milliSec - item->m_start_milliSec << endl;
 			else
-				LOG(INFO) << m_strategyId << ",validTime," << item->m_Id << "," << 0.0 << endl;
+				LOG(INFO) << "," << m_strategyId << ",validTime," << tradingDate << "," << item->m_Id << "," << 0.0 << endl;
 
 			LOG(INFO) << m_strategyId << "-----------CycleStatisticsEnd-----------" << endl;
 		}

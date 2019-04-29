@@ -102,7 +102,8 @@ struct orderRtn_struct
 	int    m_volumeTotal;
 	///郑商所成交数量 ??什么鬼
 	int	m_ZCETotalTradedVolume;
-
+	///交易日
+	string m_tradingDay;
 };
 typedef boost::shared_ptr<orderRtn_struct> orderRtnPtr;
 

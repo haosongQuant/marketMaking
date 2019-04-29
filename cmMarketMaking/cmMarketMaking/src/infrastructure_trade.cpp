@@ -173,6 +173,7 @@ void infrastructure::onRtnCtpOrder(string adapterID, CThostFtdcOrderFieldPtr pOr
 	orderPtr->m_VolumeTotalOriginal = pOrder->VolumeTotalOriginal;
 	orderPtr->m_volumeTraded = pOrder->VolumeTraded;
 	orderPtr->m_ZCETotalTradedVolume = pOrder->ZCETotalTradedVolume;
+	orderPtr->m_tradingDay = string(pOrder->TradingDay);
 	auto iter1 = m_orderRtnHandlers.find(adapterID);
 	if (iter1 != m_orderRtnHandlers.end())
 	{
