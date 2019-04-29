@@ -23,7 +23,7 @@ bool cmMM01::isOrderComplete(int orderRef, int& tradedVol)
 		iter01->second->m_orderStatus == ORDER_STATUS_Unknown)
 	{
 		m_tradeTP->getDispatcher().post(boost::bind(&infrastructure::queryOrder,
-			m_infra, m_tradeAdapterID)); //如果报单回报未返回或状态未知，发起报单查询
+			m_infra, m_tradeAdapterID, orderRef)); //如果报单回报未返回或状态未知，发起报单查询
 		return false;
 	}
 
