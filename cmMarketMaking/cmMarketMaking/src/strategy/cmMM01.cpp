@@ -10,7 +10,7 @@ cmMM01::cmMM01(string strategyId, string strategyTyp, string productId, string e
 	m_quoteAdapterID(quoteAdapterID), m_tradeAdapterID(tradeAdapterID), m_tickSize(tickSize),
 	m_miniOrderSpread(miniOrderSpread), m_orderQty(orderQty), m_volumeMultiple(volMulti),
 	m_quoteTP(quoteTP), m_tradeTP(tradeTP), m_infra(infra), m_cycleId(0), m_pauseReq(false),
-	m_breakReq(false), m_strategyConfig(config),
+	m_breakReq(false), m_strategyConfig(config), m_cancelTrialTime(0),
 	m_cancelConfirmTimer(tradeTP->getDispatcher()), m_cancelHedgeTimer(tradeTP->getDispatcher()),
 	m_daemonTimer(tradeTP->getDispatcher()), m_pauseLagTimer(tradeTP->getDispatcher())
 {
@@ -182,12 +182,13 @@ void cmMM01::CancelOrder(bool restart)//const boost::system::error_code& error)
 		LOG(WARNING) << m_strategyId<<": order ref illegal." << endl;
 
 	//先检查报单回报，减少单边撤单，取代ORDER_CANCEL_ERROR_NOT_FOUND对应逻辑
-	map < int, orderRtnPtr>::iterator bidOrderIter;
-	map < int, orderRtnPtr>::iterator askOrderIter;
+	//map < int, orderRtnPtr>::iterator bidOrderIter;
+	//map < int, orderRtnPtr>::iterator askOrderIter;
+	if (m_cancelTrialTime < 3)
 	{
 		read_lock lock(m_orderRtnBuffLock);
-		bidOrderIter = m_orderRef2orderRtn.find(m_bidOrderRef);
-		askOrderIter = m_orderRef2orderRtn.find(m_askOrderRef);
+		auto bidOrderIter = m_orderRef2orderRtn.find(m_bidOrderRef);
+		auto askOrderIter = m_orderRef2orderRtn.find(m_askOrderRef);
 		if (bidOrderIter == m_orderRef2orderRtn.end() ||
 			askOrderIter == m_orderRef2orderRtn.end()){
 			if (bidOrderIter == m_orderRef2orderRtn.end())
@@ -200,12 +201,16 @@ void cmMM01::CancelOrder(bool restart)//const boost::system::error_code& error)
 				m_infra->queryOrder(m_tradeAdapterID, m_askOrderRef);
 				LOG(WARNING) << m_strategyId << ": order not found, querying order, orderRef: " << m_askOrderRef << endl;
 			}
-			
+			m_cancelTrialTime++;
 			m_cancelConfirmTimer.expires_from_now(boost::posix_time::milliseconds(1000 * 10));
 			m_cancelConfirmTimer.async_wait(bind(&cmMM01::CancelOrder, this, restart));// , boost::asio::placeholders::error));
 			return;
 		}
+		else
+			m_cancelTrialTime = 0;
 	}
+	else
+		m_cancelTrialTime = 0;
 
 	if (m_cancelBidOrderRC == 0 || m_cancelBidOrderRC == ORDER_CANCEL_ERROR_NOT_FOUND ||
 		m_cancelBidOrderRC == ORDER_CANCEL_ERROR_SEND_FAIL)

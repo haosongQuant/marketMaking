@@ -111,6 +111,7 @@ private:
 	athena_lag_timer m_cancelConfirmTimer;
 	bool m_cancelConfirmTimerCancelled;
 	void CancelOrder(bool);// const boost::system::error_code& error);
+	int  m_cancelTrialTime;
 	void processCancelRes(cancelRtnPtr);
 
 private:
