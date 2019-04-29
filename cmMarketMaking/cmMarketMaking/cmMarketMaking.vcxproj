@@ -166,6 +166,7 @@ copy  ..\lib\*.dll  ..\Debug\</Command>
     <ClCompile Include="src\threadpool\threadpool.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\header\baseClass\adapterBase.h" />
     <ClInclude Include="..\header\baseClass\UTC.h" />
     <ClInclude Include="..\header\baseClass\Utils.h" />
     <ClInclude Include="..\header\ctp\quoteAdapter_CTP.h" />
@@ -174,7 +175,6 @@ copy  ..\lib\*.dll  ..\Debug\</Command>
     <ClInclude Include="..\header\json\configloader.h" />
     <ClInclude Include="..\header\tap\quoteAdapter_TAP.h" />
     <ClInclude Include="..\header\tap\tradeAdapter_TAP.h" />
-    <ClInclude Include="header\baseClass\adapterBase.h" />
     <ClInclude Include="header\baseClass\orderBase.h" />
     <ClInclude Include="header\baseClass\strategyBase.h" />
     <ClInclude Include="header\infrastructure.h" />

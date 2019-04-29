@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <boost/shared_ptr.hpp>
+#include "baseClass/orderBase.h"
 using namespace std;
 
 enum enum_strategy_interrupt_result
@@ -24,6 +25,8 @@ public:
 	virtual void interrupt(boost::function<void()> pauseHandler){};
 	virtual bool pause(boost::function<void()> pauseHandler){ return true; };
 	virtual void resume(){};
+
+	virtual void registerOrder(orderRtnPtr pOrder){};
 };
 
 

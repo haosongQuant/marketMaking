@@ -4,6 +4,7 @@
 #include "threadpool\threadpool.h"
 #include "json\json.h"
 #include "glog\logging.h"
+#include "baseClass/orderBase.h"
 #include "strategy\cmMM01.h"
 #include "strategy\cmSpec01.h"
 
@@ -31,4 +32,7 @@ private:
 	map<string, strategyBase*>      m_strategies;
 	map<string, enum_strategy_type> m_strategyTypeMap;
 	void registerStrategyType(string strategyID, string strategyType);
+
+public:
+	void onBroadcastOrder(orderRtnPtr orderPtr);
 };

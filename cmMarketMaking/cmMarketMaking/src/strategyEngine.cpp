@@ -6,6 +6,7 @@ m_config(config), m_infra(infra)
 {
 	m_quoteTP = athenathreadpoolPtr(new threadpool(4));
 	m_tradeTP = athenathreadpoolPtr(new threadpool(8));
+	infra->broadcastOrder = boost::bind(&strategyEngine::onBroadcastOrder, this, _1);
 };
 
 void strategyEngine::registerStrategyType(string strategyID, string strategyType)
@@ -62,6 +63,29 @@ void strategyEngine::init()
 		}
 	}
 }
+
+void strategyEngine::onBroadcastOrder(orderRtnPtr orderPtr)
+{
+	auto iter = m_strategies.begin();
+	while (iter != m_strategies.end())
+	{
+		switch (m_strategyTypeMap[iter->first])
+		{
+		case STRATEGY_cmMM01:
+		{
+			((cmMM01 *)(iter->second))->registerOrder(orderPtr);
+			break;
+		}
+		case STRATEGY_cmSpec01:
+		{
+			((cmSepc01 *)(iter->second))->registerOrder(orderPtr);
+				break;
+		}
+		}
+		iter++;
+	}
+};
+
 
 void strategyEngine::commandProcess()
 {

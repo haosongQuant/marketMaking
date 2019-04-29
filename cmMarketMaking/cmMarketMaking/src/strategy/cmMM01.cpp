@@ -251,12 +251,15 @@ void cmMM01::CancelOrder(bool restart)//const boost::system::error_code& error)
 	}
 };
 
+void cmMM01::registerOrder(orderRtnPtr pOrder)
+{
+	write_lock lock(m_orderRtnBuffLock);
+	m_orderRef2orderRtn[pOrder->m_orderRef] = pOrder;
+};
+
 void cmMM01::processOrder(orderRtnPtr pOrder)
 { 
-	{
-		write_lock lock(m_orderRtnBuffLock);
-		m_orderRef2orderRtn[pOrder->m_orderRef] = pOrder;
-	}
+	registerOrder(pOrder);
 	tradeGroupBufferPtr ptradeGrp = nullptr; //用于获取该order所在的闭环
 	{
 		read_lock lock1(m_orderRef2cycleRWlock);
@@ -413,8 +416,7 @@ void cmMM01::processHedgeTradeRtn(tradeRtnPtr ptrade)
 
 void cmMM01::processHedgeOrderRtn(orderRtnPtr pOrder)
 {
-	write_lock lock(m_orderRtnBuffLock);
-	m_orderRef2orderRtn[pOrder->m_orderRef] = pOrder;
+	registerOrder(pOrder);
 }
 
 //处理对冲指令：如果对冲指令未成交，撤单，并异步调用轧差市价对冲函数 confirmCancel_hedgeOrder()
@@ -543,6 +545,5 @@ void cmMM01::processNetHedgeTradeRtn(tradeRtnPtr ptrade)
 
 void cmMM01::processNetHedgeOrderRtn(orderRtnPtr pOrder)
 {
-	write_lock lock(m_orderRtnBuffLock);
-	m_orderRef2orderRtn[pOrder->m_orderRef] = pOrder;
+	registerOrder(pOrder);
 }

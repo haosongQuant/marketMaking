@@ -180,8 +180,11 @@ void infrastructure::onRtnCtpOrder(string adapterID, CThostFtdcOrderFieldPtr pOr
 		auto iter2 = iter1->second.find(orderRef);
 		if (iter2 != iter1->second.end())
 			m_tradeTP->getDispatcher().post(bind((m_orderRtnHandlers[adapterID][orderRef]), orderPtr));
+		else if (broadcastOrder)
+			broadcastOrder(orderPtr);
 	}
 };
+
 void infrastructure::onRtnCtpTrade(string adapterID, CThostFtdcTradeField *pTrade)
 {
 	int orderRef = atoi(pTrade->OrderRef);

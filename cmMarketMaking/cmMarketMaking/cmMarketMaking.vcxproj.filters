@@ -86,9 +86,6 @@
     <ClInclude Include="header\baseClass\orderBase.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="header\baseClass\adapterBase.h">
-      <Filter>头文件\adapter</Filter>
-    </ClInclude>
     <ClInclude Include="header\infrastructureStruct.h">
       <Filter>头文件\infrastructure</Filter>
     </ClInclude>
@@ -130,6 +127,9 @@
     </ClInclude>
     <ClInclude Include="..\header\baseClass\Utils.h">
       <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\header\baseClass\adapterBase.h">
+      <Filter>头文件\adapter</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

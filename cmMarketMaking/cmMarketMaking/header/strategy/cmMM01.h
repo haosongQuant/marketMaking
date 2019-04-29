@@ -89,6 +89,7 @@ public: //供外部调用的响应函数 | 在策略线程池中调用相应的处理函数
 	void onCycleNetHedgeOrderRtn(orderRtnPtr pOrder){ m_tradeTP->getDispatcher().post(bind(&cmMM01::processCycleNetHedgeOrderRtn, this, pOrder)); };
 	void onCycleNetHedgeTradeRtn(tradeRtnPtr ptrade){ m_tradeTP->getDispatcher().post(bind(&cmMM01::processCycleNetHedgeTradeRtn, this, ptrade)); };
 	void onRspCancel(cancelRtnPtr pCancel){ m_tradeTP->getDispatcher().post(bind(&cmMM01::processCancelRes, this, pCancel)); };
+	virtual void registerOrder(orderRtnPtr pOrder);
 
 private:
 	futuresMDPtr   m_lastQuotePtr;
