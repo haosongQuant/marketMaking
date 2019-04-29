@@ -269,6 +269,10 @@ void cmMM01::processOrder(orderRtnPtr pOrder)
 	}
 	if (ptradeGrp)
 	{
+		//记录交易日
+		if (ptradeGrp->m_tradingDate == "")
+			ptradeGrp->m_tradingDate = pOrder->m_tradingDay;
+
 		//记录有效挂单时间
 		if (ptradeGrp->m_start_milliSec == 0.0)
 		{

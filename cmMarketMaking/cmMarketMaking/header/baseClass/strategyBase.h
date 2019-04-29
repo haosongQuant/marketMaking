@@ -34,10 +34,11 @@ class tradeGroupBuffer
 {
 public:
 	int m_Id;
+	string m_tradingDate;
 	list<int> m_orderIdList;
 	double m_start_milliSec;
 	double m_end_milliSec;
-	tradeGroupBuffer() :m_start_milliSec(0.0), m_end_milliSec(0.0){};
+	tradeGroupBuffer() :m_tradingDate(""), m_start_milliSec(0.0), m_end_milliSec(0.0){};
 };
 typedef boost::shared_ptr<tradeGroupBuffer> tradeGroupBufferPtr;
 
