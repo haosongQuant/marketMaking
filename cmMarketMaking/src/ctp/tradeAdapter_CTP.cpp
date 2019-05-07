@@ -273,7 +273,8 @@ void tradeAdapterCTP::OnRspQryInvestorPosition(CThostFtdcInvestorPositionField *
 {
 	if (pInvestorPosition)
 	{
-		/*LOG(INFO) << "合约代码: " << pInvestorPosition->InstrumentID << endl
+		/*cout << "___________________________________" << endl;
+		cout << "合约代码: " << pInvestorPosition->InstrumentID << endl
 		<< "经纪公司代码: " << pInvestorPosition->BrokerID << endl
 		<< "投资者代码: " << pInvestorPosition->InvestorID << endl
 		<< "持仓多空方向: " << pInvestorPosition->PosiDirection << endl
@@ -512,7 +513,12 @@ void tradeAdapterCTP::OnRspOrderInsert(CThostFtdcInputOrderField *pInputOrder, C
 			LOG(INFO)  << m_adapterID << ":resp | order insert succ, orderRef: " << pInputOrder->OrderRef << endl;
 	}
 	else
-		LOG(INFO)  << m_adapterID << ":resp | order insert fail, ErrorID: " << pRspInfo->ErrorID << ", ErrorMsg: " << pRspInfo->ErrorMsg << endl;
+	{
+		LOG(INFO) << m_adapterID << ":resp | order insert fail";
+		if (pInputOrder)
+			LOG(INFO) <<", orderRef: " << pInputOrder->OrderRef;
+		LOG(INFO) << ", ErrorID: " << pRspInfo->ErrorID << ", ErrorMsg: " << pRspInfo->ErrorMsg << endl;
+	}
 };
 
 void tradeAdapterCTP::OnErrRtnOrderInsert(CThostFtdcInputOrderField *pInputOrder, CThostFtdcRspInfoField *pRspInfo)
@@ -522,7 +528,12 @@ void tradeAdapterCTP::OnErrRtnOrderInsert(CThostFtdcInputOrderField *pInputOrder
 			LOG(INFO)  << "resp | order insert succ, orderRef: " << pInputOrder->OrderRef << endl;
 	}
 	else
-		LOG(INFO)  << "resp | order insert fail, ErrorID: " << pRspInfo->ErrorID << ", ErrorMsg: " << pRspInfo->ErrorMsg << endl;
+	{
+		LOG(INFO) << "resp | order insert fail";
+		if (pInputOrder)
+			LOG(INFO) << ", orderRef: " << pInputOrder->OrderRef;
+		LOG(INFO) << ", ErrorID: " << pRspInfo->ErrorID << ", ErrorMsg : " << pRspInfo->ErrorMsg << endl;
+	}
 };
 
 void tradeAdapterCTP::queryOrder(int orderRef)

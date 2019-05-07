@@ -112,4 +112,8 @@ public:
 
 private:
 	void initAdapters();
+
+private:
+	map<enum_adapterType, map<char, enum_holding_dir_type> > m_holdingDirMapRev;
+
 };

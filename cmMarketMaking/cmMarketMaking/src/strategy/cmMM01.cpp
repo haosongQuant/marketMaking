@@ -322,7 +322,7 @@ void cmMM01::logTrade(tradeRtnPtr ptrade)
 //    4、等待1s钟，调用对冲指令处理函数 cancelHedgeOrder()
 void cmMM01::processTrade(tradeRtnPtr ptrade)
 {
-	m_tradeTP->getDispatcher().post(boost::bind(&cmMM01::registerTradeRtn, this, ptrade));
+	//m_tradeTP->getDispatcher().post(boost::bind(&cmMM01::registerTradeRtn, this, ptrade));
 	logTrade(ptrade);
 	enum_cmMM01_strategy_status status;
 	{
@@ -394,7 +394,7 @@ void cmMM01::sendHedgeOrder(tradeRtnPtr ptrade)//同价对冲
 //对冲成交处理函数
 void cmMM01::processHedgeTradeRtn(tradeRtnPtr ptrade)
 {
-	m_tradeTP->getDispatcher().post(boost::bind(&cmMM01::registerTradeRtn, this, ptrade));
+	//m_tradeTP->getDispatcher().post(boost::bind(&cmMM01::registerTradeRtn, this, ptrade));
 	logTrade(ptrade);
 
 	write_lock lock(m_hedgeOrderVolLock);
@@ -529,7 +529,7 @@ void cmMM01::sendNetHedgeOrder(double netHedgeVol)
 //轧差市价成交处理函数
 void cmMM01::processNetHedgeTradeRtn(tradeRtnPtr ptrade)
 {
-	m_tradeTP->getDispatcher().post(boost::bind(&cmMM01::registerTradeRtn, this, ptrade));
+	//m_tradeTP->getDispatcher().post(boost::bind(&cmMM01::registerTradeRtn, this, ptrade));
 	logTrade(ptrade);
 
 	boost::mutex::scoped_lock lock(m_NetHedgeOrderVolLock);

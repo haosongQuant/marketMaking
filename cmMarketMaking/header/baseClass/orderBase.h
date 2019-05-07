@@ -130,3 +130,9 @@ struct cancelRtn_struct
 	enum_cancel_order_rc m_cancelOrderRc = CANCEL_RC_UNDEFINED;
 };
 typedef boost::shared_ptr<cancelRtn_struct> cancelRtnPtr;
+
+enum enum_holding_dir_type
+{
+	HOLDING_DIR_BUY,
+	HOLDING_DIR_SELL,
+};
