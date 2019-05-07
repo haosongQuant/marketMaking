@@ -193,7 +193,11 @@ void infrastructure::onRtnCtpTrade(string adapterID, CThostFtdcTradeField *pTrad
 	tradePtr->m_instId = string(pTrade->InstrumentID);
 	tradePtr->m_tradeId = string(pTrade->TradeID);
 	tradePtr->m_exchange = string(pTrade->ExchangeID);
-	tradePtr->m_orderDir = pTrade->Direction == THOST_FTDC_D_Buy ? ORDER_DIR_BUY : ORDER_DIR_SELL;
+	tradePtr->m_orderDir = m_orderDirMapRev[ADAPTER_CTP_TRADE][pTrade->Direction];
+	if (THOST_FTDC_OF_Open == pTrade->OffsetFlag)
+		tradePtr->m_positionEffectTyp = m_positinEffectMapRev[ADAPTER_CTP_TRADE][THOST_FTDC_OFEN_Open];
+	else if (THOST_FTDC_OF_Close == pTrade->OffsetFlag)
+		tradePtr->m_positionEffectTyp = m_positinEffectMapRev[ADAPTER_CTP_TRADE][THOST_FTDC_OFEN_Close];
 	tradePtr->m_orderRef = orderRef;
 	tradePtr->m_price = pTrade->Price;
 	tradePtr->m_volume = pTrade->Volume;

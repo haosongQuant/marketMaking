@@ -92,7 +92,7 @@ public:
 	boost::function<void(string, CThostFtdcOrderFieldPtr)> m_OnOrderRtn;
 	boost::function<void(string, CThostFtdcTradeField*)> m_OnTradeRtn;
 	boost::function<void(string, CThostFtdcInstrumentField*)> m_OnInstrumentsRtn;
-	boost::function<void(CThostFtdcInvestorPositionField*)> m_OnInvestorPositionRtn;
+	boost::function<void(string, CThostFtdcInvestorPositionField*)> m_OnInvestorPositionRtn;
 	boost::function<void(string adapterID, CThostFtdcOrderActionField *pOrderAction, 
 						CThostFtdcRspInfoField *pRspInfo) > m_onErrRtnOrderAction;
 

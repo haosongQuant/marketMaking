@@ -86,6 +86,19 @@ void cmMM01::daemonEngine(){
 		m_daemonTimer.async_wait(boost::bind(&cmMM01::daemonEngine, this));
 		return;
 	}
+	if (!m_isInvestorPositionReady)
+	{
+		m_infra->queryInitPosition(m_tradeAdapterID, m_productId, m_initPosition);
+		for (auto positionPtr : m_initPosition)
+			m_investorPosition[m_productId][positionPtr->m_holdingDirection] = positionPtr;
+		int validHoldingVol = m_investorPosition[m_productId][HOLDING_DIR_LONG]->m_position
+						   <= m_investorPosition[m_productId][HOLDING_DIR_SHORT]->m_position ?
+							  m_investorPosition[m_productId][HOLDING_DIR_LONG]->m_position :
+							  m_investorPosition[m_productId][HOLDING_DIR_SHORT]->m_position;
+		if (validHoldingVol >= m_holdingRequirement)
+			m_isHoldingRequireFilled = true;
+		m_isInvestorPositionReady = true;
+	}
 	{
 		boost::recursive_mutex::scoped_lock lock(m_strategyStatusLock);
 		switch (m_strategyStatus)

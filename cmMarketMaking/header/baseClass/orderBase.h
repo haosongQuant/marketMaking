@@ -114,7 +114,7 @@ struct tradeRtn_struct
 	string m_instId;
 	string m_tradeId;
 	//enum_order_type           m_orderTyp;
-	//enum_position_effect_type m_positionEffectTyp;
+	enum_position_effect_type m_positionEffectTyp;
 	enum_order_dir_type       m_orderDir;
 	double m_price;
 	double m_volume;
@@ -133,6 +133,18 @@ typedef boost::shared_ptr<cancelRtn_struct> cancelRtnPtr;
 
 enum enum_holding_dir_type
 {
-	HOLDING_DIR_BUY,
-	HOLDING_DIR_SELL,
+	HOLDING_DIR_LONG,
+	HOLDING_DIR_SHORT,
 };
+struct investorPosition_struct
+{
+	string m_instrument;
+	int    m_position;
+	enum_holding_dir_type m_holdingDirection;
+	investorPosition_struct()
+	{};
+	investorPosition_struct(string instrument, enum_holding_dir_type holdingDirection):
+		m_instrument(instrument), m_holdingDirection(holdingDirection), m_position(0)
+	{};
+};
+typedef boost::shared_ptr<investorPosition_struct> investorPositionPtr;

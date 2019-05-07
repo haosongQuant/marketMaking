@@ -45,6 +45,7 @@ private:
 	double m_miniOrderSpread;
 	double m_orderQty;
 	int    m_volumeMultiple;
+	int    m_holdingRequirement;
 
 	infrastructure* m_infra;
 	Json::Value m_strategyConfig;
@@ -57,7 +58,7 @@ private:
 public:
 	cmMM01(string strategyId, string strategyTyp, string productId, string exchange, 
 		string quoteAdapterID, string tradeAdapterID, double tickSize, double miniOrderSpread,
-		double orderQty, int volMulti,
+		double orderQty, int volMulti, int holdingRequirement,
 		athenathreadpoolPtr quoteTP, athenathreadpoolPtr tradeTP, infrastructure* infra,
 		Json::Value config);
 	~cmMM01();
@@ -136,6 +137,15 @@ private:
 	void processNetHedgeOrderRtn(orderRtnPtr);
 	void processNetHedgeTradeRtn(tradeRtnPtr);
 
+//for record position
+private:
+	bool m_isInvestorPositionReady = false;
+	bool m_isHoldingRequireFilled = false;
+	list<investorPositionPtr> m_initPosition;
+	boost::shared_mutex m_investorPositionLock;
+	//instrument->direction->position
+	map<string, map<enum_holding_dir_type, investorPositionPtr> > m_investorPosition;
+
 //for interrupt
 private:
 	bool                    m_breakReq;
@@ -151,13 +161,7 @@ private:
 
 		map < int, map<string, tradeRtnPtr> > m_orderRef2tradeRtn;  //orderRef -> tradeRtn
 		boost::shared_mutex     m_tradeRtnBuffLock;
-		void registerTradeRtn(tradeRtnPtr pTrade){
-			if (pTrade)
-			{
-				write_lock lock(m_tradeRtnBuffLock);
-				m_orderRef2tradeRtn[pTrade->m_orderRef][pTrade->m_tradeId] = pTrade;
-			}
-		};
+		void registerTradeRtn(tradeRtnPtr pTrade);
 
 public:
 

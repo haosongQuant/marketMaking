@@ -84,6 +84,7 @@ void infrastructure::initAdapters()
 			pTradeAdapter->m_OnOrderRtn = bind(&infrastructure::onRtnCtpOrder, this, _1, _2);
 			pTradeAdapter->m_OnTradeRtn = bind(&infrastructure::onRtnCtpTrade, this, _1, _2);
 			pTradeAdapter->m_onErrRtnOrderAction = bind(&infrastructure::onRtnCTPOrderActionErr, this, _1, _2, _3);
+			pTradeAdapter->m_OnInvestorPositionRtn = bind(&infrastructure::onRtnCtpInvestorPosition, this, _1, _2);
 			pTradeAdapter->init();
 			//m_tradeAdapters[adapterID] = pTradeAdapter;
 			m_adapters[adapterID] = pTradeAdapter;
@@ -153,6 +154,31 @@ void infrastructure::onFrontDisconnected(string adapterID)
 	m_isAdapterReady[adapterID] = false;
 };
 
+void infrastructure::onRtnCtpInvestorPosition(string adapterId, CThostFtdcInvestorPositionField *pInvestorPosition)
+{
+	write_lock lock(m_investorPositonLock);
+	investorPositionPtr pPosition = investorPositionPtr(new investorPosition_struct());
+	pPosition->m_instrument = string(pInvestorPosition->InstrumentID);
+	switch (m_adapterTypeMap[adapterId])
+	{
+	case ADAPTER_CTP_TRADE:
+	{
+		pPosition->m_holdingDirection = m_holdingDirMapRev[ADAPTER_CTP_TRADE][pInvestorPosition->PosiDirection];
+		break;
+	}
+	}
+	pPosition->m_position = pInvestorPosition->Position;
+	m_investorPositon[adapterId][string(pInvestorPosition->InstrumentID)].push_back(pPosition);
+};
+
+void infrastructure::queryInitPosition(string adapterId, string instrumentId, list< investorPositionPtr > &positionList)
+{
+	read_lock lock(m_investorPositonLock);
+	positionList.clear();
+	for (auto item : m_investorPositon[adapterId][instrumentId])
+		positionList.push_back(item);
+};
+
 bool infrastructure::isAdapterReady(string adapterID)
 {
 	return m_isAdapterReady[adapterID];
@@ -174,9 +200,15 @@ void infrastructure::genOrderParmMap()
 	m_orderDirMapRev[ADAPTER_CTP_TRADE][THOST_FTDC_D_Buy] = ORDER_DIR_BUY;
 	m_orderDirMapRev[ADAPTER_CTP_TRADE][THOST_FTDC_D_Sell] = ORDER_DIR_SELL;
 
+	//持仓方向
+	m_holdingDirMapRev[ADAPTER_CTP_TRADE][THOST_FTDC_PD_Long] = HOLDING_DIR_LONG;
+	m_holdingDirMapRev[ADAPTER_CTP_TRADE][THOST_FTDC_PD_Short] = HOLDING_DIR_SHORT;
+
 	//开平标志
 	m_positinEffectMap[ADAPTER_CTP_TRADE][POSITION_EFFECT_OPEN] = THOST_FTDC_OFEN_Open;
 	m_positinEffectMap[ADAPTER_CTP_TRADE][POSITION_EFFECT_CLOSE] = THOST_FTDC_OFEN_Close;
+	m_positinEffectMapRev[ADAPTER_CTP_TRADE][THOST_FTDC_OFEN_Open] = POSITION_EFFECT_OPEN;
+	m_positinEffectMapRev[ADAPTER_CTP_TRADE][THOST_FTDC_OFEN_Close] = POSITION_EFFECT_CLOSE;
 	m_positinEffectMap[ADAPTER_TAP_TRADE][POSITION_EFFECT_OPEN] = TAPI_PositionEffect_OPEN;
 	m_positinEffectMap[ADAPTER_TAP_TRADE][POSITION_EFFECT_CLOSE] = TAPI_PositionEffect_COVER;
 

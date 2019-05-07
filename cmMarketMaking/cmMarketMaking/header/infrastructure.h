@@ -11,6 +11,7 @@
 #include "infrastructureStruct.h"
 #include "baseClass\orderBase.h"
 #include "baseClass\adapterBase.h"
+#include "baseClass/Utils.h"
 #include "threadpool\threadpool.h"
 #include "ctp\tradeAdapter_CTP.h"
 #include "ctp\quoteAdapter_CTP.h"
@@ -45,6 +46,7 @@ public:
 		CThostFtdcRspInfoField *pRspInfo);
 	void onRespCtpCancel(string adapterID, CThostFtdcInputOrderActionField *pInputOrderAction,
 		CThostFtdcRspInfoField *pRspInfo); // not used right now
+	void onRtnCtpInvestorPosition(string, CThostFtdcInvestorPositionField*);
 	void onRtnTapOrder(string adapterID, TapAPIOrderInfoNotice *pOrder);
 	void onRtnTapTrade(string adapterID, TapAPIFillInfo *pTrade);
 
@@ -95,9 +97,10 @@ public:
 private:
 	map<enum_adapterType, map<enum_order_type, char> > m_orderTypeMap;
 	map<enum_adapterType, map<enum_order_dir_type, char> > m_orderDirMap;
+	map<enum_adapterType, map<enum_position_effect_type, char> > m_positinEffectMap;
 	map<enum_adapterType, map<char, enum_order_dir_type> > m_orderDirMapRev;
 	map<enum_adapterType, map<char, enum_order_status> > m_orderStatusMapRev;
-	map<enum_adapterType, map<enum_position_effect_type, char> > m_positinEffectMap;
+	map<enum_adapterType, map<char, enum_position_effect_type> > m_positinEffectMapRev;
 	map<enum_adapterType, map<enum_hedge_flag, char> > m_hedgeFlagMap;
 	void genOrderParmMap();
 
@@ -116,4 +119,8 @@ private:
 private:
 	map<enum_adapterType, map<char, enum_holding_dir_type> > m_holdingDirMapRev;
 
+	boost::shared_mutex m_investorPositonLock;
+	map<string, map<string, list< investorPositionPtr > > > m_investorPositon; //adapterId->instrument->holdings
+public:
+	void queryInitPosition(string adapterId, string instrumentId, list< investorPositionPtr > &positionList);
 };

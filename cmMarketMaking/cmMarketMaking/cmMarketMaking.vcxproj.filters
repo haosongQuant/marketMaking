@@ -83,9 +83,6 @@
     <ClInclude Include="header\threadpool\threadpool.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="header\baseClass\orderBase.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="header\infrastructureStruct.h">
       <Filter>头文件\infrastructure</Filter>
     </ClInclude>
@@ -122,14 +119,17 @@
     <ClInclude Include="header\strategy\cmSpec01.h">
       <Filter>头文件\strategy</Filter>
     </ClInclude>
-    <ClInclude Include="..\header\baseClass\UTC.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="..\header\baseClass\Utils.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="..\header\baseClass\adapterBase.h">
       <Filter>头文件\adapter</Filter>
+    </ClInclude>
+    <ClInclude Include="..\header\baseClass\orderBase.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\header\baseClass\UTC.h">
+      <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
