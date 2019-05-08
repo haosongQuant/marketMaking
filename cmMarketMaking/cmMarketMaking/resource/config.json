@@ -1,17 +1,125 @@
 {
     "adapters": [
         {
-            "adapterID": "tradeCTP01", "adapterType": "tradeCtp",
-            "frontIP": "tcp://180.168.146.187:10000", "broker": "9999", "user": "140108", "pwd": "1qazxc",
-            "Authenticate": false, "productID": "nan", "authCode": "nan"
+            "adapterID": "tradeCTP01",
+            "adapterType": "tradeCtp",
+            "frontIP": "tcp://180.168.146.187:10000",
+            "broker": "9999",
+            "user": "140108",
+            "pwd": "1qazxc",
+            "Authenticate": false,
+            "productID": "nan",
+            "authCode": "nan"
         },
         {
-            "adapterID": "quoteCTP01", "adapterType": "quoteCtp",
-            "frontIP": "tcp://180.168.146.187:10010", "broker": "9999", "user": "140108", "pwd": "1qazxc"
+            "adapterID": "quoteCTP01",
+            "adapterType": "quoteCtp",
+            "frontIP": "tcp://180.168.146.187:10010",
+            "broker": "9999",
+            "user": "140108",
+            "pwd": "1qazxc"
         }
     ],
 
-    "adapters_backup": [
+    "strategy": [
+        {
+            "strategyID": "mm_ZC907",
+            "strategyTyp": "cmMM01",
+            "productId": "ZC907",
+            "exchange": "CZCE",
+            "quote": "quoteCTP01",
+            "trade": "tradeCTP01",
+            "tickSize": 0.2,
+            "miniOrderSpread": 4.0,
+            "orderQty": 10,
+            "volMulti": 10,
+            "holdingRequirement": 100,
+            "openTime": [
+                { "start": 901, "end": 1014 },
+                { "start": 1031, "end": 1128 },
+                { "start": 1329, "end": 1459 },
+                { "start": 2101, "end": 2329 }
+            ]
+        },
+        {
+            "strategyID": "spec_ZC907",
+            "strategyTyp": "cmSpec01",
+            "productId": "ZC907",
+            "exchange": "CZCE",
+            "quote": "quoteCTP01",
+            "trade": "tradeCTP01",
+            "tickSize": 2.0,
+            "orderQty": 1,
+            "volMulti": 5,
+            "masterStrategy": "mm_ZC907",
+            "openTime": [
+                { "start": 901, "end": 1014 },
+                { "start": 1031, "end": 1128 },
+                { "start": 1329, "end": 1459 },
+                { "start": 2101, "end": 2329 }
+            ]
+        }
+    ],
+
+    "backup": [
+        
+        {
+            "strategyID": "mm_TA911",
+            "strategyTyp": "cmMM01",
+            "productId": "TA911",
+            "exchange": "CZCE",
+            "quote": "quoteCTP01",
+            "trade": "tradeCTP01",
+            "tickSize": 2.0,
+            "miniOrderSpread": 4.0,
+            "orderQty": 10,
+            "volMulti": 5,
+            "holdingRequirement": 100,
+            "openTime": [
+                { "start": 901, "end": 1014 },
+                { "start": 1031, "end": 1128 },
+                { "start": 1329, "end": 1459 },
+                { "start": 2101, "end": 2329 }
+            ]
+        },
+        {
+            "strategyID": "mm_TA907",
+            "strategyTyp": "cmMM01",
+            "productId": "TA907",
+            "exchange": "CZCE",
+            "quote": "quoteCTP01",
+            "trade": "tradeCTP01",
+            "tickSize": 2.0,
+            "miniOrderSpread": 4.0,
+            "orderQty": 10,
+            "volMulti": 5,
+            "holdingRequirement": 100,
+            "openTime": [
+                { "start": 901, "end": 1014 },
+                { "start": 1031, "end": 1128 },
+                { "start": 1329, "end": 1459 },
+                { "start": 2101, "end": 2329 }
+            ]
+        },
+        {
+            "strategyID": "mm_ZC911",
+            "strategyTyp": "cmMM01",
+            "productId": "ZC911",
+            "exchange": "CZCE",
+            "quote": "quoteCTP01",
+            "trade": "tradeCTP01",
+            "tickSize": 0.2,
+            "miniOrderSpread": 4.0,
+            "orderQty": 10,
+            "volMulti": 10,
+            "holdingRequirement": 100,
+            "openTime": [
+                { "start": 901, "end": 1014 },
+                { "start": 1031, "end": 1128 },
+                { "start": 1329, "end": 1459 },
+                { "start": 2101, "end": 2329 }
+            ]
+        },
         {
             "adapterID": "tradeCTP01",
             "adapterType": "tradeCtp",
@@ -50,44 +158,6 @@
             "port": 6161,
             "user": "",
             "pwd": ""
-        }
-    ],
-
-    "strategy": [
-        {
-            "strategyID": "mm_ZC911", "strategyTyp": "cmMM01", "productId": "ZC911", "exchange": "CZCE",
-            "quote": "quoteCTP01", "trade": "tradeCTP01", "tickSize": 0.2, "miniOrderSpread": 4.0,
-            "orderQty": 10, "volMulti": 10, "holdingRequirement": 100,
-            "openTime": [ { "start": 901, "end": 1014 }, { "start": 1031, "end": 1128 },
-                          { "start": 1329, "end": 1459 }, { "start": 2101, "end": 2329 }]
-        },
-        {
-            "strategyID": "mm_ZC907", "strategyTyp": "cmMM01", "productId": "ZC907", "exchange": "CZCE",
-            "quote": "quoteCTP01", "trade": "tradeCTP01", "tickSize": 0.2, "miniOrderSpread": 4.0,
-            "orderQty": 10, "volMulti": 10, "holdingRequirement": 100,
-            "openTime": [ { "start": 901, "end": 1014 }, { "start": 1031, "end": 1128 },
-                          { "start": 1329, "end": 1459 }, { "start": 2101, "end": 2329 }]
-        },
-        {
-            "strategyID": "mm_TA911", "strategyTyp": "cmMM01", "productId": "TA911", "exchange": "CZCE",
-            "quote": "quoteCTP01", "trade": "tradeCTP01", "tickSize": 2.0, "miniOrderSpread": 4.0,
-            "orderQty": 10, "volMulti": 5, "holdingRequirement": 100,
-            "openTime": [ { "start": 901, "end": 1014 }, { "start": 1031, "end": 1128 },
-                          { "start": 1329, "end": 1459 }, { "start": 2101, "end": 2329 } ]
-        },
-        {
-            "strategyID": "mm_TA907", "strategyTyp": "cmMM01", "productId": "TA907", "exchange": "CZCE",
-            "quote": "quoteCTP01", "trade": "tradeCTP01", "tickSize": 2.0, "miniOrderSpread": 4.0,
-            "orderQty": 10, "volMulti": 5, "holdingRequirement": 100,
-            "openTime": [ { "start": 901, "end": 1014 }, { "start": 1031, "end": 1128 },
-                          { "start": 1329, "end": 1459 }, { "start": 2101, "end": 2329 } ]
-        },
-        {
-            "strategyID": "spec_ZC911", "strategyTyp": "cmSpec01", "productId": "ZC911", "exchange": "CZCE",
-            "quote": "quoteCTP01", "trade": "tradeCTP01", "tickSize": 2.0, "orderQty": 1, "volMulti": 5, 
-            "masterStrategy": "mm_ZC911",
-            "openTime": [ { "start": 901, "end": 1014 }, { "start": 1031, "end": 1128 },
-                          { "start": 1329, "end": 1459 }, { "start": 2101, "end": 2329 } ]
         }
     ]
 }
