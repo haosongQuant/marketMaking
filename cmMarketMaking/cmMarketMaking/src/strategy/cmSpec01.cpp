@@ -29,6 +29,7 @@ cmSepc01::cmSepc01(string strategyId, string strategyTyp, string productId, stri
 	m_resumeMaster = false;
 	m_strategyStatus = CMSPEC01_STATUS_INIT;
 	m_signal == CMSPEC01_SIGNAL_NONE;
+	m_toSendSignal = CMSPEC01_SIGNAL_NONE;
 	m_netOpenInterest = 0;
 	daemonEngine();
 };
@@ -164,6 +165,7 @@ void cmSepc01::quoteEngine()
 				cmMM01 *pStrategy = (cmMM01 *)m_masterStrategy;
 				enum_strategy_interrupt_result interRuptRc = 
 					pStrategy->tryInterrupt(boost::bind(&cmSepc01::sendOrder, this));
+				m_toSendSignal = m_signal;
 				switch (interRuptRc)
 				{
 				case STRATEGY_INTERRUPT_BREAKING:
@@ -186,10 +188,29 @@ void cmSepc01::quoteEngine()
 	}
 };
 
+void cmSepc01::resumeMaster()
+{
+	if (m_resumeMaster)
+	{
+		switch (m_masterStrategyTyp)
+		{
+		case STRATEGY_cmMM01:
+		{
+			cmMM01 *pStrategy = (cmMM01 *)m_masterStrategy;
+			pStrategy->resume();
+		}
+		}
+	}
+};
+
 void cmSepc01::sendOrder(){
 
-	if (m_signal == CMSPEC01_SIGNAL_NONE)
+	if (m_signal != m_toSendSignal)
+	{
+		resumeMaster();
+		m_toSendSignal = CMSPEC01_SIGNAL_NONE;
 		return;
+	}
 	enum_order_dir_type dir;
 	if (m_signal == CMSPEC01_SIGNAL_LONG)
 		dir = ORDER_DIR_BUY;
@@ -224,6 +245,7 @@ void cmSepc01::sendOrder(){
 				<< vol << endl;
 		}
 	}
+	m_toSendSignal = CMSPEC01_SIGNAL_NONE;
 };
 
 void cmSepc01::processOrder(orderRtnPtr pOrder)
@@ -236,18 +258,7 @@ void cmSepc01::processTrade(tradeRtnPtr ptrade)
 		boost::mutex::scoped_lock lock(m_netOpenInterestLock);
 		m_netOpenInterest += (ptrade->m_orderDir == ORDER_DIR_BUY ? ptrade->m_volume : (ptrade->m_volume * -1)); 
 	}
-
-	if (m_resumeMaster)
-	{
-		switch (m_masterStrategyTyp)
-		{
-		case STRATEGY_cmMM01:
-		{
-			cmMM01 *pStrategy = (cmMM01 *)m_masterStrategy;
-			pStrategy->resume();
-		}
-		}
-	}
+	resumeMaster();
 	{
 		boost::mutex::scoped_lock lock1(m_strategyStatusLock);
 		m_strategyStatus = CMSPEC01_STATUS_START;

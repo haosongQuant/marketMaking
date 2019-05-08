@@ -286,6 +286,7 @@ void cmMM01::callPauseHandler()
 	if (m_oneTimeMMPausedHandler)
 	{
 		m_oneTimeMMPausedHandler();
+		LOG(INFO) << m_strategyId << " pause handler called." << endl;
 		m_oneTimeMMPausedHandler = NULL;
 	}
 };

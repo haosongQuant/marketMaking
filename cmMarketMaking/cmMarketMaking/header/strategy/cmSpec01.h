@@ -93,10 +93,12 @@ private:
 	strategyBase      *m_masterStrategy;
 	enum_strategy_type m_masterStrategyTyp;
 	bool               m_resumeMaster;
+	void resumeMaster();
 private:
 	boost::mutex  m_strategyStatusLock;
 	enum_cmSepc01_strategy_status m_strategyStatus;
 	enum_cmSepc01_Signal_Typ      m_signal;
+	enum_cmSepc01_Signal_Typ      m_toSendSignal;
 	boost::mutex m_netOpenInterestLock;
 	int          m_netOpenInterest;
 
