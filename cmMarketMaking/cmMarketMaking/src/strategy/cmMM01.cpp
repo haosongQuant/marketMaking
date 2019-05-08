@@ -424,9 +424,10 @@ void cmMM01::processCancelRes(cancelRtnPtr pCancel)
 void cmMM01::sendHedgeOrder(tradeRtnPtr ptrade)//同价对冲
 {
 	enum_order_dir_type dir = (ptrade->m_orderDir == ORDER_DIR_BUY) ? ORDER_DIR_SELL : ORDER_DIR_BUY;
+	enum_position_effect_type positionEffect = m_isHoldingRequireFilled ? POSITION_EFFECT_CLOSE : POSITION_EFFECT_OPEN;
 
 	int m_hedgeOrderRef = m_infra->insertOrder(m_tradeAdapterID, m_productId, m_exchange, ORDER_TYPE_LIMIT,
-		dir, POSITION_EFFECT_OPEN, FLAG_SPECULATION, ptrade->m_price, ptrade->m_volume,
+		dir, positionEffect, FLAG_SPECULATION, ptrade->m_price, ptrade->m_volume,
 		bind(&cmMM01::onHedgeOrderRtn, this, _1), bind(&cmMM01::onHedgeTradeRtn, this, _1));
 
 	if (m_hedgeOrderRef > 0)
@@ -558,10 +559,12 @@ void cmMM01::sendNetHedgeOrder(double netHedgeVol)
 {
 	//轧差市价对冲
 	enum_order_dir_type dir = netHedgeVol > 0.0 ? ORDER_DIR_BUY : ORDER_DIR_SELL;
+	enum_position_effect_type positionEffect = m_isHoldingRequireFilled ? POSITION_EFFECT_CLOSE : POSITION_EFFECT_OPEN;
+
 	double price = (dir == ORDER_DIR_BUY) ?
 		m_lastQuotePtr->UpperLimitPrice : m_lastQuotePtr->LowerLimitPrice;
 	int netHedgeOrderRef = m_infra->insertOrder(m_tradeAdapterID, m_productId, m_exchange,
-		ORDER_TYPE_LIMIT, dir, POSITION_EFFECT_OPEN, FLAG_SPECULATION, price, fabs(netHedgeVol),
+		ORDER_TYPE_LIMIT, dir, positionEffect, FLAG_SPECULATION, price, fabs(netHedgeVol),
 		bind(&cmMM01::onNetHedgeOrderRtn, this, _1), bind(&cmMM01::onNetHedgeTradeRtn, this, _1));
 	if (netHedgeOrderRef > 0)
 	{
