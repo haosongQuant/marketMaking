@@ -204,7 +204,8 @@ void cmMM01::sendCycleNetHedgeOrder(int hedgeVol)
 {
 	enum_order_dir_type dir = hedgeVol > 0.0 ? ORDER_DIR_BUY : ORDER_DIR_SELL;
 	double price = (dir == ORDER_DIR_BUY) ?
-		m_lastQuotePtr->UpperLimitPrice : m_lastQuotePtr->LowerLimitPrice;
+	//	m_lastQuotePtr->UpperLimitPrice : m_lastQuotePtr->LowerLimitPrice;
+		(m_lastQuotePtr->askprice[0] + m_tickSize * 2.0) : (m_lastQuotePtr->bidprice[0] - m_tickSize * 2.0);
 	int cycleNetHedgeOrderRef = m_infra->insertOrder(m_tradeAdapterID, m_productId, m_exchange,
 		ORDER_TYPE_LIMIT, dir, POSITION_EFFECT_OPEN, FLAG_SPECULATION, price, abs(hedgeVol),
 		bind(&cmMM01::onCycleNetHedgeOrderRtn, this, _1),

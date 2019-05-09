@@ -562,7 +562,8 @@ void cmMM01::sendNetHedgeOrder(double netHedgeVol)
 	enum_position_effect_type positionEffect = m_isHoldingRequireFilled ? POSITION_EFFECT_CLOSE : POSITION_EFFECT_OPEN;
 
 	double price = (dir == ORDER_DIR_BUY) ?
-		m_lastQuotePtr->UpperLimitPrice : m_lastQuotePtr->LowerLimitPrice;
+		//m_lastQuotePtr->UpperLimitPrice : m_lastQuotePtr->LowerLimitPrice;
+		(m_lastQuotePtr->askprice[0] + m_tickSize * 2.0) : (m_lastQuotePtr->bidprice[0] - m_tickSize * 2.0);
 	int netHedgeOrderRef = m_infra->insertOrder(m_tradeAdapterID, m_productId, m_exchange,
 		ORDER_TYPE_LIMIT, dir, positionEffect, FLAG_SPECULATION, price, fabs(netHedgeVol),
 		bind(&cmMM01::onNetHedgeOrderRtn, this, _1), bind(&cmMM01::onNetHedgeTradeRtn, this, _1));

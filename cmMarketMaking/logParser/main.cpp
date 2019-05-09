@@ -33,6 +33,9 @@ map<string, map<string, double> > validTimeDic; //tradingDate -> strategyId -> v
 //tradingDate -> strategyID -> instrument -> list <vol, price> 
 map<string, map<string, map<string, list<pair<int, double> > > > > tradeDic; 
 
+//tradingDate -> strategyID -> instrument -> list <vol, price> 
+map<string, map<string, map<string, list<pair<int, double> > > > > specTradeDic;
+
 void getLogPath(string path)
 {
 	//文件句柄  
@@ -150,6 +153,53 @@ void processTrade(string lineStr)
 	return;
 }
 
+void processSpecTrade(string lineStr)
+{
+	string tradingDt;
+	string instrument;
+	string strategyId;
+	int    direction;
+	double price;
+	int    volume;
+	vector<string> lineElements;
+	athenaUtils::Split(lineStr, ",", lineElements);
+	strategyId = lineElements[1];
+	for (auto ele : lineElements)
+	{
+		vector<string> wordElements;
+		athenaUtils::Split(ele, ":", wordElements);
+		if (wordElements[0] == "tradeDate")
+		{
+			tradingDt = wordElements[1];
+			continue;
+		}
+		if (wordElements[0] == "InstrumentID")
+		{
+			instrument = wordElements[1];
+			continue;
+		}
+		if (wordElements[0] == "Direction")
+		{
+			direction = atoi((const char*)(wordElements[1].c_str()));
+			continue;
+		}
+		if (wordElements[0] == "Price")
+		{
+			price = atof((const char*)(wordElements[1].c_str()));
+			continue;
+		}
+		if (wordElements[0] == "volume")
+		{
+			volume = atoi((const char*)(wordElements[1].c_str()));
+			continue;
+		}
+	}
+
+	specTradeDic[tradingDt][strategyId][instrument].push_back(make_pair((direction == 0 ? (volume * -1) : volume), price));
+
+	return;
+}
+
 void scanFiles()
 {
 	for (auto filename : files)
@@ -181,6 +231,13 @@ void scanFiles()
 				processTrade(lineStr);
 				continue;
 			}
+
+			idx = lineStr.find("spec_tradeRtn");
+			if (idx != string::npos) //成交
+			{
+				processSpecTrade(lineStr);
+				continue;
+			}
 		}
 	}
 }
@@ -196,12 +253,17 @@ void collectNoutputResult(string path)
 		ofstream outFile;
 		outFile.open(outfileName, ios::out);
 		outFile << tradeDtIter->first << endl;
-		outFile << "strategyId,validTime,fullfillRate,P&L" << endl;
+		//做市成交统计
+		outFile << "strategyId,validTime,fullfillRate,buyVol,avgBuyPrz,sellVol,avgSellPrz,P&L" << endl;
 		auto strategyIter = tradeDtIter->second.begin();//strategyID
 		while (strategyIter != tradeDtIter->second.end())
 		{
 			double validtime = strategyIter->second;
 			double profit = 0.0;
+			int    buyVol = 0;
+			double buyAmount = 0.0;
+			int    sellVol = 0;
+			double sellAmount = 0.0;
 			auto instrumentIter = tradeDic[tradeDtIter->first][strategyIter->first].begin();
 			while (instrumentIter != tradeDic[tradeDtIter->first][strategyIter->first].end())//存在成交记录
 			{
@@ -212,6 +274,16 @@ void collectNoutputResult(string path)
 					netVolume += tradeItemIter->first;
 					profit += tradeItemIter->first * tradeItemIter->second 
 						* contractMultiplier[instrumentIter->first];
+					if (tradeItemIter->first < 0)
+					{
+						buyVol -= tradeItemIter->first;
+						buyAmount -= tradeItemIter->first * tradeItemIter->second;
+					}
+					else
+					{
+						sellVol += tradeItemIter->first;
+						sellAmount += tradeItemIter->first * tradeItemIter->second;
+					}
 					tradeItemIter++;
 				}
 				if (netVolume != 0) //假设按收盘价对冲所有仓位
@@ -230,8 +302,63 @@ void collectNoutputResult(string path)
 			outFile << strategyIter->first << ","
 				<< validtime / (1000 * 60 * 60) << " h,"
 				<< validtime / (fullTradeTime[strategyIter->first] * 60 * 60 * 10) << "%,"
+				<< buyVol << "," << (buyAmount / buyVol) << "," 
+				<< sellVol << "," << (sellAmount / sellVol) << ","
 				<<profit<< endl;
 			strategyIter++;
+		}
+
+		//投机成交统计 todo: debug
+		//tradingDate -> strategyID -> instrument -> list <vol, price> 
+		outFile << "strategyId,buyVol,avgBuyPrz,sellVol,avgSellPrz,P&L" << endl;
+		auto strategyIter2 = specTradeDic[tradeDtIter->first].begin();//strategyID
+		while (strategyIter2 != specTradeDic[tradeDtIter->first].end())
+		{
+			double profit = 0.0;
+			int    buyVol = 0;
+			double buyAmount = 0.0;
+			int    sellVol = 0;
+			double sellAmount = 0.0;
+			auto instrumentIter = specTradeDic[tradeDtIter->first][strategyIter2->first].begin();
+			while (instrumentIter != specTradeDic[tradeDtIter->first][strategyIter2->first].end())//存在成交记录
+			{
+				int netVolume = 0;
+				auto tradeItemIter = instrumentIter->second.begin();
+				while (tradeItemIter != instrumentIter->second.end())//遍历每一笔成交
+				{
+					netVolume += tradeItemIter->first;
+					profit += tradeItemIter->first * tradeItemIter->second
+						* contractMultiplier[instrumentIter->first];
+					if (tradeItemIter->first < 0)
+					{
+						buyVol -= tradeItemIter->first;
+						buyAmount -= tradeItemIter->first * tradeItemIter->second;
+					}
+					else
+					{
+						sellVol += tradeItemIter->first;
+						sellAmount += tradeItemIter->first * tradeItemIter->second;
+					}
+					tradeItemIter++;
+				}
+				if (netVolume != 0) //假设按收盘价对冲所有仓位
+				{
+					double lastprice = 0.0;
+					auto lastPriceIter = lastPriceDic[tradeDtIter->first].find(instrumentIter->first);
+					if (lastPriceIter != lastPriceDic[tradeDtIter->first].end())
+						lastprice = lastPriceIter->second;
+					else
+						lastprice = (tradeItemIter--)->second;//如果没有找到行情，以最后一笔成交价为准
+					profit += (netVolume*-1) * lastprice
+						* contractMultiplier[instrumentIter->first];
+				}
+				instrumentIter++;
+			}
+			outFile << strategyIter2->first << ","
+				<< buyVol << "," << (buyAmount / buyVol) << ","
+				<< sellVol << "," << (sellAmount / sellVol) << ","
+				<< profit << endl;
+			strategyIter2++;
 		}
 		outFile.close();
 		tradeDtIter++;

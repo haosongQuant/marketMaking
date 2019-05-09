@@ -221,7 +221,8 @@ void cmSepc01::sendOrder(){
 	{
 		boost::mutex::scoped_lock lock(m_lastQuoteLock);
 		price = (dir == ORDER_DIR_BUY) ?
-			m_lastQuotePtr->UpperLimitPrice : m_lastQuotePtr->LowerLimitPrice;
+		//	m_lastQuotePtr->UpperLimitPrice : m_lastQuotePtr->LowerLimitPrice;
+			(m_lastQuotePtr->askprice[0] + m_tickSize * 2.0) : (m_lastQuotePtr->bidprice[0] - m_tickSize * 2.0);
 	}
 
 	unsigned int vol;
@@ -263,6 +264,13 @@ void cmSepc01::processTrade(tradeRtnPtr ptrade)
 		boost::mutex::scoped_lock lock1(m_strategyStatusLock);
 		m_strategyStatus = CMSPEC01_STATUS_START;
 	}
+	LOG(INFO) << "," << m_strategyId << ",spec_tradeRtn"
+		<< ", orderRef:" << ptrade->m_orderRef
+		<< ", tradeDate:" << ptrade->m_tradeDate
+		<< ", InstrumentID:" << ptrade->m_instId
+		<< ", Direction:" << ptrade->m_orderDir
+		<< ", Price:" << ptrade->m_price
+		<< ", volume:" << ptrade->m_volume << endl;
 };
 
 //³·µ¥ÏìÓ¦º¯Êý
