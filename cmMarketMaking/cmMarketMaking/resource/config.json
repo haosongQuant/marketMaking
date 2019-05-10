@@ -48,9 +48,9 @@
             "exchange": "CZCE",
             "quote": "quoteCTP01",
             "trade": "tradeCTP01",
-            "tickSize": 2.0,
+            "tickSize": 0.2,
             "orderQty": 1,
-            "volMulti": 5,
+            "volMulti": 10,
             "masterStrategy": "mm_ZC907",
             "openTime": [
                 { "start": 901, "end": 1014 },
