@@ -47,6 +47,9 @@ private:
 	Json::Value m_strategyConfig;
 	athenathreadpoolPtr m_quoteTP;
 	athenathreadpoolPtr m_tradeTP;
+
+	boost::shared_mutex m_tradingDtRWLock;
+	string m_tradingDate;
 	
 public:
 	cmSepc01(string strategyId, string strategyTyp, string productId, string exchange,

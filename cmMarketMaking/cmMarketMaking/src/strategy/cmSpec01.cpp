@@ -18,6 +18,7 @@ cmSepc01::cmSepc01(string strategyId, string strategyTyp, string productId, stri
 	m_lastprice_1 = -1.0;
 	m_upline = 50.0;
 	m_downline = -50.0;
+	m_tradingDate = "";
 	int openNum = m_strategyConfig["openTime"].size();
 	for (int i = 0; i < openNum; ++i)
 	{
@@ -251,6 +252,8 @@ void cmSepc01::sendOrder(){
 
 void cmSepc01::processOrder(orderRtnPtr pOrder)
 {
+	write_lock lock(m_tradingDtRWLock);
+	m_tradingDate = string(pOrder->m_tradingDay);
 };
 
 void cmSepc01::processTrade(tradeRtnPtr ptrade)
@@ -264,13 +267,16 @@ void cmSepc01::processTrade(tradeRtnPtr ptrade)
 		boost::mutex::scoped_lock lock1(m_strategyStatusLock);
 		m_strategyStatus = CMSPEC01_STATUS_START;
 	}
-	LOG(INFO) << "," << m_strategyId << ",spec_tradeRtn"
-		<< ", orderRef:" << ptrade->m_orderRef
-		<< ", tradeDate:" << ptrade->m_tradeDate
-		<< ", InstrumentID:" << ptrade->m_instId
-		<< ", Direction:" << ptrade->m_orderDir
-		<< ", Price:" << ptrade->m_price
-		<< ", volume:" << ptrade->m_volume << endl;
+	{
+		read_lock lock2(m_tradingDtRWLock);
+		LOG(INFO) << "," << m_strategyId << ",spec_tradeRtn"
+			<< ", orderRef:" << ptrade->m_orderRef
+			<< ", tradeDate:" << m_tradingDate
+			<< ", InstrumentID:" << ptrade->m_instId
+			<< ", Direction:" << ptrade->m_orderDir
+			<< ", Price:" << ptrade->m_price
+			<< ", volume:" << ptrade->m_volume << endl;
+	}
 };
 
 //³·µ¥ÏìÓ¦º¯Êý

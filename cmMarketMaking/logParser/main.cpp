@@ -235,7 +235,9 @@ void scanFiles()
 			idx = lineStr.find("spec_tradeRtn");
 			if (idx != string::npos) //³É½»
 			{
+				static int specNum = 0;
 				processSpecTrade(lineStr);
+				cout << specNum++ << ": " << lineStr << endl;
 				continue;
 			}
 		}
@@ -302,8 +304,8 @@ void collectNoutputResult(string path)
 			outFile << strategyIter->first << ","
 				<< validtime / (1000 * 60 * 60) << " h,"
 				<< validtime / (fullTradeTime[strategyIter->first] * 60 * 60 * 10) << "%,"
-				<< buyVol << "," << (buyAmount / buyVol) << "," 
-				<< sellVol << "," << (sellAmount / sellVol) << ","
+				<< buyVol << "," << (buyVol == 0 ? 0.0:(buyAmount / buyVol)) << ","
+				<< sellVol << "," << (sellVol == 0 ? 0.0:(sellAmount / sellVol)) << ","
 				<<profit<< endl;
 			strategyIter++;
 		}
