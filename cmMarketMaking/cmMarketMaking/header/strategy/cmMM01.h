@@ -187,7 +187,7 @@ private: // for clear cycle
 
 	int  m_cycleHedgeVol;
 	void daemonEngine(); //守护线程引擎
-	bool isOrderComplete(int orderRef, int& tradedVol);
+	bool isOrderComplete(int orderRef, bool &isTraded);
 	void sendCycleNetHedgeOrder();
 	void sendCycleNetHedgeOrder(int);
 	void processCycleNetHedgeOrderRtn(orderRtnPtr);

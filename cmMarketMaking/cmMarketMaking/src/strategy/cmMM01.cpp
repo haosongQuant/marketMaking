@@ -135,7 +135,7 @@ void cmMM01::startCycle()
 	m_cancelHedgeTimerCancelled = false;
 	m_ptradeGrp = tradeGroupBufferPtr(new tradeGroupBuffer());
 	m_ptradeGrp->m_Id = m_cycleId;
-	LOG(INFO) << m_strategyId << ": starting new cycle." << endl;
+	LOG(INFO) << m_strategyId << ": starting new cycle. cycleId: " << m_cycleId << endl;
 	double bidprice = 0.0, askprice = 0.0;
 	orderPrice(&bidprice, &askprice);
 	if (0.0 == bidprice || 0.0 == askprice)

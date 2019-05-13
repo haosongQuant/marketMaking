@@ -14,7 +14,7 @@ bool cmMM01::isInOpenTime()
 	return false;
 };
 
-bool cmMM01::isOrderComplete(int orderRef, int& tradedVol)
+bool cmMM01::isOrderComplete(int orderRef, bool &isTraded)
 {
 	bool isTrdComplete = true;
 	int orderTradedVol = 0;
@@ -47,7 +47,8 @@ bool cmMM01::isOrderComplete(int orderRef, int& tradedVol)
 	case ORDER_STATUS_PartTradedNotQueueing:///部分成交不在队列中,
 	case ORDER_STATUS_NoTradeNotQueueing:///未成交不在队列中,
 	{//isTrdComplete == true
-		orderTradedVol += iter01->second->m_volumeTraded;
+		if (iter01->second->m_volumeTraded != 0)
+			isTraded = true;
 		break;
 	}
 	case ORDER_STATUS_TerminatedFromCancel:///撤单时，返回报单已成交或撤销,
@@ -69,7 +70,6 @@ bool cmMM01::isOrderComplete(int orderRef, int& tradedVol)
 	//// 表示尚有tradeRtn没收到，认为交易未完成
 	//if (orderTradedVol != 0 && tradeRtnedVol != orderTradedVol)
 	//	isTrdComplete = false;
-	tradedVol += orderTradedVol;
 	return isTrdComplete;
 };
 
@@ -132,10 +132,10 @@ void cmMM01::daemonEngine(){
 	for each(auto item in m_tradeGrpBuffer)
 	{
 		bool isTrdGrpComplete = true;
-		int  absTradedVol = 0;
+		bool isTraded = false;
 		for each(auto orderRef in item->m_orderIdList)
 		{
-			if (!isOrderComplete(orderRef, absTradedVol))
+			if (!isOrderComplete(orderRef, isTraded))
 				isTrdGrpComplete = false;
 		}//end: 循环处理每一个order
 
@@ -144,46 +144,30 @@ void cmMM01::daemonEngine(){
 		else 
 		{	//闭环完成
 			LOG(INFO) << m_strategyId << ": -----------CycleStatisticsStart-----------" << endl;
-			if (item->m_start_milliSec != 0.0 && item->m_end_milliSec != 0.0)
-				LOG(INFO) << "," << m_strategyId << ",validTime," << item->m_tradingDate << "," << item->m_Id << "," << item->m_end_milliSec - item->m_start_milliSec << endl;
-			else
-				LOG(INFO) << "," << m_strategyId << ",validTime," << item->m_tradingDate << "," << item->m_Id << "," << 0.0 << endl;
+			LOG(INFO) << "," << m_strategyId << ",validTime," << item->m_tradingDate << "," << item->m_Id << ","
+					  << ((item->m_start_milliSec != 0.0 && item->m_end_milliSec != 0.0) ?
+						 (item->m_end_milliSec - item->m_start_milliSec) : 0.0) 
+					  << endl;
 			LOG(INFO) << m_strategyId << "-----------CycleStatisticsEnd-----------" << endl;
 
-			if (absTradedVol != 0)//有交易发生
+			if (isTraded)//有交易发生
 			{
 				int  cycleTradedVol = 0;
-				//double cycleProfit = 0.0;
 				for each(auto orderRef in item->m_orderIdList)
 				{
 					int orderTradedVol = 0;
 					orderRtnPtr pOrder = m_orderRef2orderRtn[orderRef];
 					cycleTradedVol += pOrder->m_direction == ORDER_DIR_BUY ?
 						pOrder->m_volumeTraded : (pOrder->m_volumeTraded * -1);
-					//auto iter03 = m_orderRef2tradeRtn.find(orderRef);
-					//if (iter03 != m_orderRef2tradeRtn.end())
-					//{
-					//	for each(auto item2 in iter03->second)
-					//	{
-					//		double orderProfit = pOrder->m_direction == ORDER_DIR_SELL ?
-					//			(item2.second->m_price * item2.second->m_volume * m_volumeMultiple) : 
-					//			(item2.second->m_price * item2.second->m_volume * m_volumeMultiple*-1);
-					//		LOG(INFO) << m_strategyId << ",tradeInfo," << item2.second->m_orderRef
-					//			<< "," << item2.second->m_tradeId << "," << item2.second->m_instId
-					//			<< "," << item2.second->m_orderDir << "," << item2.second->m_price
-					//			<< "," << item2.second->m_volume << "," << orderProfit << endl;
-					//		cycleProfit += orderProfit;
-					//	}
-					//}
 				}//end: 循环处理每一个order
 				totalTradedVol += cycleTradedVol;
-				//LOG(INFO) << m_strategyId << ",cycleProfit," << item->m_Id
-				//	<< "," << cycleProfit << endl;
+				LOG(INFO) << m_strategyId << ", cycle: " << item->m_Id << ", cycleTradedVol: " << cycleTradedVol << endl;
 			}
 		}
 
 	} //end: 循环处理每一个闭环
 
+	LOG(INFO) << m_strategyId << ", totalTradedVol: " << totalTradedVol << endl;
 	if (totalTradedVol != 0)
 	{
 		m_cycleHedgeVol = totalTradedVol;
