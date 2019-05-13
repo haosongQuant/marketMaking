@@ -75,6 +75,7 @@ bool cmMM01::isOrderComplete(int orderRef, bool &isTraded)
 
 void cmMM01::daemonEngine(){
 
+	//if (!m_infra->isAdapterReady(m_tradeAdapterID))
 	if (!isInOpenTime() || !m_infra->isAdapterReady(m_tradeAdapterID))
 	{
 		if (STRATEGY_STATUS_INIT != m_strategyStatus)
@@ -143,12 +144,11 @@ void cmMM01::daemonEngine(){
 			m_aliveTrdGrp.push_back(item);
 		else 
 		{	//闭环完成
-			LOG(INFO) << m_strategyId << ": -----------CycleStatisticsStart-----------" << endl;
-			LOG(INFO) << "," << m_strategyId << ",validTime," << item->m_tradingDate << "," << item->m_Id << ","
+			LOG(INFO) << m_strategyId << ": -----------CycleStatisticsStart-----------" << endl
+				      << "," << m_strategyId << ",validTime," << item->m_tradingDate << "," << item->m_Id << ","
 					  << ((item->m_start_milliSec != 0.0 && item->m_end_milliSec != 0.0) ?
-						 (item->m_end_milliSec - item->m_start_milliSec) : 0.0) 
-					  << endl;
-			LOG(INFO) << m_strategyId << "-----------CycleStatisticsEnd-----------" << endl;
+						 (item->m_end_milliSec - item->m_start_milliSec) : 0.0) << endl
+					  << m_strategyId << "-----------CycleStatisticsEnd-----------" << endl;
 
 			if (isTraded)//有交易发生
 			{
@@ -216,13 +216,9 @@ void cmMM01::processCycleNetHedgeOrderRtn(orderRtnPtr pOrder){
 
 void cmMM01::processCycleNetHedgeTradeRtn(tradeRtnPtr ptrade)
 {
-	//double orderProfit = ptrade->m_orderDir == ORDER_DIR_SELL ?
-	//	(ptrade->m_price * ptrade->m_volume * m_volumeMultiple) :
-	//	(ptrade->m_price * ptrade->m_volume * m_volumeMultiple*-1);
-	LOG(INFO) << m_strategyId << ",cycleNetHedgeTrade," << ptrade->m_orderRef
-		<< "," << ptrade->m_tradeId << "," << ptrade->m_instId
-		<< "," << ptrade->m_orderDir << "," << ptrade->m_price
-		<< "," << ptrade->m_volume << endl;// "," << orderProfit << endl;
+
+	m_tradeTP->getDispatcher().post(boost::bind(&cmMM01::registerTradeRtn, this, ptrade));
+	LOG(INFO) << m_strategyId << ",cycleNetHedgeTrade Rtn." << endl;
 	logTrade(ptrade);
 	{
 		boost::mutex::scoped_lock lock(m_cycleNetHedgeVolLock);
