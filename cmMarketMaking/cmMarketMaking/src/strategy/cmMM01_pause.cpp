@@ -144,11 +144,11 @@ void cmMM01::daemonEngine(){
 			m_aliveTrdGrp.push_back(item);
 		else 
 		{	//闭环完成
-			LOG(INFO) << m_strategyId << ": -----------CycleStatisticsStart-----------" << endl
-				      << "," << m_strategyId << ",validTime," << item->m_tradingDate << "," << item->m_Id << ","
+			LOG(INFO) << m_strategyId << ": -----------CycleStatisticsStart-----------" << endl;
+			LOG(INFO) << "," << m_strategyId << ",validTime," << item->m_tradingDate << "," << item->m_Id << ","
 					  << ((item->m_start_milliSec != 0.0 && item->m_end_milliSec != 0.0) ?
-						 (item->m_end_milliSec - item->m_start_milliSec) : 0.0) << endl
-					  << m_strategyId << "-----------CycleStatisticsEnd-----------" << endl;
+						(item->m_end_milliSec - item->m_start_milliSec) : 0.0) << endl;
+			LOG(INFO) << m_strategyId << "-----------CycleStatisticsEnd-----------" << endl;
 
 			if (isTraded)//有交易发生
 			{
