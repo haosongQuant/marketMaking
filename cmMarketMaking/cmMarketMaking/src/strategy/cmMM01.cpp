@@ -342,14 +342,15 @@ void cmMM01::registerTradeRtn(tradeRtnPtr pTrade){
 			break;
 		}
 		}
+		if (!m_isHoldingRequireFilled)
 		{
 			read_lock lock(m_investorPositionLock);
 			int validHoldingVol = m_investorPosition[m_productId][HOLDING_DIR_LONG]->m_position
 							   <= m_investorPosition[m_productId][HOLDING_DIR_SHORT]->m_position ?
 								m_investorPosition[m_productId][HOLDING_DIR_LONG]->m_position :
 								m_investorPosition[m_productId][HOLDING_DIR_SHORT]->m_position;
-
-			m_isHoldingRequireFilled = validHoldingVol >= m_holdingRequirement ?  true : false;
+			if (validHoldingVol >= m_holdingRequirement)
+				m_isHoldingRequireFilled = true;
 		}
 		//write_lock lock(m_tradeRtnBuffLock);
 		//m_orderRef2tradeRtn[pTrade->m_orderRef][pTrade->m_tradeId] = pTrade;
