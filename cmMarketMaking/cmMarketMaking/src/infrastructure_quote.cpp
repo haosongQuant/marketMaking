@@ -1,5 +1,6 @@
 #include "baseClass\Utils.h"
 #include "infrastructure.h"
+#include "glog\logging.h"
 
 //
 //void infrastructure::createTradeAdapter(string adapterID, string tradeFront, string broker, string user, 
@@ -224,6 +225,8 @@ void infrastructure::onRtnCtpQuote(string adapterID, CThostFtdcDepthMarketDataFi
 		}
 		m_quoteTP->getDispatcher().post(bind(&infrastructure::onFuturesTick, this, adapterID, quote));
 	}
+	else
+		LOG(WARNING) << "quote category not recognized! instrument: " << dataptr->InstrumentID << endl;
 	return;
 }
 
@@ -309,7 +312,7 @@ void infrastructure::onFuturesTick(string adapterID, futuresMDPtr pQuote)
 			}
 		//}
 	}
-	cout << "infra warning: "<< string(pQuote->InstrumentID) << " no handler registered!" << endl;
+	LOG(WARNING) << "infra warning: "<< string(pQuote->InstrumentID) << " no handler registered!" << endl;
 	return;
 };
 

@@ -35,41 +35,24 @@ bool cmMM01::isOrderComplete(int orderRef, bool &isTraded)
 	case ORDER_STATUS_NotTouched:///尚未触发,
 	case ORDER_STATUS_Touched:///已触发,
 	{
-		//m_tradeTP->getDispatcher().post(boost::bind(&infrastructure::cancelOrder, m_infra,
-		//	m_tradeAdapterID, orderRef, bind(&cmMM01::onRspCancel, this, _1)));
 		m_infra->cancelOrder(m_tradeAdapterID, orderRef, bind(&cmMM01::onRspCancel, this, _1));
 		isTrdComplete = false;
 		break;
 	}
-	//遇到下面几个最终状态，计算对冲量
-	case ORDER_STATUS_Canceled: ///撤单,
+	//遇到下面2个状态, 返回已交易
 	case ORDER_STATUS_AllTraded:///全部成交,
 	case ORDER_STATUS_PartTradedNotQueueing:///部分成交不在队列中,
-	case ORDER_STATUS_NoTradeNotQueueing:///未成交不在队列中,
-	{//isTrdComplete == true
-		if (iter01->second->m_volumeTraded != 0)
-			isTraded = true;
+	{
+		isTraded = true;
 		break;
 	}
+	case ORDER_STATUS_Canceled: ///撤单,
+	case ORDER_STATUS_NoTradeNotQueueing:///未成交不在队列中,
 	case ORDER_STATUS_TerminatedFromCancel:///撤单时，返回报单已成交或撤销,
-	{//isTrdComplete == true
+	{
 		break;
 	}
 	}//end:处理每个状态
-
-	//int tradeRtnedVol = 0; //统计本order返回的成交量
-	//{
-	//	auto iter02 = m_orderRef2tradeRtn.find(orderRef);
-	//	if (iter02 != m_orderRef2tradeRtn.end())
-	//	{
-	//		for each(auto item2 in iter02->second)
-	//			tradeRtnedVol += item2.second->m_volume;
-	//	}
-	//}
-	////如果有成交发生，而orderRtn中的成交量与tradeRtn中的量不一致，
-	//// 表示尚有tradeRtn没收到，认为交易未完成
-	//if (orderTradedVol != 0 && tradeRtnedVol != orderTradedVol)
-	//	isTrdComplete = false;
 	return isTrdComplete;
 };
 
@@ -137,7 +120,10 @@ void cmMM01::daemonEngine(){
 		for each(auto orderRef in item->m_orderIdList)
 		{
 			if (!isOrderComplete(orderRef, isTraded))
+			{
 				isTrdGrpComplete = false;
+				break;
+			}
 		}//end: 循环处理每一个order
 
 		if (!isTrdGrpComplete)//闭环未完成
@@ -161,7 +147,8 @@ void cmMM01::daemonEngine(){
 						pOrder->m_volumeTraded : (pOrder->m_volumeTraded * -1);
 				}//end: 循环处理每一个order
 				totalTradedVol += cycleTradedVol;
-				LOG(INFO) << m_strategyId << ", cycle: " << item->m_Id << ", cycleTradedVol: " << cycleTradedVol << endl;
+				LOG(INFO) << m_strategyId << ", cycle: " << item->m_Id 
+										  << ", cycleTradedVol: " << cycleTradedVol << endl;
 			}
 		}
 
@@ -274,11 +261,9 @@ void cmMM01::callPauseHandler()
 
 void cmMM01::resume()
 {
-	{
-		boost::recursive_mutex::scoped_lock lock(m_strategyStatusLock); 
-		write_lock lock1(m_pauseReqLock);
-		m_strategyStatus = STRATEGY_STATUS_READY;
-		m_pauseReq = false; 
-		LOG(INFO) << m_strategyId << " resumed." << endl;
-	}
+	boost::recursive_mutex::scoped_lock lock(m_strategyStatusLock); 
+	write_lock lock1(m_pauseReqLock);
+	m_strategyStatus = STRATEGY_STATUS_READY;
+	m_pauseReq = false; 
+	LOG(INFO) << m_strategyId << " resumed." << endl;
 };

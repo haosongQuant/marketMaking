@@ -610,6 +610,7 @@ void tradeAdapterCTP::OnRtnOrder(CThostFtdcOrderField *pOrder)
 	<< ", LimitPrice:" << pOrder->LimitPrice
 	<< ", OrderStatus:" << pOrder->OrderStatus
 	<< ", StatusMsg:" << pOrder->StatusMsg
+	<< ", VolumeTraded:" << pOrder->VolumeTraded
 	//<< ", CombHedgeFlag:" << pOrder->CombHedgeFlag
 	//<< ", CombOffsetFlag:" << pOrder->CombOffsetFlag
 	//<< ", MinVolume:" << pOrder->MinVolume

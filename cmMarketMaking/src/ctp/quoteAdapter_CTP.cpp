@@ -198,6 +198,8 @@ void quoteAdapter_CTP::OnRtnDepthMarketData(CThostFtdcDepthMarketDataField *pDep
 
 	if (m_onRtnMarketData != NULL)
 		m_onRtnMarketData(m_adapterID, pDepthMarketData);
+	else
+		LOG(WARNING) << m_adapterID << ",行情未处理, instrument:" << pDepthMarketData->InstrumentID << endl;
 };
 
 void quoteAdapter_CTP::OnRspError(CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
