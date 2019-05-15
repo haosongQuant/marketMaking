@@ -78,6 +78,12 @@
     <ClCompile Include="..\src\baseClass\Utils.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="src\strategy\cmMM02.cpp">
+      <Filter>源文件\strategy</Filter>
+    </ClCompile>
+    <ClCompile Include="src\strategy\cmMM02_deamon.cpp">
+      <Filter>源文件\strategy</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="header\threadpool\threadpool.h">
@@ -130,6 +136,9 @@
     </ClInclude>
     <ClInclude Include="..\header\baseClass\UTC.h">
       <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="header\strategy\cmMM02.h">
+      <Filter>头文件\strategy</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
