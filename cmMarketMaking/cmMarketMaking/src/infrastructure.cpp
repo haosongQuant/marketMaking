@@ -7,7 +7,7 @@ infrastructure::infrastructure(Json::Value config) :
 m_config(config)
 {
 	m_quoteTP = athenathreadpoolPtr(new threadpool(4));
-	m_tradeTP = athenathreadpoolPtr(new threadpool(8));
+	m_tradeTP = athenathreadpoolPtr(new threadpool(10));
 };
 
 void infrastructure::init()
@@ -207,8 +207,12 @@ void infrastructure::genOrderParmMap()
 	//开平标志
 	m_positinEffectMap[ADAPTER_CTP_TRADE][POSITION_EFFECT_OPEN] = THOST_FTDC_OFEN_Open;
 	m_positinEffectMap[ADAPTER_CTP_TRADE][POSITION_EFFECT_CLOSE] = THOST_FTDC_OFEN_Close;
+	m_positinEffectMap[ADAPTER_CTP_TRADE][POSITION_EFFECT_CLOSE_TODAY] = THOST_FTDC_OFEN_CloseToday;
+	m_positinEffectMap[ADAPTER_CTP_TRADE][POSITION_EFFECT_CLOSE_YESTERDAY] = THOST_FTDC_OFEN_CloseYesterday;
 	m_positinEffectMapRev[ADAPTER_CTP_TRADE][THOST_FTDC_OFEN_Open] = POSITION_EFFECT_OPEN;
 	m_positinEffectMapRev[ADAPTER_CTP_TRADE][THOST_FTDC_OFEN_Close] = POSITION_EFFECT_CLOSE;
+	m_positinEffectMapRev[ADAPTER_CTP_TRADE][THOST_FTDC_OFEN_CloseToday] = POSITION_EFFECT_CLOSE_TODAY;
+	m_positinEffectMapRev[ADAPTER_CTP_TRADE][THOST_FTDC_OFEN_CloseYesterday] = POSITION_EFFECT_CLOSE_YESTERDAY;
 	m_positinEffectMap[ADAPTER_TAP_TRADE][POSITION_EFFECT_OPEN] = TAPI_PositionEffect_OPEN;
 	m_positinEffectMap[ADAPTER_TAP_TRADE][POSITION_EFFECT_CLOSE] = TAPI_PositionEffect_COVER;
 

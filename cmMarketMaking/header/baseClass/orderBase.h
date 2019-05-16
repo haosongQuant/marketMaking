@@ -22,6 +22,8 @@ enum enum_position_effect_type
 	POSITION_EFFECT_CLOSE,
 	//! 平当日
 	POSITION_EFFECT_CLOSE_TODAY,
+	//! 平昨日
+	POSITION_EFFECT_CLOSE_YESTERDAY
 };
 
 enum enum_order_dir_type

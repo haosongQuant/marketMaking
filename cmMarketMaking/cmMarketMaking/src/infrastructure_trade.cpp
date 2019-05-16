@@ -6,6 +6,12 @@ int infrastructure::insertOrder(string adapterID, string instrument, string exch
 	enum_hedge_flag hedgeflag, double price, unsigned int volume,
 	boost::function<void(orderRtnPtr)> orderRtnhandler, boost::function<void(tradeRtnPtr)> tradeRtnhandler)
 {
+	//todo: develop virtual counter
+	enum_position_effect_type poEffect;
+	if (positionEffect == POSITION_EFFECT_CLOSE && exchange == "SHFE")
+		poEffect = POSITION_EFFECT_CLOSE_TODAY;
+	else
+		poEffect = positionEffect;
 	switch (m_adapterTypeMap[adapterID])
 	{
 	case ADAPTER_CTP_TRADE:
@@ -14,7 +20,7 @@ int infrastructure::insertOrder(string adapterID, string instrument, string exch
 		int orderRef = pTradeAdapter->OrderInsert(instrument, exchange,
 			m_orderTypeMap[ADAPTER_CTP_TRADE][orderType],
 			m_orderDirMap[ADAPTER_CTP_TRADE][dir],
-			m_positinEffectMap[ADAPTER_CTP_TRADE][positionEffect],
+			m_positinEffectMap[ADAPTER_CTP_TRADE][poEffect],
 			m_hedgeFlagMap[ADAPTER_CTP_TRADE][hedgeflag],
 			price, volume, 
 			THOST_FTDC_TC_GFD, //当日有效
