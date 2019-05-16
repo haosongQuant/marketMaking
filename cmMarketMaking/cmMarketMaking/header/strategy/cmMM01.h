@@ -79,7 +79,8 @@ public: //供外部调用的响应函数 | 在策略线程池中调用相应的处理函数
 			boost::mutex::scoped_lock lock(m_lastQuoteLock);
 			m_lastQuotePtr = pFuturesMD;
 		}
-		m_quoteTP->getDispatcher().post(bind(&cmMM01::quoteEngine, this));
+		//m_quoteTP->getDispatcher().post(bind(&cmMM01::quoteEngine, this));
+		quoteEngine();
 	};
 	void onOrderRtn(orderRtnPtr pOrder){ m_tradeTP->getDispatcher().post(bind(&cmMM01::processOrder, this, pOrder)); };
 	void onTradeRtn(tradeRtnPtr ptrade){ m_tradeTP->getDispatcher().post(bind(&cmMM01::processTrade, this, ptrade)); };

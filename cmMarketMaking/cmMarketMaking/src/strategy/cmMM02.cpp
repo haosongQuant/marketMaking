@@ -206,7 +206,7 @@ void cmMM02::CancelOrder(bool confirm, bool restart)//const boost::system::error
 				m_infra->queryOrder(m_tradeAdapterID, m_askOrderRef);
 				LOG(WARNING) << m_strategyId << ": order not found, querying order, orderRef: " << m_askOrderRef << endl;
 			}
-			m_orderCheckTimer.expires_from_now(boost::posix_time::milliseconds(10));
+			m_orderCheckTimer.expires_from_now(boost::posix_time::milliseconds(1000));
 			m_orderCheckTimer.async_wait(bind(&cmMM02::CancelOrder, this, confirm, restart));// , boost::asio::placeholders::error));
 			return;
 		}
@@ -230,7 +230,7 @@ void cmMM02::CancelOrder(bool confirm, bool restart)//const boost::system::error
 	if (m_cancelBidOrderRC == ORDER_CANCEL_ERROR_SEND_FAIL 
 		|| m_cancelAskOrderRC == ORDER_CANCEL_ERROR_SEND_FAIL)
 	{
-		m_orderCheckTimer.expires_from_now(boost::posix_time::milliseconds(10));
+		m_orderCheckTimer.expires_from_now(boost::posix_time::milliseconds(1000));
 		m_orderCheckTimer.async_wait(bind(&cmMM02::CancelOrder, this, confirm,  restart)); // , boost::asio::placeholders::error));
 		return;
 	}

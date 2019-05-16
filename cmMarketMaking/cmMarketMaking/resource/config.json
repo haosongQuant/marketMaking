@@ -33,7 +33,7 @@
             "miniOrderSpread": 4.0,
             "orderQty": 6,
             "volMulti": 1,
-            "holdingRequirement": 30,
+            "holdingRequirement": 12,
             "openTime": [
                 { "start": 901, "end": 1014 },
                 { "start": 1031, "end": 1128 },
@@ -51,7 +51,25 @@
             "miniOrderSpread": 4.0,
             "orderQty": 6,
             "volMulti": 1,
-            "holdingRequirement": 30,
+            "holdingRequirement": 12,
+            "openTime": [
+                { "start": 901, "end": 1014 },
+                { "start": 1031, "end": 1128 },
+                { "start": 1329, "end": 1459 },
+                { "start": 2101, "end": 2329 }
+            ]
+        },
+        {
+            "strategyID": "spec_ni1907",
+            "strategyTyp": "cmSpec01",
+            "productId": "ni1907",
+            "exchange": "SHFE",
+            "quote": "quoteCTP01",
+            "trade": "tradeCTP01",
+            "tickSize": 10,
+            "orderQty": 1,
+            "volMulti": 1,
+            "masterStrategy": "mm_ni1907",
             "openTime": [
                 { "start": 901, "end": 1014 },
                 { "start": 1031, "end": 1128 },
@@ -176,24 +194,6 @@
             "port": 6161,
             "user": "",
             "pwd": ""
-        },
-        {
-            "strategyID": "spec_ni1907",
-            "strategyTyp": "cmSpec01",
-            "productId": "ni1907",
-            "exchange": "SHFE",
-            "quote": "quoteCTP01",
-            "trade": "tradeCTP01",
-            "tickSize": 10,
-            "orderQty": 1,
-            "volMulti": 1,
-            "masterStrategy": "mm_ni1907",
-            "openTime": [
-                { "start": 901, "end": 1014 },
-                { "start": 1031, "end": 1128 },
-                { "start": 1329, "end": 1459 },
-                { "start": 2101, "end": 2329 }
-            ]
         }
     ]
 }
