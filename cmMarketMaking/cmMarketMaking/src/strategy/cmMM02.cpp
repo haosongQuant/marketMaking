@@ -27,21 +27,21 @@ cmMM02::cmMM02(string strategyId, string strategyTyp, string productId, string e
 		= investorPositionPtr(new investorPosition_struct(productId, HOLDING_DIR_LONG));
 	m_investorPosition[productId][HOLDING_DIR_SHORT]
 		= investorPositionPtr(new investorPosition_struct(productId, HOLDING_DIR_SHORT));
-	m_strategyStatus = STRATEGY_STATUS_INIT;
+	m_strategyStatus = cmMM02_STATUS_INIT;
 	daemonEngine();
 };
 
 void cmMM02::startStrategy(){
 	cout << m_strategyId << " starting..." << endl;
-	if (STRATEGY_STATUS_INIT == m_strategyStatus)
+	if (cmMM02_STATUS_INIT == m_strategyStatus)
 	{
 		m_infra->subscribeFutures(m_quoteAdapterID, m_exchange, m_productId, bind(&cmMM02::onRtnMD, this, _1));
 	}
-	m_strategyStatus = STRATEGY_STATUS_READY;
+	m_strategyStatus = cmMM02_STATUS_READY;
 };
 
 void cmMM02::resetStrategyStatus(){ //等待行情触发cycle
-	m_strategyStatus = STRATEGY_STATUS_READY;
+	m_strategyStatus = cmMM02_STATUS_READY;
 };
 
 //行情处理
@@ -53,23 +53,23 @@ void cmMM02::quoteEngine()
 	LOG(INFO) << m_strategyId << " | status: " << m_strategyStatus << endl;
 	switch (m_strategyStatus)
 	{
-	case STRATEGY_STATUS_READY:
+	case cmMM02_STATUS_READY:
 	{
 		startCycle();
 		break;
 	}
-	case STRATEGY_STATUS_ORDER_SENT:
+	case cmMM02_STATUS_ORDER_SENT:
 	{
-		m_strategyStatus = STRATEGY_STATUS_CLOSING_POSITION;
+		m_strategyStatus = cmMM02_STATUS_CLOSING_POSITION;
 		m_tradeTP->getDispatcher().post(boost::bind(&cmMM02::refreshCycle, this)); //,boost::asio::placeholders::error));
 		break;
 	}
-	case STRATEGY_STATUS_PAUSE:
+	case cmMM02_STATUS_PAUSE:
 	{
 		cout << m_strategyId << ": market making paused!" << endl;
 		break;
 	}
-	case STRATEGY_STATUS_BREAK:
+	case cmMM02_STATUS_BREAK:
 	{
 		cout << m_strategyId << " breaking ..." << endl;
 		break;
@@ -112,7 +112,7 @@ void cmMM02::startCycle()
 		read_lock lock(m_breakReqLock);
 		if (m_breakReq)
 		{
-			m_strategyStatus = STRATEGY_STATUS_BREAK; //interrupt结束后由行情触发新的交易
+			m_strategyStatus = cmMM02_STATUS_BREAK; //interrupt结束后由行情触发新的交易
 			return;
 		}
 	}
@@ -120,7 +120,7 @@ void cmMM02::startCycle()
 		read_lock lock(m_pauseReqLock);
 		if (m_pauseReq)
 		{
-			m_strategyStatus = STRATEGY_STATUS_PAUSE; //interrupt结束后由行情触发新的交易
+			m_strategyStatus = cmMM02_STATUS_PAUSE; //interrupt结束后由行情触发新的交易
 			callPauseHandler();
 			return;
 		}
@@ -141,7 +141,7 @@ void cmMM02::startCycle()
 	if (0.0 == bidprice || 0.0 == askprice)
 	{
 		boost::recursive_mutex::scoped_lock lock(m_strategyStatusLock);
-		m_strategyStatus = STRATEGY_STATUS_READY;
+		m_strategyStatus = cmMM02_STATUS_READY;
 		LOG(INFO) << m_strategyId << ": warning | spread is too wide, no order sent." << endl;
 		return;
 	}
@@ -167,7 +167,7 @@ void cmMM02::startCycle()
 
 	if (m_bidOrderRef == 0 || m_askOrderRef == 0)
 		cout << "debug" << endl;
-	m_strategyStatus = STRATEGY_STATUS_ORDER_SENT;
+	m_strategyStatus = cmMM02_STATUS_ORDER_SENT;
 };
 
 void cmMM02::refreshCycle()
@@ -206,7 +206,7 @@ void cmMM02::CancelOrder(bool confirm, bool restart)//const boost::system::error
 				m_infra->queryOrder(m_tradeAdapterID, m_askOrderRef);
 				LOG(WARNING) << m_strategyId << ": order not found, querying order, orderRef: " << m_askOrderRef << endl;
 			}
-			m_orderCheckTimer.expires_from_now(boost::posix_time::milliseconds(1000));
+			m_orderCheckTimer.expires_from_now(boost::posix_time::milliseconds(10));
 			m_orderCheckTimer.async_wait(bind(&cmMM02::CancelOrder, this, confirm, restart));// , boost::asio::placeholders::error));
 			return;
 		}
@@ -230,7 +230,7 @@ void cmMM02::CancelOrder(bool confirm, bool restart)//const boost::system::error
 	if (m_cancelBidOrderRC == ORDER_CANCEL_ERROR_SEND_FAIL 
 		|| m_cancelAskOrderRC == ORDER_CANCEL_ERROR_SEND_FAIL)
 	{
-		m_orderCheckTimer.expires_from_now(boost::posix_time::milliseconds(1000));
+		m_orderCheckTimer.expires_from_now(boost::posix_time::milliseconds(10));
 		m_orderCheckTimer.async_wait(bind(&cmMM02::CancelOrder, this, confirm,  restart)); // , boost::asio::placeholders::error));
 		return;
 	}
@@ -247,11 +247,18 @@ void cmMM02::confirmCancel(bool restart)
 	}
 	{
 		boost::recursive_mutex::scoped_lock lock(m_strategyStatusLock);
-		if (STRATEGY_STATUS_CLOSING_POSITION == m_strategyStatus)
+		if (cmMM02_STATUS_CLOSING_POSITION == m_strategyStatus)
 		{//重新下单
 			read_lock lock(m_orderRtnBuffLock);
 			auto bidOrderIter = m_orderRef2orderRtn.find(m_bidOrderRef);
 			auto askOrderIter = m_orderRef2orderRtn.find(m_askOrderRef);
+			if (bidOrderIter == m_orderRef2orderRtn.end()
+				|| askOrderIter == m_orderRef2orderRtn.end())
+			{
+				m_orderCheckTimer.expires_from_now(boost::posix_time::milliseconds(1000));
+				m_orderCheckTimer.async_wait(bind(&cmMM02::CancelOrder, this, true, restart));
+				return;
+			}
 			if (ORDER_STATUS_Canceled == bidOrderIter->second->m_orderStatus
 				&& ORDER_STATUS_Canceled == askOrderIter->second->m_orderStatus)
 			{
@@ -419,8 +426,8 @@ void cmMM02::processTrade(tradeRtnPtr ptrade)
 		}
 
 		status = m_strategyStatus;
-		m_strategyStatus = STRATEGY_STATUS_TRADED_HEDGING;
-		if (STRATEGY_STATUS_ORDER_SENT == status)
+		m_strategyStatus = cmMM02_STATUS_TRADED_HEDGING;
+		if (cmMM02_STATUS_ORDER_SENT == status)
 		{//撤单
 			m_cancelBidOrderRC = 0;
 			m_cancelAskOrderRC = 0;
@@ -432,7 +439,7 @@ void cmMM02::processTrade(tradeRtnPtr ptrade)
 	sendHedgeOrder(ptrade);
 
 	//等待1s
-	if (STRATEGY_STATUS_TRADED_HEDGING != status)
+	if (cmMM02_STATUS_TRADED_HEDGING != status)
 	{
 		LOG(INFO) << m_strategyId << ": waiting 1s to cancel hedge order!" << endl;
 		m_cancelHedgeTimer.expires_from_now(boost::posix_time::milliseconds(1000));
@@ -559,7 +566,7 @@ void cmMM02::confirmCancel_hedgeOrder()
 	{
 		{
 			boost::recursive_mutex::scoped_lock lock(m_strategyStatusLock);
-			m_strategyStatus = STRATEGY_STATUS_TRADED_NET_HEDGING;
+			m_strategyStatus = cmMM02_STATUS_TRADED_NET_HEDGING;
 		}
 		double netHedgeVol = 0.0;
 		for (auto iter = m_hedgeOrderVol.begin(); iter != m_hedgeOrderVol.end(); iter++)

@@ -45,6 +45,7 @@ typedef boost::shared_ptr<tradeGroupBuffer> tradeGroupBufferPtr;
 enum enum_strategy_type
 {
 	STRATEGY_cmMM01,
+	STRATEGY_cmMM02,
 	STRATEGY_cmSpec01,
 	STRATEGY_ERROR,
 };

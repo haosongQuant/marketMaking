@@ -6,6 +6,7 @@
 #include "glog\logging.h"
 #include "baseClass/orderBase.h"
 #include "strategy\cmMM01.h"
+#include "strategy\cmMM02.h"
 #include "strategy\cmSpec01.h"
 
 struct IpauseStrategy

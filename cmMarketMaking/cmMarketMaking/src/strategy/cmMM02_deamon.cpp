@@ -61,7 +61,7 @@ void cmMM02::daemonEngine(){
 	//if (!m_infra->isAdapterReady(m_tradeAdapterID))
 	if (!isInOpenTime() || !m_infra->isAdapterReady(m_tradeAdapterID))
 	{
-		if (STRATEGY_STATUS_INIT != m_strategyStatus)
+		if (cmMM02_STATUS_INIT != m_strategyStatus)
 		{
 			write_lock lock(m_breakReqLock);
 			m_breakReq = true;
@@ -87,8 +87,8 @@ void cmMM02::daemonEngine(){
 		boost::recursive_mutex::scoped_lock lock(m_strategyStatusLock);
 		switch (m_strategyStatus)
 		{
-		case STRATEGY_STATUS_INIT:
-		case STRATEGY_STATUS_BREAK:
+		case cmMM02_STATUS_INIT:
+		case cmMM02_STATUS_BREAK:
 		{
 			write_lock lock(m_breakReqLock);
 			m_breakReq = false;
@@ -218,7 +218,7 @@ void cmMM02::processCycleNetHedgeTradeRtn(tradeRtnPtr ptrade)
 
 void cmMM02::interrupt(boost::function<void()> pauseHandler)
 {
-	if (!pause(pauseHandler) && m_strategyStatus != STRATEGY_STATUS_BREAK)
+	if (!pause(pauseHandler) && m_strategyStatus != cmMM02_STATUS_BREAK)
 	{
 		m_pauseLagTimer.expires_from_now(boost::posix_time::millisec(1000));
 		m_pauseLagTimer.async_wait(boost::bind(&cmMM02::interrupt, this, pauseHandler));
@@ -227,7 +227,7 @@ void cmMM02::interrupt(boost::function<void()> pauseHandler)
 
 
 enum_strategy_interrupt_result cmMM02::tryInterrupt(boost::function<void()> pauseHandler){
-	if (m_strategyStatus == STRATEGY_STATUS_BREAK)
+	if (m_strategyStatus == cmMM02_STATUS_BREAK)
 		return STRATEGY_INTERRUPT_BREAKING;
 	else if (pause(pauseHandler))
 		return STRATEGY_INTERRUPT_WAIT_CALLBACK;
@@ -263,7 +263,7 @@ void cmMM02::resume()
 {
 	boost::recursive_mutex::scoped_lock lock(m_strategyStatusLock); 
 	write_lock lock1(m_pauseReqLock);
-	m_strategyStatus = STRATEGY_STATUS_READY;
+	m_strategyStatus = cmMM02_STATUS_READY;
 	m_pauseReq = false; 
 	LOG(INFO) << m_strategyId << " resumed." << endl;
 };

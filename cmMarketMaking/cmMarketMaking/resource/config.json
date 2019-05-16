@@ -23,35 +23,35 @@
 
     "strategy": [
         {
-            "strategyID": "mm_ZC907",
+            "strategyID": "mm_ni1907",
             "strategyTyp": "cmMM01",
-            "productId": "ZC907",
-            "exchange": "CZCE",
+            "productId": "ni1907",
+            "exchange": "SHFE",
             "quote": "quoteCTP01",
             "trade": "tradeCTP01",
-            "tickSize": 0.2,
+            "tickSize": 10,
             "miniOrderSpread": 4.0,
-            "orderQty": 10,
-            "volMulti": 10,
-            "holdingRequirement": 100,
+            "orderQty": 6,
+            "volMulti": 1,
+            "holdingRequirement": 30,
             "openTime": [
                 { "start": 901, "end": 1014 },
                 { "start": 1031, "end": 1128 },
                 { "start": 1329, "end": 1459 },
                 { "start": 2101, "end": 2329 }
             ]
-        },
-        {
-            "strategyID": "spec_ZC907",
-            "strategyTyp": "cmSpec01",
-            "productId": "ZC907",
-            "exchange": "CZCE",
+        },        {
+            "strategyID": "mm_ni1908",
+            "strategyTyp": "cmMM02",
+            "productId": "ni1908",
+            "exchange": "SHFE",
             "quote": "quoteCTP01",
             "trade": "tradeCTP01",
-            "tickSize": 0.2,
-            "orderQty": 1,
-            "volMulti": 10,
-            "masterStrategy": "mm_ZC907",
+            "tickSize": 10,
+            "miniOrderSpread": 4.0,
+            "orderQty": 6,
+            "volMulti": 1,
+            "holdingRequirement": 30,
             "openTime": [
                 { "start": 901, "end": 1014 },
                 { "start": 1031, "end": 1128 },
@@ -75,6 +75,24 @@
             "orderQty": 10,
             "volMulti": 5,
             "holdingRequirement": 100,
+            "openTime": [
+                { "start": 901, "end": 1014 },
+                { "start": 1031, "end": 1128 },
+                { "start": 1329, "end": 1459 },
+                { "start": 2101, "end": 2329 }
+            ]
+        },
+        {
+            "strategyID": "spec_ZC907",
+            "strategyTyp": "cmSpec01",
+            "productId": "ZC907",
+            "exchange": "CZCE",
+            "quote": "quoteCTP01",
+            "trade": "tradeCTP01",
+            "tickSize": 0.2,
+            "orderQty": 1,
+            "volMulti": 10,
+            "masterStrategy": "mm_ZC907",
             "openTime": [
                 { "start": 901, "end": 1014 },
                 { "start": 1031, "end": 1128 },
@@ -158,6 +176,24 @@
             "port": 6161,
             "user": "",
             "pwd": ""
+        },
+        {
+            "strategyID": "spec_ni1907",
+            "strategyTyp": "cmSpec01",
+            "productId": "ni1907",
+            "exchange": "SHFE",
+            "quote": "quoteCTP01",
+            "trade": "tradeCTP01",
+            "tickSize": 10,
+            "orderQty": 1,
+            "volMulti": 1,
+            "masterStrategy": "mm_ni1907",
+            "openTime": [
+                { "start": 901, "end": 1014 },
+                { "start": 1031, "end": 1128 },
+                { "start": 1329, "end": 1459 },
+                { "start": 2101, "end": 2329 }
+            ]
         }
     ]
 }

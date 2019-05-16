@@ -13,6 +13,8 @@ void strategyEngine::registerStrategyType(string strategyID, string strategyType
 {
 	if ("cmMM01" == strategyType)
 		m_strategyTypeMap[strategyID] = STRATEGY_cmMM01;
+	else if ("cmMM02" == strategyType)
+			m_strategyTypeMap[strategyID] = STRATEGY_cmMM02;
 	else if ("cmSpec01" == strategyType)
 		m_strategyTypeMap[strategyID] = STRATEGY_cmSpec01;
 	else
@@ -46,6 +48,22 @@ void strategyEngine::init()
 			m_strategies[strategyId] = pCmMM01;
 			break;
 		}
+		case STRATEGY_cmMM02:
+		{
+			cmMM02 *pCmMM02 = new cmMM02(strategyId, strategyType,
+				strategyConfig["productId"].asString(),
+				strategyConfig["exchange"].asString(),
+				strategyConfig["quote"].asString(),
+				strategyConfig["trade"].asString(),
+				strategyConfig["tickSize"].asDouble(),
+				strategyConfig["miniOrderSpread"].asDouble(),
+				strategyConfig["orderQty"].asDouble(),
+				strategyConfig["volMulti"].asInt(),
+				strategyConfig["holdingRequirement"].asInt(),
+				m_quoteTP, m_tradeTP, m_infra, strategyConfig);
+			m_strategies[strategyId] = pCmMM02;
+			break;
+		}
 		case STRATEGY_cmSpec01:
 		{
 			cmSepc01 *pCmSpec01 = new cmSepc01(strategyId, strategyType,
@@ -75,6 +93,11 @@ void strategyEngine::onBroadcastOrder(orderRtnPtr orderPtr)
 		case STRATEGY_cmMM01:
 		{
 			((cmMM01 *)(iter->second))->registerOrder(orderPtr);
+			break;
+		}
+		case STRATEGY_cmMM02:
+		{
+			((cmMM02 *)(iter->second))->registerOrder(orderPtr);
 			break;
 		}
 		case STRATEGY_cmSpec01:
@@ -123,6 +146,12 @@ void strategyEngine::commandProcess()
 					pStrategy->startStrategy();
 					break;
 				}
+				case STRATEGY_cmMM02:
+				{
+					cmMM02* pStrategy = (cmMM02*)m_strategies[commandEle[1]];
+					pStrategy->startStrategy();
+					break;
+				}
 				}
 			}
 			else if (commandEle[0] == "stop")
@@ -131,7 +160,13 @@ void strategyEngine::commandProcess()
 				{
 				case STRATEGY_cmMM01:
 				{
-					cmMM01* pStrategy = (cmMM01*)m_strategies[commandEle[1]];
+					cmMM01 *pStrategy = (cmMM01 *)m_strategies[commandEle[1]];
+					pStrategy->pause(boost::bind(&IpauseStrategy::plainVanilla, &m_pauseInterface));
+					break;
+				}
+				case STRATEGY_cmMM02:
+				{
+					cmMM02 *pStrategy = (cmMM02 *)m_strategies[commandEle[1]];
 					pStrategy->pause(boost::bind(&IpauseStrategy::plainVanilla, &m_pauseInterface));
 					break;
 				}
@@ -144,6 +179,12 @@ void strategyEngine::commandProcess()
 				case STRATEGY_cmMM01:
 				{
 					cmMM01* pStrategy = (cmMM01*)m_strategies[commandEle[1]];
+					pStrategy->resume();
+					break;
+				}
+				case STRATEGY_cmMM02:
+				{
+					cmMM02 *pStrategy = (cmMM02 *)m_strategies[commandEle[1]];
 					pStrategy->resume();
 					break;
 				}
