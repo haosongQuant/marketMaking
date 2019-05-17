@@ -15,6 +15,7 @@ cmMM02::cmMM02(string strategyId, string strategyTyp, string productId, string e
 	m_cancelHedgeTimer(tradeTP->getDispatcher()),
 	m_daemonTimer(tradeTP->getDispatcher()), m_pauseLagTimer(tradeTP->getDispatcher())
 {
+	m_lastQuotePtr = NULL;
 	int openNum = m_strategyConfig["openTime"].size();
 	for (int i = 0; i < openNum; ++i)
 	{
