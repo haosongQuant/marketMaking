@@ -273,7 +273,7 @@ void tradeAdapterCTP::OnRspQryInvestorPosition(CThostFtdcInvestorPositionField *
 {
 	if (pInvestorPosition)
 	{
-		cout << "___________________________________" << endl;
+		/*cout << "___________________________________" << endl;
 		cout << "合约代码: " << pInvestorPosition->InstrumentID << endl
 		<< "经纪公司代码: " << pInvestorPosition->BrokerID << endl
 		<< "投资者代码: " << pInvestorPosition->InvestorID << endl
@@ -316,7 +316,7 @@ void tradeAdapterCTP::OnRspQryInvestorPosition(CThostFtdcInvestorPositionField *
 		<< "保证金率(按手数): " << pInvestorPosition->MarginRateByVolume << endl
 		<< "执行冻结: " << pInvestorPosition->StrikeFrozen << endl
 		<< "执行冻结金额: " << pInvestorPosition->StrikeFrozenAmount << endl
-		<< "放弃执行冻结: " << pInvestorPosition->AbandonFrozen << endl;
+		<< "放弃执行冻结: " << pInvestorPosition->AbandonFrozen << endl;*/
 		if (m_OnInvestorPositionRtn)
 			m_OnInvestorPositionRtn(m_adapterID, pInvestorPosition);
 

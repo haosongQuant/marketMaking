@@ -6,7 +6,7 @@
 infrastructure::infrastructure(Json::Value config) :
 m_config(config)
 {
-	m_quoteTP = athenathreadpoolPtr(new threadpool(4));
+	m_quoteTP = athenathreadpoolPtr(new threadpool(20));
 	m_tradeTP = athenathreadpoolPtr(new threadpool(10));
 };
 

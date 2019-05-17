@@ -513,11 +513,12 @@ void cmMM02::cancelHedgeOrder()//const boost::system::error_code& error){
 {
 	if (m_cancelHedgeTimerCancelled)
 	{
-		LOG(INFO) << m_strategyId << ": hedge timer cancelled" << endl;
+		LOG(INFO) << m_strategyId << ": hedge timer cancelled." << endl;
 		return;
 	}
 
 	read_lock lock(m_hedgeOrderVolLock);
+	LOG(INFO) << m_strategyId << ": cancelling hedge order..." << endl;
 	if (m_hedgeOrderVol.size() > 0)   //存在未完成的对冲指令
 	{
 		bool isHedgeOrderConfirmed = true;
@@ -555,6 +556,9 @@ void cmMM02::cancelHedgeOrder()//const boost::system::error_code& error){
 		else
 			confirmCancel_hedgeOrder();
 	}
+	else
+		LOG(INFO) << m_strategyId << ": hedge_Order_Vol dic is empty!" << endl;
+
 };
 
 

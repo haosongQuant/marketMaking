@@ -183,6 +183,31 @@ void cmSepc01::quoteEngine()
 					break;
 				}
 				}
+				break;
+			}
+			case STRATEGY_cmMM02:
+			{
+				cmMM02 *pStrategy = (cmMM02 *)m_masterStrategy;
+				enum_strategy_interrupt_result interRuptRc =
+					pStrategy->tryInterrupt(boost::bind(&cmSepc01::sendOrder, this));
+				m_toSendSignal = m_signal;
+				switch (interRuptRc)
+				{
+				case STRATEGY_INTERRUPT_BREAKING:
+				{
+					m_resumeMaster = false;
+					m_strategyStatus = CMSPEC01_STATUS_ORDER_SENT;
+					sendOrder();
+					break;
+				}
+				case STRATEGY_INTERRUPT_WAIT_CALLBACK:
+				{
+					m_resumeMaster = true;
+					m_strategyStatus = CMSPEC01_STATUS_ORDER_SENT;
+					break;
+				}
+				}
+				break;
 			}
 			}
 		}
@@ -200,8 +225,15 @@ void cmSepc01::resumeMaster()
 			cmMM01 *pStrategy = (cmMM01 *)m_masterStrategy;
 			pStrategy->resume();
 		}
+		case STRATEGY_cmMM02:
+		{
+			cmMM02 *pStrategy = (cmMM02 *)m_masterStrategy;
+			pStrategy->resume();
+		}
 		}
 	}
+	else
+		LOG(INFO) << m_strategyId << ": master strategy not resumed!" << endl;
 };
 
 void cmSepc01::sendOrder(){

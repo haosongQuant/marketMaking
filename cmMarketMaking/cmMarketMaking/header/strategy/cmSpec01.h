@@ -8,6 +8,7 @@
 #include "baseClass/Utils.h"
 #include <boost\circular_buffer.hpp>
 #include "strategy\cmMM01.h"
+#include "strategy\cmMM02.h"
 
 using namespace std;
 

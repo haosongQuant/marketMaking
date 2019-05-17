@@ -24,7 +24,7 @@
     "strategy": [
         {
             "strategyID": "mm_ni1907",
-            "strategyTyp": "cmMM01",
+            "strategyTyp": "cmMM02",
             "productId": "ni1907",
             "exchange": "SHFE",
             "quote": "quoteCTP01",
@@ -33,25 +33,7 @@
             "miniOrderSpread": 4.0,
             "orderQty": 6,
             "volMulti": 1,
-            "holdingRequirement": 12,
-            "openTime": [
-                { "start": 901, "end": 1014 },
-                { "start": 1031, "end": 1128 },
-                { "start": 1329, "end": 1459 },
-                { "start": 2101, "end": 2329 }
-            ]
-        },        {
-            "strategyID": "mm_ni1908",
-            "strategyTyp": "cmMM02",
-            "productId": "ni1908",
-            "exchange": "SHFE",
-            "quote": "quoteCTP01",
-            "trade": "tradeCTP01",
-            "tickSize": 10,
-            "miniOrderSpread": 4.0,
-            "orderQty": 6,
-            "volMulti": 1,
-            "holdingRequirement": 12,
+            "holdingRequirement": 6,
             "openTime": [
                 { "start": 901, "end": 1014 },
                 { "start": 1031, "end": 1128 },
@@ -93,6 +75,25 @@
             "orderQty": 10,
             "volMulti": 5,
             "holdingRequirement": 100,
+            "openTime": [
+                { "start": 901, "end": 1014 },
+                { "start": 1031, "end": 1128 },
+                { "start": 1329, "end": 1459 },
+                { "start": 2101, "end": 2329 }
+            ]
+        },
+        {
+            "strategyID": "mm_ni1908",
+            "strategyTyp": "cmMM02",
+            "productId": "ni1908",
+            "exchange": "SHFE",
+            "quote": "quoteCTP01",
+            "trade": "tradeCTP01",
+            "tickSize": 10,
+            "miniOrderSpread": 4.0,
+            "orderQty": 6,
+            "volMulti": 1,
+            "holdingRequirement": 6,
             "openTime": [
                 { "start": 901, "end": 1014 },
                 { "start": 1031, "end": 1128 },
