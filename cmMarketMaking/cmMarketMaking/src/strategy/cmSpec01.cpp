@@ -268,7 +268,7 @@ void cmSepc01::sendOrder(){
 	{
 		m_orderRef = m_infra->insertOrder(m_tradeAdapterID, m_productId, m_exchange,
 			ORDER_TYPE_LIMIT, dir, 
-			(dir == ORDER_DIR_BUY ? POSITION_EFFECT_OPEN : POSITION_EFFECT_CLOSE),
+			(m_netOpenInterest == 0 ? POSITION_EFFECT_OPEN : POSITION_EFFECT_CLOSE),
 			FLAG_SPECULATION, price, vol,
 			bind(&cmSepc01::onOrderRtn, this, _1),
 			bind(&cmSepc01::onTradeRtn, this, _1));

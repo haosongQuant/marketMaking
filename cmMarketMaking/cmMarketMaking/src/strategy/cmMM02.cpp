@@ -87,21 +87,40 @@ void cmMM02::orderPrice(double* bidprice, double* askprice)
 	}
 	int quoteSpread = round((plastQuote->askprice[0] - plastQuote->bidprice[0]) / m_tickSize);
 	if (quoteSpread > m_miniOrderSpread) return;
-	switch (quoteSpread)
+	int spreadDiff = round(m_miniOrderSpread - quoteSpread);
+	if (spreadDiff % 2 == 1)
 	{
-	case 1:
-	case 2:
+		if (plastQuote->LastPrice >= m_lastPrz_1)
+			*bidprice = plastQuote->bidprice[0] - m_tickSize * (spreadDiff-1)/2;
+		else
+			*bidprice = plastQuote->bidprice[0] - m_tickSize * (spreadDiff+1) / 2;
+	}
+	else if (spreadDiff <= 2)
 	{
-		*bidprice = plastQuote->bidprice[0] - m_tickSize;
-		break;
+		*bidprice = plastQuote->bidprice[0] - m_tickSize * spreadDiff / 2;
 	}
-	case 3:
-	case 4:
+	else
 	{
-		*bidprice = plastQuote->bidprice[0];
-		break;
+		if (plastQuote->LastPrice >= m_lastPrz_1)
+			*bidprice = plastQuote->bidprice[0] - m_tickSize * (spreadDiff - 2) / 2;
+		else
+			*bidprice = plastQuote->bidprice[0] - m_tickSize * (spreadDiff + 2) / 2;
 	}
-	}
+	//switch (quoteSpread)
+	//{
+	//case 1:
+	//case 2:
+	//{
+	//	*bidprice = plastQuote->bidprice[0] - m_tickSize;
+	//	break;
+	//}
+	//case 3:
+	//case 4:
+	//{
+	//	*bidprice = plastQuote->bidprice[0];
+	//	break;
+	//}
+	//}
 	//*bidprice = plastQuote->bidprice[0] + int((quoteSpread - m_miniOrderSpread) / 2) * m_tickSize;
 	//*bidprice = plastQuote->askprice[0]; //≤‚ ‘≥…Ωª
 	*askprice = *bidprice + m_tickSize * m_miniOrderSpread;

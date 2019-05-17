@@ -266,4 +266,5 @@ void cmMM02::resume()
 	m_strategyStatus = cmMM02_STATUS_READY;
 	m_pauseReq = false; 
 	LOG(INFO) << m_strategyId << " resumed." << endl;
+	cout << m_strategyId << ": market making resumed." << endl;
 };
