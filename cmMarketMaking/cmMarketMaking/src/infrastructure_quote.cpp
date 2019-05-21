@@ -223,7 +223,8 @@ void infrastructure::onRtnCtpQuote(string adapterID, CThostFtdcDepthMarketDataFi
 			quote->askvol[4] = dataptr->AskVolume5;
 			quote->AveragePrice = dataptr->AveragePrice;
 		}
-		m_quoteTP->getDispatcher().post(bind(&infrastructure::onFuturesTick, this, adapterID, quote));
+		//m_quoteTP->getDispatcher().post(bind(&infrastructure::onFuturesTick, this, adapterID, quote));
+		onFuturesTick(adapterID, quote);
 	}
 	else
 		LOG(WARNING) << "quote category not recognized! instrument: " << dataptr->InstrumentID << endl;

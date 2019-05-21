@@ -190,16 +190,20 @@ void quoteAdapter_CTP::OnRtnDepthMarketData(CThostFtdcDepthMarketDataField *pDep
 	//	<< " 买一量:" << pDepthMarketData->BidVolume1
 	//	<< " 持仓量:" << pDepthMarketData->OpenInterest << endl;
 
-#ifdef	ADAPTER_LOGGING
-	LOG(INFO) << "," << m_adapterID << ",行情,tradingDate:"<< pDepthMarketData ->TradingDay<<",instrument:" << pDepthMarketData->InstrumentID << ",lastPrice:" << pDepthMarketData->LastPrice << endl;
-#else
-	cout << m_adapterID << ",行情,tradingDate:"<< pDepthMarketData ->TradingDay<<",instrument:" << pDepthMarketData->InstrumentID << ",lastPrice:" << pDepthMarketData->LastPrice << endl;
-#endif
-
 	if (m_onRtnMarketData != NULL)
 		m_onRtnMarketData(m_adapterID, pDepthMarketData);
 	else
 		LOG(WARNING) << m_adapterID << ",行情未处理, instrument:" << pDepthMarketData->InstrumentID << endl;
+
+#ifdef	ADAPTER_LOGGING
+	LOG(INFO) << "," << m_adapterID << ",行情, tradingDate:"<< pDepthMarketData ->TradingDay
+		<<",instrument:" << pDepthMarketData->InstrumentID 
+		<< ", bid1:" << pDepthMarketData->BidPrice1
+		<< ", ask1:" << pDepthMarketData->AskPrice1
+		<< ",lastPrice:" << pDepthMarketData->LastPrice << endl;
+#else
+	cout << m_adapterID << ",行情,tradingDate:"<< pDepthMarketData ->TradingDay<<",instrument:" << pDepthMarketData->InstrumentID << ",lastPrice:" << pDepthMarketData->LastPrice << endl;
+#endif
 };
 
 void quoteAdapter_CTP::OnRspError(CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)

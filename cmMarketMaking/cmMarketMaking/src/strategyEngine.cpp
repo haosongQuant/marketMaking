@@ -4,8 +4,8 @@
 strategyEngine::strategyEngine(Json::Value  config, infrastructure* infra):
 m_config(config), m_infra(infra)
 {
-	m_quoteTP = athenathreadpoolPtr(new threadpool(20));
-	m_tradeTP = athenathreadpoolPtr(new threadpool(10));
+	m_quoteTP = athenathreadpoolPtr(new threadpool(50));
+	m_tradeTP = athenathreadpoolPtr(new threadpool(50));
 	infra->broadcastOrder = boost::bind(&strategyEngine::onBroadcastOrder, this, _1);
 };
 

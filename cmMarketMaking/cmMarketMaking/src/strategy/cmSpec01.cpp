@@ -42,7 +42,7 @@ void cmSepc01::daemonEngine(){
 		if (CMSPEC01_STATUS_INIT != m_strategyStatus && CMSPEC01_STATUS_STOP != m_strategyStatus)
 			m_strategyStatus = CMSPEC01_STATUS_STOP;
 	}
-	else if (CMSPEC01_STATUS_START != m_strategyStatus)
+	else if (CMSPEC01_STATUS_INIT == m_strategyStatus || CMSPEC01_STATUS_STOP == m_strategyStatus)
 		startStrategy();
 
 	m_daemonTimer.expires_from_now(boost::posix_time::millisec(1000 * 60)); //每分钟运行一次

@@ -556,6 +556,7 @@ void cmMM02::cancelHedgeOrder()//const boost::system::error_code& error){
 			else if(m_hedgeOrderCancelRC[iter->first] == ORDER_CANCEL_ERROR_NOT_FOUND)
 			{
 				m_infra->queryOrder(m_tradeAdapterID, iter->first);
+				m_hedgeOrderCancelRC[iter->first] = 0;
 				m_cancelHedgeTimer.expires_from_now(boost::posix_time::milliseconds(1000));
 				m_cancelHedgeTimer.async_wait(boost::bind(&cmMM02::cancelHedgeOrder, this));// ,boost::asio::placeholders::error));
 				return;

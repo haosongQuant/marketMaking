@@ -23,9 +23,9 @@
 
     "strategy": [
         {
-            "strategyID": "mm_ni1907",
+            "strategyID": "mm_ni1908",
             "strategyTyp": "cmMM02",
-            "productId": "ni1907",
+            "productId": "ni1908",
             "exchange": "SHFE",
             "quote": "quoteCTP01",
             "trade": "tradeCTP01",
@@ -42,16 +42,16 @@
             ]
         },
         {
-            "strategyID": "spec_ni1907",
+            "strategyID": "spec_ni1908",
             "strategyTyp": "cmSpec01",
-            "productId": "ni1907",
+            "productId": "ni1908",
             "exchange": "SHFE",
             "quote": "quoteCTP01",
             "trade": "tradeCTP01",
             "tickSize": 10,
             "orderQty": 1,
             "volMulti": 1,
-            "masterStrategy": "mm_ni1907",
+            "masterStrategy": "mm_ni1908",
             "openTime": [
                 { "start": 901, "end": 1014 },
                 { "start": 1031, "end": 1128 },
@@ -63,6 +63,25 @@
 
     "backup": [
         
+        {
+            "strategyID": "mm_ni1910",
+            "strategyTyp": "cmMM02",
+            "productId": "ni1910",
+            "exchange": "SHFE",
+            "quote": "quoteCTP01",
+            "trade": "tradeCTP01",
+            "tickSize": 10,
+            "miniOrderSpread": 5.0,
+            "orderQty": 6,
+            "volMulti": 1,
+            "holdingRequirement": 6,
+            "openTime": [
+                { "start": 901, "end": 1014 },
+                { "start": 1031, "end": 1128 },
+                { "start": 1329, "end": 1459 },
+                { "start": 2101, "end": 2329 }
+            ]
+        },
         {
             "strategyID": "mm_TA911",
             "strategyTyp": "cmMM01",
