@@ -2,131 +2,6 @@
 #include "infrastructure.h"
 #include "glog\logging.h"
 
-//
-//void infrastructure::createTradeAdapter(string adapterID, string tradeFront, string broker, string user, 
-//	string pwd, string userproductID, string authenticateCode, athenathreadpoolPtr tp)
-//{
-//	tradeAdapterCTP * pTradeAdapter = new tradeAdapterCTP(adapterID, (char *)tradeFront.c_str(), 
-//		(char *)broker.c_str(), (char *)user.c_str(), (char *)pwd.c_str(), (char *)userproductID.c_str(), 
-//		(char *)authenticateCode.c_str(), tp);
-//	pTradeAdapter->m_OnUserLogin = bind(&infrastructure::onAdapterLogin, shared_from_this(), _1);
-//	pTradeAdapter->m_OnUserLogout = bind(&infrastructure::onAdapterLogout, shared_from_this(), _1);
-//	pTradeAdapter->m_OnFrontDisconnected = bind(&infrastructure::onFrontDisconnected, shared_from_this(), _1, _2);
-//	pTradeAdapter->m_OnInstrumentsRtn = bind(&infrastructure::onRtnCtpInstruments, shared_from_this(), _1, _2);
-//	pTradeAdapter->init();
-//	m_tradeAdapters[adapterID] = pTradeAdapter;
-//	m_adapters[adapterID] = pTradeAdapter;
-//	{
-//		boost::mutex::scoped_lock lock(m_adapterStatusLock);
-//		m_adapterStatus[adapterID] = ADAPTER_STATUS_NEW;
-//	}
-//	LOG(WARNING) << "creating tradeAdapter: " << adapterID << endl;
-//};
-//
-//
-//void infrastructure::createQuoteAdapter(string adapterID, string mdFront, string broker, 
-//	string user, string pwd)
-//{
-//	quoteAdapter_CTP * pQuoteAdapter = new quoteAdapter_CTP(adapterID, (char *)mdFront.c_str(), 
-//		(char *)broker.c_str(), (char *)user.c_str(), (char *)pwd.c_str());
-//	pQuoteAdapter->m_onRtnMarketData = bind(&infrastructure::onRtnCtpQuote, shared_from_this(), _1, _2);
-//	pQuoteAdapter->m_OnUserLogin = bind(&infrastructure::onAdapterLogin, shared_from_this(), _1);
-//	pQuoteAdapter->m_OnFrontDisconnected = bind(&infrastructure::onFrontDisconnected, shared_from_this(), _1, _2);
-//	pQuoteAdapter->m_OnUserLogout = bind(&infrastructure::onAdapterLogout, shared_from_this(), _1);
-//	pQuoteAdapter->init();
-//	m_quoteAdapters[adapterID] = pQuoteAdapter;
-//	m_adapters[adapterID] = pQuoteAdapter;
-//	{
-//		boost::mutex::scoped_lock lock(m_adapterStatusLock);
-//		m_adapterStatus[adapterID] = ADAPTER_STATUS_NEW;
-//	}
-//	LOG(WARNING) << "creating quoteAdapter: " << adapterID << endl;
-//};
-//
-//void infrastructure::deleteAdapter(string adapterID, string adapterType, bool reCreate)
-//{
-//	LOG(WARNING) << "in deleteAdapter " << adapterID << "," << adapterType << endl;
-//	if (reCreate && inOpenTime(adapterID, adapterType))
-//	{
-//		if (adapterType == "trade")
-//			deleteTradeAdapter(adapterID, true);
-//		else if (adapterType == "quote")
-//			deleteQuoteAdapter(adapterID, true);
-//
-//		if (adapterType == "trade")
-//		{
-//			boost::mutex::scoped_lock lock(m_delayed_TimerLock1);
-//			m_delayed_Timer1.expires_from_now(boost::posix_time::milliseconds(5 * 1000));
-//			m_delayed_Timer1.async_wait(
-//				bind(&infrastructure::createTradeAdapter, shared_from_this(), m_tradeAdapterCfg[adapterID].m_adapterID,
-//				m_tradeAdapterCfg[adapterID].m_frontIP, m_tradeAdapterCfg[adapterID].m_broker, 
-//				m_tradeAdapterCfg[adapterID].m_user, m_tradeAdapterCfg[adapterID].m_pwd,
-//				m_tradeAdapterCfg[adapterID].m_productID, m_tradeAdapterCfg[adapterID].m_authCode, m_threadpool));
-//			LOG(WARNING) << "reCreating tradeAdapter: " << adapterID << endl;
-//		}
-//		else if (adapterType == "quote")
-//		{
-//			boost::mutex::scoped_lock lock(m_delayed_TimerLock2);
-//			m_delayed_Timer2.expires_from_now(boost::posix_time::milliseconds(5 * 1000));
-//			m_delayed_Timer2.async_wait(
-//				bind(&infrastructure::createQuoteAdapter, shared_from_this(),
-//				m_quoteAdapterCfg[adapterID].m_adapterID, m_quoteAdapterCfg[adapterID].m_frontIP,
-//				m_quoteAdapterCfg[adapterID].m_broker, m_quoteAdapterCfg[adapterID].m_user, 
-//				m_quoteAdapterCfg[adapterID].m_pwd));
-//			LOG(WARNING) << "reCreating quoteAdapter: " << adapterID << endl;
-//		}
-//	}
-//	else
-//	{
-//		if (adapterType == "trade")
-//			deleteTradeAdapter(adapterID, false);
-//		else if (adapterType == "quote")
-//			deleteQuoteAdapter(adapterID, false);
-//	}
-//};
-//
-//void infrastructure::deleteTradeAdapter(string adapterID, bool reCreate)
-//{
-//	if (m_adapters[adapterID] != nullptr)
-//	{
-//		m_adapters[adapterID]->destroyAdapter();
-//		delete m_adapters[adapterID];
-//		m_adapters[adapterID] = nullptr;
-//		m_tradeAdapters[adapterID] = nullptr;
-//	}
-//	if (reCreate)
-//	{
-//		boost::mutex::scoped_lock lock(m_adapterStatusLock);
-//		m_adapterStatus[adapterID] = ADAPTER_STATUS_TONEW;
-//	}
-//	else
-//	{
-//		boost::mutex::scoped_lock lock(m_adapterStatusLock);
-//		m_adapterStatus[adapterID] = ADAPTER_STATUS_NA;
-//	}
-//};
-//
-//void infrastructure::deleteQuoteAdapter(string adapterID, bool reCreate)
-//{
-//	if (m_adapters[adapterID] != nullptr)
-//	{
-//		m_adapters[adapterID]->destroyAdapter();
-//		delete m_adapters[adapterID];
-//		m_adapters[adapterID] = nullptr;
-//		m_quoteAdapters[adapterID] = nullptr;
-//	}
-//	if (reCreate)
-//	{
-//		boost::mutex::scoped_lock lock(m_adapterStatusLock);
-//		m_adapterStatus[adapterID] = ADAPTER_STATUS_TONEW;
-//	}
-//	else
-//	{
-//		boost::mutex::scoped_lock lock(m_adapterStatusLock);
-//		m_adapterStatus[adapterID] = ADAPTER_STATUS_NA;
-//	}
-//};
-
 void infrastructure::registerFuturesQuoteHandler(string adapterID, string exchange, string instList,
 	boost::function<void(futuresMDPtr)> handler)
 {
@@ -299,19 +174,15 @@ void infrastructure::onFuturesTick(string adapterID, futuresMDPtr pQuote)
 	auto iter0 = m_futuresMDHandler.find(adapterID);
 	if (iter0 != m_futuresMDHandler.end())
 	{
-		//auto iter1 = iter0->second.find(string(pQuote->ExchangeID));
-		//if (iter1 != iter0->second.end())
-		//{
-			auto iter2 = iter0->second.find(string(pQuote->InstrumentID));
-			if (iter2 != iter0->second.end())
+		auto iter2 = iter0->second.find(string(pQuote->InstrumentID));
+		if (iter2 != iter0->second.end())
+		{
+			for each(auto item in iter2->second)
 			{
-				for each(auto item in iter2->second)
-				{
-					m_quoteTP->getDispatcher().post(bind((item), pQuote));
-				}
-				return;
+				m_quoteTP->getDispatcher().post(bind((item), pQuote));
 			}
-		//}
+			return;
+		}
 	}
 	LOG(WARNING) << "infra warning: "<< string(pQuote->InstrumentID) << " no handler registered!" << endl;
 	return;

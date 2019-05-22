@@ -5,8 +5,10 @@
 #include <boost\thread\mutex.hpp>
 #include <boost\bind.hpp>
 #include <boost\function.hpp>
+#include "baseClass/UTC.h"
 
 using namespace std;
+using namespace athenaUTC;
 
 class quoteAdapter_CTP : public quoteAdapterBase, public CThostFtdcMdSpi
 {
@@ -20,6 +22,9 @@ private:
 	int SubscribeMarketData(char * pInstrumentList);
 	void UnSubscribeMarketData(char * pInstrumentList);
 
+private:
+	//boost::detail::spinlock m_lastQuoteTime_lock;
+	map<string, double>     m_lastQuoteTime;
 public:
 	virtual void Subscribe(string instIdList, string exchange)
 	{

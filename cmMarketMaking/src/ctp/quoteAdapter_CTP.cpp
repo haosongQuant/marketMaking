@@ -128,6 +128,7 @@ int quoteAdapter_CTP::SubscribeMarketData(char * pInstrumentList)
 
 		pInstId[i] = list[i];
 		string instTemp = string(list[i]);
+		m_lastQuoteTime[instTemp] = 0.0;
 		auto iter = find(m_instrumentList.begin(), m_instrumentList.end(), instTemp);
 		if (iter == m_instrumentList.end())
 			m_instrumentList.push_back(instTemp);
@@ -189,21 +190,34 @@ void quoteAdapter_CTP::OnRtnDepthMarketData(CThostFtdcDepthMarketDataField *pDep
 	//	<< " 买一价:" << pDepthMarketData->BidPrice1
 	//	<< " 买一量:" << pDepthMarketData->BidVolume1
 	//	<< " 持仓量:" << pDepthMarketData->OpenInterest << endl;
-
-	if (m_onRtnMarketData != NULL)
-		m_onRtnMarketData(m_adapterID, pDepthMarketData);
-	else
-		LOG(WARNING) << m_adapterID << ",行情未处理, instrument:" << pDepthMarketData->InstrumentID << endl;
+	string instrument = string(pDepthMarketData->InstrumentID);
+	double quoteArrivalMilliSec = UTC::GetMilliSecs();
+	if (quoteArrivalMilliSec - m_lastQuoteTime[instrument] > 10)
+	{
+		if (m_onRtnMarketData != NULL)
+			m_onRtnMarketData(m_adapterID, pDepthMarketData);
+		else
+			LOG(WARNING) << m_adapterID << ",行情未处理, instrument:" << pDepthMarketData->InstrumentID << endl;
 
 #ifdef	ADAPTER_LOGGING
-	LOG(INFO) << "," << m_adapterID << ",行情, tradingDate:"<< pDepthMarketData ->TradingDay
-		<<",instrument:" << pDepthMarketData->InstrumentID 
-		<< ", bid1:" << pDepthMarketData->BidPrice1
-		<< ", ask1:" << pDepthMarketData->AskPrice1
-		<< ",lastPrice:" << pDepthMarketData->LastPrice << endl;
+		LOG(INFO) << "," << m_adapterID << ",行情, tradingDate:" << pDepthMarketData->TradingDay
+			<< ",instrument:" << pDepthMarketData->InstrumentID
+			<< ", bid1:" << pDepthMarketData->BidPrice1
+			<< ", ask1:" << pDepthMarketData->AskPrice1
+			<< ",lastPrice:" << pDepthMarketData->LastPrice << endl;
 #else
-	cout << m_adapterID << ",行情,tradingDate:"<< pDepthMarketData ->TradingDay<<",instrument:" << pDepthMarketData->InstrumentID << ",lastPrice:" << pDepthMarketData->LastPrice << endl;
+		cout << m_adapterID << ",行情,tradingDate:" << pDepthMarketData->TradingDay << ",instrument:" << pDepthMarketData->InstrumentID << ",lastPrice:" << pDepthMarketData->LastPrice << endl;
 #endif
+	}
+	else
+	{
+#ifdef	ADAPTER_LOGGING
+		LOG(WARNING) << m_adapterID << ": 行情间隔小于10ms, 忽略 ! " << endl;
+#else
+		cout << m_adapterID << ": 行情间隔小于10ms, 忽略 ! "<< endl;
+#endif
+	}
+	m_lastQuoteTime[instrument] = quoteArrivalMilliSec;
 };
 
 void quoteAdapter_CTP::OnRspError(CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
