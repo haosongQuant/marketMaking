@@ -84,6 +84,9 @@
     <ClCompile Include="src\strategy\cmMM02_deamon.cpp">
       <Filter>源文件\strategy</Filter>
     </ClCompile>
+    <ClCompile Include="src\strategy\cmTestOrder01.cpp">
+      <Filter>源文件\strategy</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="header\threadpool\threadpool.h">
@@ -138,6 +141,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="header\strategy\cmMM02.h">
+      <Filter>头文件\strategy</Filter>
+    </ClInclude>
+    <ClInclude Include="header\strategy\cmTestOrder01.h">
       <Filter>头文件\strategy</Filter>
     </ClInclude>
   </ItemGroup>

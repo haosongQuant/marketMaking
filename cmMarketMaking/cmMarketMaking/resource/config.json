@@ -23,6 +23,24 @@
 
     "strategy": [
         {
+            "strategyID": "testOrder_ni1908",
+            "strategyTyp": "cmTestOrder01",
+            "productId": "ni1908",
+            "exchange": "SHFE",
+            "quote": "quoteCTP01",
+            "trade": "tradeCTP01",
+            "openTime": [
+                { "start": 901, "end": 1014 },
+                { "start": 1031, "end": 1128 },
+                { "start": 1329, "end": 1459 },
+                { "start": 2101, "end": 2329 }
+            ]
+        }
+    ],
+
+    "backup": [
+        
+        {
             "strategyID": "mm_ni1908",
             "strategyTyp": "cmMM02",
             "productId": "ni1908",
@@ -58,11 +76,7 @@
                 { "start": 1329, "end": 1459 },
                 { "start": 2101, "end": 2329 }
             ]
-        }
-    ],
-
-    "backup": [
-        
+        },
         {
             "strategyID": "mm_ni1910",
             "strategyTyp": "cmMM02",

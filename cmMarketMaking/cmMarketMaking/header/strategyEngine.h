@@ -8,6 +8,7 @@
 #include "strategy\cmMM01.h"
 #include "strategy\cmMM02.h"
 #include "strategy\cmSpec01.h"
+#include "strategy\cmTestOrder01.h"
 
 struct IpauseStrategy
 {

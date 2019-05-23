@@ -17,6 +17,8 @@ void strategyEngine::registerStrategyType(string strategyID, string strategyType
 			m_strategyTypeMap[strategyID] = STRATEGY_cmMM02;
 	else if ("cmSpec01" == strategyType)
 		m_strategyTypeMap[strategyID] = STRATEGY_cmSpec01;
+	else if ("cmTestOrder01" == strategyType)
+		m_strategyTypeMap[strategyID] = STRATEGY_cmTestOrder01;
 	else
 		m_strategyTypeMap[strategyID] = STRATEGY_ERROR;
 };
@@ -79,6 +81,21 @@ void strategyEngine::init()
 			pCmSpec01->registerMasterStrategy(m_strategies[masterStrategy], m_strategyTypeMap[masterStrategy]);
 			m_strategies[strategyId] = pCmSpec01;
 		}
+		case STRATEGY_cmTestOrder01:
+		{
+			/*string strategyId, string strategyTyp, string productId, string exchange,
+				string quoteAdapterID, string tradeAdapterID,
+				athenathreadpoolPtr quoteTP, athenathreadpoolPtr tradeTP, infrastructure* infra,
+				Json::Value config*/
+			cmTestOrder01 *pCmTestOrder01 = new cmTestOrder01(strategyId, strategyType,
+				strategyConfig["productId"].asString(),
+				strategyConfig["exchange"].asString(),
+				strategyConfig["quote"].asString(),
+				strategyConfig["trade"].asString(),
+				m_quoteTP, m_tradeTP, m_infra, strategyConfig
+				);
+			m_strategies[strategyId] = pCmTestOrder01;
+		}
 		}
 	}
 }
@@ -104,6 +121,11 @@ void strategyEngine::onBroadcastOrder(orderRtnPtr orderPtr)
 		{
 			((cmSepc01 *)(iter->second))->registerOrder(orderPtr);
 				break;
+		}
+		case STRATEGY_cmTestOrder01:
+		{
+			((cmTestOrder01 *)(iter->second))->registerOrder(orderPtr);
+			break;
 		}
 		}
 		iter++;
