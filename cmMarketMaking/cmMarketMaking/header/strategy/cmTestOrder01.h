@@ -42,7 +42,7 @@ public:
 		Json::Value config);
 	~cmTestOrder01();
 	virtual void startStrategy();
-	virtual void stopStrategy(){};
+	virtual void stopStrategy();
 	
 private:
 	list< pair <int, int> > m_openTimeList;

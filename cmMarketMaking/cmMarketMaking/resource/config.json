@@ -3,6 +3,68 @@
         {
             "adapterID": "tradeCTP01",
             "adapterType": "tradeCtp",
+            "frontIP": "tcp://101.231.127.50:41205",
+            "broker": "8899",
+            "user": "81180873",
+            "pwd": "pd173196",
+            "Authenticate": false,
+            "productID": "nan",
+            "authCode": "nan"
+        },
+        {
+            "adapterID": "quoteCTP01",
+            "adapterType": "quoteCtp",
+            "frontIP": "tcp://101.231.127.50:41213",
+            "broker": "8899",
+            "user": "81180873",
+            "pwd": "pd173196"
+        }
+    ],
+
+    "strategy": [
+        {
+            "strategyID": "mm_ni1908",
+            "strategyTyp": "cmMM02",
+            "productId": "ni1908",
+            "exchange": "SHFE",
+            "quote": "quoteCTP01",
+            "trade": "tradeCTP01",
+            "tickSize": 10,
+            "miniOrderSpread": 5.0,
+            "orderQty": 6,
+            "volMulti": 1,
+            "holdingRequirement": 6,
+            "openTime": [
+                { "start": 901, "end": 1014 },
+                { "start": 1031, "end": 1128 },
+                { "start": 1329, "end": 1459 },
+                { "start": 2101, "end": 2329 }
+            ]
+        },
+        {
+            "strategyID": "spec_ni1908",
+            "strategyTyp": "cmSpec01",
+            "productId": "ni1908",
+            "exchange": "SHFE",
+            "quote": "quoteCTP01",
+            "trade": "tradeCTP01",
+            "tickSize": 10,
+            "orderQty": 1,
+            "volMulti": 1,
+            "masterStrategy": "mm_ni1908",
+            "openTime": [
+                { "start": 901, "end": 1014 },
+                { "start": 1031, "end": 1128 },
+                { "start": 1329, "end": 1459 },
+                { "start": 2101, "end": 2329 }
+            ]
+        }
+    ],
+
+    "backup": [
+        {
+            "adapterID": "tradeCTP01",
+            "adapterType": "tradeCtp",
             "frontIP": "tcp://180.168.146.187:10000",
             "broker": "9999",
             "user": "140108",
@@ -19,9 +81,7 @@
             "user": "140108",
             "pwd": "1qazxc"
         }
-    ],
-
-    "strategy": [
+        ,,
         {
             "strategyID": "testOrder_ni1908",
             "strategyTyp": "cmTestOrder01",
@@ -36,10 +96,6 @@
                 { "start": 2101, "end": 2329 }
             ]
         }
-    ],
-
-    "backup": [
-        
         {
             "strategyID": "mm_ni1908",
             "strategyTyp": "cmMM02",

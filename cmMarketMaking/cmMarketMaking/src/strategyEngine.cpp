@@ -174,6 +174,12 @@ void strategyEngine::commandProcess()
 					pStrategy->startStrategy();
 					break;
 				}
+				case STRATEGY_cmTestOrder01:
+				{
+					cmTestOrder01 *pStrategy = (cmTestOrder01 *)m_strategies[commandEle[1]];
+					pStrategy->startStrategy();
+					break;
+				}
 				}
 			}
 			else if (commandEle[0] == "stop")
@@ -192,6 +198,12 @@ void strategyEngine::commandProcess()
 					pStrategy->pause(boost::bind(&IpauseStrategy::plainVanilla, &m_pauseInterface));
 					break;
 				}
+				case STRATEGY_cmTestOrder01:
+				{
+					cmTestOrder01 *pStrategy = (cmTestOrder01 *)m_strategies[commandEle[1]];
+					pStrategy->stopStrategy();
+					break;
+				}
 				}
 			}
 			else if (commandEle[0] == "resume")
@@ -208,6 +220,12 @@ void strategyEngine::commandProcess()
 				{
 					cmMM02 *pStrategy = (cmMM02 *)m_strategies[commandEle[1]];
 					pStrategy->resume();
+					break;
+				}
+				case STRATEGY_cmTestOrder01:
+				{
+					cmTestOrder01 *pStrategy = (cmTestOrder01 *)m_strategies[commandEle[1]];
+					pStrategy->startStrategy();
 					break;
 				}
 				}

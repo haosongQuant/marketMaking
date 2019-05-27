@@ -51,6 +51,11 @@ void cmTestOrder01::startStrategy(){
 	m_strategyStatus = CMTESTORDER01_STATUS_START;
 };
 
+void cmTestOrder01::stopStrategy(){
+	boost::recursive_mutex::scoped_lock lock(m_strategyStatusLock);
+	m_strategyStatus = CMTESTORDER01_STATUS_STOP;
+};
+
 void cmTestOrder01::onRtnMD(futuresMDPtr pFuturesMD)//行情响应函数: 更新行情，调用quoteEngine产生信号
 {
 	m_quoteTP->getDispatcher().post(bind(&cmTestOrder01::quoteEngine, this, pFuturesMD));
@@ -89,7 +94,7 @@ void cmTestOrder01::quoteEngine(futuresMDPtr pFuturesMD)
 		if (cancelOrder())
 		{
 			sendLowerLmtOrder();
-			m_strategyStatus = CMTESTORDER01_STATUS_UPPERLIMIT_ORDER;
+			m_strategyStatus = CMTESTORDER01_STATUS_LOWERLIMIT_ORDER;
 		}
 		break; 
 	}
@@ -154,8 +159,9 @@ bool cmTestOrder01::cancelOrder()
 			|| orderIter->second->m_orderStatus == ORDER_STATUS_AllTraded
 			|| orderIter->second->m_orderStatus == ORDER_STATUS_PartTradedNotQueueing)
 		{
-			LOG(WARNING) << m_strategyId << ": order cancelled, orderRef: " << m_orderRef << endl;
+			LOG(INFO) << m_strategyId << ": order terminated, orderRef: " << m_orderRef << endl;
 			m_cancelOrderRC = 0;
+			m_orderRef = 0;
 			return true;
 		}
 	}
@@ -167,7 +173,7 @@ bool cmTestOrder01::cancelOrder()
 		if (m_cancelOrderRC == ORDER_CANCEL_ERROR_SEND_FAIL)
 			LOG(WARNING) << m_strategyId << ": send cancel failed, orderRef: " << m_orderRef << endl;
 		else
-			LOG(WARNING) << m_strategyId << ": send cancel succ, orderRef: " << m_orderRef << endl;
+			LOG(INFO) << m_strategyId << ": send cancel succ, orderRef: " << m_orderRef << endl;
 	}
 
 	return false;
