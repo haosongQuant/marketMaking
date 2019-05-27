@@ -43,6 +43,8 @@ private:
 	string m_tradeAdapterID;
 	double m_tickSize;
 	double m_miniOrderSpread;
+	double m_spotOrderSpread;
+	double m_maxiOrderSpread;
 	double m_orderQty;
 	int    m_volumeMultiple;
 	int    m_holdingRequirement;
@@ -58,7 +60,7 @@ private:
 public:
 	cmMM02(string strategyId, string strategyTyp, string productId, string exchange, 
 		string quoteAdapterID, string tradeAdapterID, double tickSize, double miniOrderSpread,
-		double orderQty, int volMulti, int holdingRequirement,
+		double maxiOrderSpread, double orderQty, int volMulti, int holdingRequirement,
 		athenathreadpoolPtr quoteTP, athenathreadpoolPtr tradeTP, infrastructure* infra,
 		Json::Value config);
 	~cmMM02();

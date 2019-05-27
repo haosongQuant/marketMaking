@@ -31,6 +31,7 @@
             "trade": "tradeCTP01",
             "tickSize": 10,
             "miniOrderSpread": 5.0,
+            "maxiOrderSpread": 10.0,
             "orderQty": 6,
             "volMulti": 1,
             "holdingRequirement": 6,

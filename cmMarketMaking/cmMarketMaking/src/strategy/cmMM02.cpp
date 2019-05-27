@@ -3,12 +3,13 @@
 
 cmMM02::cmMM02(string strategyId, string strategyTyp, string productId, string exchange,
 	string quoteAdapterID, string tradeAdapterID, double tickSize, double miniOrderSpread,
-	double orderQty, int volMulti, int holdingRequirement,
+	double maxiOrderSpread, double orderQty, int volMulti, int holdingRequirement,
 	athenathreadpoolPtr quoteTP, athenathreadpoolPtr tradeTP, infrastructure* infra,
 	Json::Value config)
 	:m_strategyId(strategyId), m_strategyTyp(strategyTyp), m_productId(productId), m_exchange(exchange),
 	m_quoteAdapterID(quoteAdapterID), m_tradeAdapterID(tradeAdapterID), m_tickSize(tickSize),
-	m_miniOrderSpread(miniOrderSpread), m_orderQty(orderQty), m_volumeMultiple(volMulti),
+	m_miniOrderSpread(miniOrderSpread), m_maxiOrderSpread(maxiOrderSpread),
+	m_orderQty(orderQty), m_volumeMultiple(volMulti),
 	m_quoteTP(quoteTP), m_tradeTP(tradeTP), m_infra(infra), m_cycleId(0), m_pauseReq(false),
 	m_breakReq(false), m_strategyConfig(config), m_holdingRequirement(holdingRequirement),
 	m_orderCheckTimer(tradeTP->getDispatcher()), 
@@ -28,6 +29,7 @@ cmMM02::cmMM02(string strategyId, string strategyTyp, string productId, string e
 		= investorPositionPtr(new investorPosition_struct(productId, HOLDING_DIR_LONG));
 	m_investorPosition[productId][HOLDING_DIR_SHORT]
 		= investorPositionPtr(new investorPosition_struct(productId, HOLDING_DIR_SHORT));
+	m_spotOrderSpread = m_miniOrderSpread;
 	m_strategyStatus = cmMM02_STATUS_INIT;
 	daemonEngine();
 };
@@ -86,8 +88,10 @@ void cmMM02::orderPrice(double* bidprice, double* askprice)
 		plastQuote = m_lastQuotePtr;
 	}
 	int quoteSpread = round((plastQuote->askprice[0] - plastQuote->bidprice[0]) / m_tickSize);
-	if (quoteSpread > m_miniOrderSpread) return;
-	int spreadDiff = round(m_miniOrderSpread - quoteSpread);
+	if (quoteSpread > m_maxiOrderSpread) return;
+	if (quoteSpread > m_spotOrderSpread)
+		m_spotOrderSpread = quoteSpread;
+	int spreadDiff = round(m_spotOrderSpread - quoteSpread);
 	if (spreadDiff % 2 == 1)
 	{
 		if (plastQuote->LastPrice >= m_lastPrz_1)
@@ -124,6 +128,10 @@ void cmMM02::orderPrice(double* bidprice, double* askprice)
 	//*bidprice = plastQuote->bidprice[0] + int((quoteSpread - m_miniOrderSpread) / 2) * m_tickSize;
 	//*bidprice = plastQuote->askprice[0]; //测试成交
 	*askprice = *bidprice + m_tickSize * m_miniOrderSpread;
+	if (m_spotOrderSpread > m_miniOrderSpread)
+		m_spotOrderSpread--;
+	if (m_spotOrderSpread < m_miniOrderSpread)
+		m_spotOrderSpread = m_miniOrderSpread;
 };
 
 void cmMM02::startCycle()
@@ -162,7 +170,7 @@ void cmMM02::startCycle()
 	{
 		boost::recursive_mutex::scoped_lock lock(m_strategyStatusLock);
 		m_strategyStatus = cmMM02_STATUS_READY;
-		LOG(INFO) << m_strategyId << ": warning | spread is too wide, no order sent." << endl;
+		LOG(WARNING) << m_strategyId << ": warning | spread is too wide, no order sent." << endl;
 		return;
 	}
 	m_bidOrderRef = m_infra->insertOrder(m_tradeAdapterID, m_productId, m_exchange, ORDER_TYPE_LIMIT,
@@ -428,8 +436,9 @@ void cmMM02::logTrade(tradeRtnPtr ptrade)
 //处理报单的成交回报
 //    1、将策略状态设置为 TRADED_HEDGING
 //    2、如果尚未撤单，下撤单指令
-//    3、下对冲单
-//    4、等待1s钟，调用对冲指令处理函数 cancelHedgeOrder()
+//	  3、将spot_spread设为maxiSpread
+//    4、下对冲单
+//    5、等待1s钟，调用对冲指令处理函数 cancelHedgeOrder()
 void cmMM02::processTrade(tradeRtnPtr ptrade)
 {
 	m_tradeTP->getDispatcher().post(boost::bind(&cmMM02::registerTradeRtn, this, ptrade));
@@ -457,6 +466,8 @@ void cmMM02::processTrade(tradeRtnPtr ptrade)
 
 	//同价对冲
 	sendHedgeOrder(ptrade);
+
+	m_spotOrderSpread = m_maxiOrderSpread;
 
 	//等待1s
 	if (cmMM02_STATUS_TRADED_HEDGING != status)

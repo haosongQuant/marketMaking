@@ -59,6 +59,7 @@ void strategyEngine::init()
 				strategyConfig["trade"].asString(),
 				strategyConfig["tickSize"].asDouble(),
 				strategyConfig["miniOrderSpread"].asDouble(),
+				strategyConfig["maxiOrderSpread"].asDouble(),
 				strategyConfig["orderQty"].asDouble(),
 				strategyConfig["volMulti"].asInt(),
 				strategyConfig["holdingRequirement"].asInt(),
@@ -80,13 +81,10 @@ void strategyEngine::init()
 			string masterStrategy = strategyConfig["masterStrategy"].asString();
 			pCmSpec01->registerMasterStrategy(m_strategies[masterStrategy], m_strategyTypeMap[masterStrategy]);
 			m_strategies[strategyId] = pCmSpec01;
+			break;
 		}
 		case STRATEGY_cmTestOrder01:
 		{
-			/*string strategyId, string strategyTyp, string productId, string exchange,
-				string quoteAdapterID, string tradeAdapterID,
-				athenathreadpoolPtr quoteTP, athenathreadpoolPtr tradeTP, infrastructure* infra,
-				Json::Value config*/
 			cmTestOrder01 *pCmTestOrder01 = new cmTestOrder01(strategyId, strategyType,
 				strategyConfig["productId"].asString(),
 				strategyConfig["exchange"].asString(),
@@ -95,6 +93,7 @@ void strategyEngine::init()
 				m_quoteTP, m_tradeTP, m_infra, strategyConfig
 				);
 			m_strategies[strategyId] = pCmTestOrder01;
+			break;
 		}
 		}
 	}
