@@ -3,10 +3,10 @@
         {
             "adapterID": "tradeCTP01",
             "adapterType": "tradeCtp",
-            "frontIP": "tcp://101.231.127.50:41205",
-            "broker": "8899",
-            "user": "81180873",
-            "pwd": "pd173196",
+            "frontIP": "tcp://180.168.146.187:10000",
+            "broker": "9999",
+            "user": "140108",
+            "pwd": "1qazxc",
             "Authenticate": false,
             "productID": "nan",
             "authCode": "nan"
@@ -14,10 +14,10 @@
         {
             "adapterID": "quoteCTP01",
             "adapterType": "quoteCtp",
-            "frontIP": "tcp://101.231.127.50:41213",
-            "broker": "8899",
-            "user": "81180873",
-            "pwd": "pd173196"
+            "frontIP": "tcp://180.168.146.187:10010",
+            "broker": "9999",
+            "user": "140108",
+            "pwd": "1qazxc"
         }
     ],
 
@@ -65,10 +65,10 @@
         {
             "adapterID": "tradeCTP01",
             "adapterType": "tradeCtp",
-            "frontIP": "tcp://180.168.146.187:10000",
-            "broker": "9999",
-            "user": "140108",
-            "pwd": "1qazxc",
+            "frontIP": "tcp://101.231.127.50:41205",
+            "broker": "8899",
+            "user": " ",
+            "pwd": "pd173196",
             "Authenticate": false,
             "productID": "nan",
             "authCode": "nan"
@@ -76,12 +76,11 @@
         {
             "adapterID": "quoteCTP01",
             "adapterType": "quoteCtp",
-            "frontIP": "tcp://180.168.146.187:10010",
-            "broker": "9999",
-            "user": "140108",
-            "pwd": "1qazxc"
-        }
-        ,,
+            "frontIP": "tcp://101.231.127.50:41213",
+            "broker": "8899",
+            "user": "811",
+            "pwd": "pd173196"
+        },
         {
             "strategyID": "testOrder_ni1908",
             "strategyTyp": "cmTestOrder01",
@@ -95,7 +94,7 @@
                 { "start": 1329, "end": 1459 },
                 { "start": 2101, "end": 2329 }
             ]
-        }
+        },
         {
             "strategyID": "mm_ni1908",
             "strategyTyp": "cmMM02",
