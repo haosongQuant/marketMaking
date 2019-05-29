@@ -6,7 +6,7 @@
             "frontIP": "tcp://180.168.146.187:10000",
             "broker": "9999",
             "user": "140108",
-            "pwd": "1qazxc",
+            "pwd": "2WSXCV",
             "Authenticate": false,
             "productID": "nan",
             "authCode": "nan"
@@ -17,7 +17,7 @@
             "frontIP": "tcp://180.168.146.187:10010",
             "broker": "9999",
             "user": "140108",
-            "pwd": "1qazxc"
+            "pwd": "2WSXCV"
         }
     ],
 
@@ -252,7 +252,7 @@
             "frontIP": "tcp://180.168.146.187:10030",
             "broker": "9999",
             "user": "140108",
-            "pwd": "1qazxc",
+            "pwd": "2WSXCV",
             "Authenticate": false,
             "productID": "nan",
             "authCode": "nan"
