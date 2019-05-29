@@ -110,23 +110,6 @@ void cmMM02::orderPrice(double* bidprice, double* askprice)
 		else
 			*bidprice = plastQuote->bidprice[0] - m_tickSize * (spreadDiff + 2) / 2;
 	}
-	//switch (quoteSpread)
-	//{
-	//case 1:
-	//case 2:
-	//{
-	//	*bidprice = plastQuote->bidprice[0] - m_tickSize;
-	//	break;
-	//}
-	//case 3:
-	//case 4:
-	//{
-	//	*bidprice = plastQuote->bidprice[0];
-	//	break;
-	//}
-	//}
-	//*bidprice = plastQuote->bidprice[0] + int((quoteSpread - m_miniOrderSpread) / 2) * m_tickSize;
-	//*bidprice = plastQuote->askprice[0]; //²âÊÔ³É½»
 	*askprice = *bidprice + m_tickSize * m_spotOrderSpread;
 	if (m_spotOrderSpread > m_miniOrderSpread)
 		m_spotOrderSpread--;
