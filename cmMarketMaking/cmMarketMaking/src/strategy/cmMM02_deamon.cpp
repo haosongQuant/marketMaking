@@ -17,7 +17,7 @@ bool cmMM02::isInOpenTime()
 bool cmMM02::isOrderComplete(int orderRef, bool &isTraded)
 {
 	bool isTrdComplete = true;
-	int orderTradedVol = 0;
+	//int orderTradedVol = 0;
 	auto iter01 = m_orderRef2orderRtn.find(orderRef);
 	if (iter01 == m_orderRef2orderRtn.end() ||
 		iter01->second->m_orderStatus == ORDER_STATUS_Unknown)

@@ -135,6 +135,7 @@ private:
 	bool m_cancelHedgeTimerCancelled;
 	void cancelHedgeOrder();// const boost::system::error_code& error);
 	void confirmCancel_hedgeOrder();
+	void cleanupCycle();
 	
 private:
 	double        m_NetHedgeOrderVol;

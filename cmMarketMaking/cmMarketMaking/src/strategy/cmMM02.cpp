@@ -496,6 +496,7 @@ void cmMM02::processHedgeTradeRtn(tradeRtnPtr ptrade)
 	m_tradeTP->getDispatcher().post(boost::bind(&cmMM02::registerTradeRtn, this, ptrade));
 	logTrade(ptrade);
 
+	//todo: delete rest of the function
 	write_lock lock(m_hedgeOrderVolLock);
 	m_hedgeOrderVol[ptrade->m_orderRef] -= ((ptrade->m_orderDir == ORDER_DIR_BUY)
 		? ptrade->m_volume : (ptrade->m_volume*-1));
@@ -521,6 +522,56 @@ void cmMM02::processHedgeOrderRtn(orderRtnPtr pOrder)
 {
 	registerOrder(pOrder);
 }
+
+void cmMM02::cleanupCycle()
+{
+	bool isTrdGrpComplete = true;
+	bool isTraded = false;
+	{
+		read_lock lock0(m_orderRef2cycleRWlock);
+		for each(auto orderRef in m_ptradeGrp->m_orderIdList)
+		{
+			if (!isOrderComplete(orderRef, isTraded))
+			{
+				isTrdGrpComplete = false;
+				break;
+			}
+		}//end: 循环处理每一个order
+	}
+
+	if (!isTrdGrpComplete)
+	{
+		LOG(INFO) << m_strategyId << ": waiting for 0.1 sec to cleanup Cycle!" << endl;
+		m_cancelHedgeTimer.expires_from_now(boost::posix_time::milliseconds(100));
+		m_cancelHedgeTimer.async_wait(boost::bind(&cmMM02::cleanupCycle, this));
+		return;
+	}
+
+	if (!isTraded)
+	{
+		m_cancelHedgeTimerCancelled = true;
+		m_cancelHedgeTimer.cancel();
+		m_orderCheckTimerCancelled = true;
+		m_orderCheckTimer.cancel();
+		m_tradeTP->getDispatcher().post(bind(&cmMM02::registerTrdGrpMap, this, m_cycleId, m_ptradeGrp));
+		startCycle();
+	}
+	else
+	{
+		read_lock lock1(m_orderRtnBuffLock);
+		int  cycleTradedVol = 0;
+		for each(auto orderRef in m_ptradeGrp->m_orderIdList)
+		{
+			int orderTradedVol = 0;
+			orderRtnPtr pOrder = m_orderRef2orderRtn[orderRef];
+			cycleTradedVol += pOrder->m_direction == ORDER_DIR_BUY ?
+				pOrder->m_volumeTraded : (pOrder->m_volumeTraded * -1);
+		}//end: 循环处理每一个order
+		sendNetHedgeOrder(-1 * cycleTradedVol);
+	}
+
+};
+
 
 //处理对冲指令：如果对冲指令未成交，撤单，并异步调用轧差市价对冲函数 confirmCancel_hedgeOrder()
 void cmMM02::cancelHedgeOrder()//const boost::system::error_code& error){
@@ -658,3 +709,4 @@ void cmMM02::processNetHedgeOrderRtn(orderRtnPtr pOrder)
 {
 	registerOrder(pOrder);
 }
+
