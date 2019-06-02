@@ -153,6 +153,7 @@ void cmMM02::startCycle()
 	m_askOrderRef = 0;
 	m_cancelBidOrderRC = 0;
 	m_cancelAskOrderRC = 0;
+	m_hedgeOrderVol.clear();
 	m_orderCheckTimerCancelled = false;
 	m_cancelHedgeTimerCancelled = false;
 	m_ptradeGrp = tradeGroupBufferPtr(new tradeGroupBuffer());
@@ -172,9 +173,7 @@ void cmMM02::startCycle()
 		bind(&cmMM02::onOrderRtn, this, _1), bind(&cmMM02::onTradeRtn, this, _1));
 	if (m_bidOrderRef > 0)
 	{
-		write_lock lock0(m_orderRef2cycleRWlock);
-		m_orderRef2cycle[m_bidOrderRef] = m_ptradeGrp;
-		m_ptradeGrp->m_orderIdList.push_back(m_bidOrderRef);
+		registerOrderRef(m_bidOrderRef);
 	}
 
 	m_askOrderRef = m_infra->insertOrder(m_tradeAdapterID, m_productId, m_exchange, ORDER_TYPE_LIMIT,
@@ -182,9 +181,7 @@ void cmMM02::startCycle()
 		bind(&cmMM02::onOrderRtn, this, _1), bind(&cmMM02::onTradeRtn, this, _1));
 	if (m_askOrderRef > 0)
 	{
-		write_lock lock0(m_orderRef2cycleRWlock);
-		m_orderRef2cycle[m_askOrderRef] = m_ptradeGrp;
-		m_ptradeGrp->m_orderIdList.push_back(m_askOrderRef);
+		registerOrderRef(m_askOrderRef);
 	}
 
 	if (m_bidOrderRef == 0 || m_askOrderRef == 0)
@@ -444,7 +441,7 @@ void cmMM02::processTrade(tradeRtnPtr ptrade)
 		read_lock lock1(m_orderRef2cycleRWlock);
 		if (m_cycleId != m_orderRef2cycle[ptrade->m_orderRef]->m_Id) //如果所在的cycle已经结束, 不做处理
 		{
-			LOG(WARNING) << m_strategyId <<": old cycle's trade rtn received!" << endl;
+			LOG(INFO) << m_strategyId << ": old cycle's trade rtn received! orderRef: " << ptrade->m_orderRef << endl;
 			return;
 		}
 
@@ -489,9 +486,7 @@ void cmMM02::sendHedgeOrder(tradeRtnPtr ptrade)//同价对冲
 
 	if (m_hedgeOrderRef > 0)
 	{
-		write_lock lock0(m_orderRef2cycleRWlock);
-		m_orderRef2cycle[m_bidOrderRef] = m_ptradeGrp;
-		m_ptradeGrp->m_orderIdList.push_back(m_hedgeOrderRef);
+		registerOrderRef(m_hedgeOrderRef);
 
 		//记录对冲量和撤销（完成）状态
 		write_lock lock1(m_hedgeOrderVolLock);
@@ -512,8 +507,12 @@ void cmMM02::processHedgeTradeRtn(tradeRtnPtr ptrade)
 {
 	m_tradeTP->getDispatcher().post(boost::bind(&cmMM02::registerTradeRtn, this, ptrade));
 	logTrade(ptrade);
-
-	//todo: delete rest of the function
+	read_lock lock1(m_orderRef2cycleRWlock);
+	if (m_cycleId != m_orderRef2cycle[ptrade->m_orderRef]->m_Id) //如果所在的cycle已经结束, 不做处理
+	{
+		LOG(INFO) << m_strategyId << ": old cycle's hedge trade rtn received! orderRef: " << ptrade->m_orderRef << endl;
+		return;
+	}
 	write_lock lock(m_hedgeOrderVolLock);
 	m_hedgeOrderVol[ptrade->m_orderRef] -= ((ptrade->m_orderDir == ORDER_DIR_BUY)
 		? ptrade->m_volume : (ptrade->m_volume*-1));
@@ -523,7 +522,6 @@ void cmMM02::processHedgeTradeRtn(tradeRtnPtr ptrade)
 	//同价对冲单全部成交
 	if (m_hedgeOrderVol.size() == 0)
 	{
-		m_hedgeOrderVol.clear();
 		m_cancelHedgeTimerCancelled = true;
 		m_cancelHedgeTimer.cancel();
 		m_orderCheckTimerCancelled = true;
@@ -598,7 +596,6 @@ void cmMM02::cleanupCycle()
 		}
 		else
 		{
-			m_hedgeOrderVol.clear();
 			m_orderCheckTimerCancelled = true;
 			m_orderCheckTimer.cancel();
 			m_tradeTP->getDispatcher().post(bind(&cmMM02::registerTrdGrpMap, this, m_cycleId, m_ptradeGrp));
@@ -707,9 +704,7 @@ void cmMM02::sendNetHedgeOrder(double netHedgeVol)
 		bind(&cmMM02::onNetHedgeOrderRtn, this, _1), bind(&cmMM02::onNetHedgeTradeRtn, this, _1));
 	if (netHedgeOrderRef > 0)
 	{
-		write_lock lock0(m_orderRef2cycleRWlock);
-		m_orderRef2cycle[netHedgeOrderRef] = m_ptradeGrp;
-		m_ptradeGrp->m_orderIdList.push_back(netHedgeOrderRef);
+		registerOrderRef(netHedgeOrderRef);
 
 		//记录轧差对冲量
 		boost::mutex::scoped_lock lock(m_NetHedgeOrderVolLock);
@@ -736,7 +731,6 @@ void cmMM02::processNetHedgeTradeRtn(tradeRtnPtr ptrade)
 	LOG(INFO) << m_strategyId << ": net hedge order left: " << m_NetHedgeOrderVol << endl;
 	if (0.0 == m_NetHedgeOrderVol) //轧差对冲全部成交
 	{
-		m_hedgeOrderVol.clear();
 		m_orderCheckTimerCancelled = true;
 		m_orderCheckTimer.cancel();
 		m_tradeTP->getDispatcher().post(bind(&cmMM02::registerTrdGrpMap, this, m_cycleId, m_ptradeGrp));

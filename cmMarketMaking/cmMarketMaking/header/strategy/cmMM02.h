@@ -182,6 +182,11 @@ private: // for clear cycle
 	tradeGroupBufferPtr     m_ptradeGrp; //用于记录单个交易闭环的所有报单号
 	map < int, tradeGroupBufferPtr >  m_orderRef2cycle;     //orderRef -> cycle Id
 	boost::shared_mutex     m_orderRef2cycleRWlock; //用于m_orderRef2cycle的读写锁
+	void registerOrderRef(int orderRef){
+		write_lock lock0(m_orderRef2cycleRWlock);
+		m_orderRef2cycle[orderRef] = m_ptradeGrp;
+		m_ptradeGrp->m_orderIdList.push_back(orderRef);
+	}
 
 	list<tradeGroupBufferPtr>      m_tradeGrpBuffer;//用于每个交易闭环清理现场
 	list<tradeGroupBufferPtr>      m_aliveTrdGrp;//用于每个交易闭环清理现场
