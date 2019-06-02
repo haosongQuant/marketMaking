@@ -122,7 +122,7 @@ void cmMM02::daemonEngine(){
 			if (!isOrderComplete(orderRef, isTraded))
 			{
 				isTrdGrpComplete = false;
-				break;
+				//break;
 			}
 		}//end: 循环处理每一个order
 

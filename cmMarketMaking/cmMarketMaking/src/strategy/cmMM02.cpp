@@ -17,6 +17,8 @@ cmMM02::cmMM02(string strategyId, string strategyTyp, string productId, string e
 	m_daemonTimer(tradeTP->getDispatcher()), m_pauseLagTimer(tradeTP->getDispatcher())
 {
 	m_lastQuotePtr = NULL;
+
+	//报单时间
 	int openNum = m_strategyConfig["openTime"].size();
 	for (int i = 0; i < openNum; ++i)
 	{
@@ -25,12 +27,21 @@ cmMM02::cmMM02(string strategyId, string strategyTyp, string productId, string e
 		int endTime = openInterval["end"].asInt() * 100 + 00;
 		m_openTimeList.push_back(make_pair(startTime, endTime));
 	}
+
+	//当前持仓
 	m_investorPosition[productId][HOLDING_DIR_LONG] 
 		= investorPositionPtr(new investorPosition_struct(productId, HOLDING_DIR_LONG));
 	m_investorPosition[productId][HOLDING_DIR_SHORT]
 		= investorPositionPtr(new investorPosition_struct(productId, HOLDING_DIR_SHORT));
+
+	//报价价差
 	m_spotOrderSpread = m_miniOrderSpread;
+
+	//初始状态
+	initStatusDiscription();
 	m_strategyStatus = cmMM02_STATUS_INIT;
+
+	//启动守护线程
 	daemonEngine();
 };
 
@@ -53,7 +64,7 @@ void cmMM02::resetStrategyStatus(){ //等待行情触发cycle
 void cmMM02::quoteEngine()
 {
 	boost::recursive_mutex::scoped_lock lock(m_strategyStatusLock);
-	LOG(INFO) << m_strategyId << " | status: " << m_strategyStatus << endl;
+	LOG(INFO) << m_strategyId << " | status: " << m_statusDiscription[m_strategyStatus] << endl;
 	switch (m_strategyStatus)
 	{
 	case cmMM02_STATUS_READY:
@@ -546,7 +557,7 @@ void cmMM02::cleanupCycle()
 			if (!isOrderComplete(orderRef, isTraded))
 			{
 				isTrdGrpComplete = false;
-				break;
+				//break;
 			}
 		}//end: 循环处理每一个order
 	}
@@ -577,8 +588,14 @@ void cmMM02::cleanupCycle()
 				pOrder->m_volumeTraded : (pOrder->m_volumeTraded * -1);
 		}//end: 循环处理每一个order
 
-		if(cycleTradedVol != 0)
+		if (cycleTradedVol != 0)
+		{
+			{
+				boost::recursive_mutex::scoped_lock lock(m_strategyStatusLock);
+				m_strategyStatus = cmMM02_STATUS_TRADED_NET_HEDGING;
+			}
 			sendNetHedgeOrder(-1 * cycleTradedVol);
+		}
 		else
 		{
 			m_hedgeOrderVol.clear();

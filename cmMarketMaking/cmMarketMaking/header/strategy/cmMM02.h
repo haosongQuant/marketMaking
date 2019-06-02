@@ -203,4 +203,19 @@ private: // for clear cycle
 	athena_lag_timer m_pauseLagTimer;
 	double        m_cycleNetHedgeVol;
 	boost::mutex  m_cycleNetHedgeVolLock;
+
+private:
+	map<enum enum_cmMM02_strategy_status, string> m_statusDiscription;
+	void initStatusDiscription()
+	{
+		m_statusDiscription.insert(make_pair(cmMM02_STATUS_INIT, "初始化"));
+		m_statusDiscription.insert(make_pair(cmMM02_STATUS_READY, "就绪"));
+		m_statusDiscription.insert(make_pair(cmMM02_STATUS_ORDER_SENT, "已报单"));
+		m_statusDiscription.insert(make_pair(cmMM02_STATUS_CLOSING_POSITION, "撤单中"));
+		m_statusDiscription.insert(make_pair(cmMM02_STATUS_TRADED_HEDGING, "同价对冲"));
+		m_statusDiscription.insert(make_pair(cmMM02_STATUS_TRADED_NET_HEDGING, "市价对冲"));
+		m_statusDiscription.insert(make_pair(cmMM02_STATUS_PAUSE, "中断"));
+		m_statusDiscription.insert(make_pair(cmMM02_STATUS_BREAK, "暂停中"));
+	};
+
 };
