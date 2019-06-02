@@ -36,10 +36,11 @@
             "volMulti": 1,
             "holdingRequirement": 6,
             "openTime": [
+                { "start": 1, "end": 59 },
                 { "start": 901, "end": 1014 },
                 { "start": 1031, "end": 1128 },
                 { "start": 1329, "end": 1459 },
-                { "start": 2101, "end": 2329 }
+                { "start": 2101, "end": 2359 }
             ]
         },
         {
@@ -54,10 +55,11 @@
             "volMulti": 1,
             "masterStrategy": "mm_ni1908",
             "openTime": [
+                { "start": 1, "end": 59 },
                 { "start": 901, "end": 1014 },
                 { "start": 1031, "end": 1128 },
                 { "start": 1329, "end": 1459 },
-                { "start": 2101, "end": 2329 }
+                { "start": 2101, "end": 2359 }
             ]
         }
     ],
