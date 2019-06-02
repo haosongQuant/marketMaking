@@ -457,7 +457,7 @@ void cmMM02::processTrade(tradeRtnPtr ptrade)
 	{
 		LOG(INFO) << m_strategyId << ": waiting 1s to cancel hedge order!" << endl;
 		m_cancelHedgeTimer.expires_from_now(boost::posix_time::milliseconds(1000));
-		m_cancelHedgeTimer.async_wait(boost::bind(&cmMM02::cancelHedgeOrder, this)); // , boost::asio::placeholders::error));
+		m_cancelHedgeTimer.async_wait(boost::bind(&cmMM02::cleanupCycle, this)); // , boost::asio::placeholders::error));
 	}
 
 };
@@ -487,6 +487,12 @@ void cmMM02::sendHedgeOrder(tradeRtnPtr ptrade)//同价对冲
 		m_hedgeOrderVol[m_hedgeOrderRef] = ((dir == ORDER_DIR_BUY) ?
 			ptrade->m_volume : (ptrade->m_volume * -1));
 		m_hedgeOrderCancelRC[m_hedgeOrderRef] = 0;
+
+		LOG(INFO) << m_strategyId << " | hedge order sent, orderRef: " << m_hedgeOrderRef << ", "
+			<< (positionEffect == POSITION_EFFECT_CLOSE ? "CLOSE " : "OPEN ")
+			<< (dir == ORDER_DIR_SELL ? "BUY, " : "SELL, ")
+			<< "volume: " << ptrade->m_volume << ", price: " << ptrade->m_price << endl;
+
 	}
 };
 
@@ -525,6 +531,12 @@ void cmMM02::processHedgeOrderRtn(orderRtnPtr pOrder)
 
 void cmMM02::cleanupCycle()
 {
+	if (m_cancelHedgeTimerCancelled)
+	{
+		LOG(INFO) << m_strategyId << ": cleanupCycle cancelled." << endl;
+		return;
+	}
+
 	bool isTrdGrpComplete = true;
 	bool isTraded = false;
 	{
@@ -549,10 +561,8 @@ void cmMM02::cleanupCycle()
 
 	if (!isTraded)
 	{
-		m_cancelHedgeTimerCancelled = true;
-		m_cancelHedgeTimer.cancel();
 		m_orderCheckTimerCancelled = true;
-		m_orderCheckTimer.cancel();
+		m_orderCheckTimer.cancel(); // cancel cancelOrder() and confirm_cancelOrder()
 		m_tradeTP->getDispatcher().post(bind(&cmMM02::registerTrdGrpMap, this, m_cycleId, m_ptradeGrp));
 		startCycle();
 	}
@@ -562,12 +572,21 @@ void cmMM02::cleanupCycle()
 		int  cycleTradedVol = 0;
 		for each(auto orderRef in m_ptradeGrp->m_orderIdList)
 		{
-			int orderTradedVol = 0;
 			orderRtnPtr pOrder = m_orderRef2orderRtn[orderRef];
 			cycleTradedVol += pOrder->m_direction == ORDER_DIR_BUY ?
 				pOrder->m_volumeTraded : (pOrder->m_volumeTraded * -1);
 		}//end: 循环处理每一个order
-		sendNetHedgeOrder(-1 * cycleTradedVol);
+
+		if(cycleTradedVol != 0)
+			sendNetHedgeOrder(-1 * cycleTradedVol);
+		else
+		{
+			m_hedgeOrderVol.clear();
+			m_orderCheckTimerCancelled = true;
+			m_orderCheckTimer.cancel();
+			m_tradeTP->getDispatcher().post(bind(&cmMM02::registerTrdGrpMap, this, m_cycleId, m_ptradeGrp));
+			startCycle();
+		}
 	}
 
 };
@@ -678,7 +697,10 @@ void cmMM02::sendNetHedgeOrder(double netHedgeVol)
 		//记录轧差对冲量
 		boost::mutex::scoped_lock lock(m_NetHedgeOrderVolLock);
 		m_NetHedgeOrderVol = netHedgeVol;
-		m_hedgeOrderVol.clear();
+		LOG(INFO) << m_strategyId << " | net hedge order sent, orderRef: " << netHedgeOrderRef << ", "
+			<< (positionEffect == POSITION_EFFECT_CLOSE ? "CLOSE " : "OPEN ")
+			<< (dir == ORDER_DIR_SELL ? "BUY, " : "SELL, ")
+			<< "volume: " << fabs(netHedgeVol) << ", price: " << price << endl;
 	}
 	else
 		LOG(INFO) << m_strategyId << " ERROR: send net hedge order failed, rc = " << netHedgeOrderRef << endl;
@@ -697,9 +719,9 @@ void cmMM02::processNetHedgeTradeRtn(tradeRtnPtr ptrade)
 	LOG(INFO) << m_strategyId << ": net hedge order left: " << m_NetHedgeOrderVol << endl;
 	if (0.0 == m_NetHedgeOrderVol) //轧差对冲全部成交
 	{
+		m_hedgeOrderVol.clear();
 		m_orderCheckTimerCancelled = true;
 		m_orderCheckTimer.cancel();
-
 		m_tradeTP->getDispatcher().post(bind(&cmMM02::registerTrdGrpMap, this, m_cycleId, m_ptradeGrp));
 		startCycle();
 	}
